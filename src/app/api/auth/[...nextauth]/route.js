@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
-import axios from "axios";
+import { authLogin } from "@/axios/auth";
+import { ApiResponseError } from "@/utils/error-handling";
 import CredentialsProvider from "next-auth/providers/credentials";
 
 const handler = NextAuth({
@@ -17,24 +18,21 @@ const handler = NextAuth({
 
             async authorize(credentials) {
                 try {
-                    const res = await axios.post(
-                        "https://nurz.site/api/login",
-                        {
-                            email: credentials.email,
-                            password: credentials.password,
-                        },
-                        {
-                            headers: {
-                                accept: "*/*",
-                                "Content-Type": "application/json",
-                            },
-                        }
-                    );
+                    const response = await authLogin({
+                        email: credentials.email,
+                        password: credentials.password,
+                    });
 
-                    return res.data.data;
+                    return response.data;
                 } catch (error) {
-                    console.log("ERROR USER AUTH", error.response.data.message);
+                    if (error instanceof ApiResponseError) {
+                        console.log(`ERR USER AUTH: `, error.message);
+                        console.log(error.data);
+                        throw new Error(error.message);
+                    }
                     throw new Error(error.response.data.message);
+                    // console.log("ERROR USER AUTH", error.response.data.message);
+                    // console.log(`MESSAGE: `, error.message);
                 }
             },
         }),
@@ -47,10 +45,6 @@ const handler = NextAuth({
             return { ...token, ...user };
         },
 
-        // async session({ session, token, user }) {
-        //     session.user = token;
-        //     return session;
-        // },
         async session({ session, token }) {
             session.user = token;
             return session;
