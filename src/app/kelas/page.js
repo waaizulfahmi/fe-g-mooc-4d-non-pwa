@@ -239,9 +239,22 @@ const Kelas = () => {
                         if (error instanceof ApiResponseError) {
                             console.log(`ERR API MESSAGE: `, error.message);
                             console.log(error.data);
-                            speechAction({
-                                text: 'Kelas tidak ditemukan',
-                            });
+
+                            if (
+                                error?.data?.data?.metadata?.code === 401 ||
+                                error?.message?.toLowerCase() === 'Email belum diverifikasi'.toLocaleLowerCase()
+                            ) {
+                                speechAction({
+                                    text: 'Anda harus verifikasi akun Anda terlebih dahulu. Silahkan check email Anda!',
+                                    actionOnEnd: () => {
+                                        router.push('/must-verify');
+                                    },
+                                });
+                            } else {
+                                speechAction({
+                                    text: 'Kelas tidak ditemukan',
+                                });
+                            }
                             return;
                         }
                         console.log(`MESSAGE: `, error.message);
