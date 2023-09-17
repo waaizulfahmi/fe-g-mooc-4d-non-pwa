@@ -36,6 +36,7 @@ import HeroIcon from '@/components/HeroIcon';
 import NavbarButton from '@/components/NavbarButton';
 import VideoFrame from '@/components/VideoFrame';
 import Certificate from '@/components/Certificate';
+import Transkrip from '@/components/Transkrip';
 
 // datas
 import { Kelas, ListMateri, ListQuiz } from '@/data/model';
@@ -86,6 +87,8 @@ const EnrollKelas = () => {
     //sertifikat
     const userName = data?.user?.name;
     const [isCetakSertifikat, setCetakSertifikat] = useState(false);
+    const [transcript, setTrancript] = useState('');
+    const [enrollClassName, setEnrollClassName] = useState('');
 
     // BOOLEAN STATE
     // const [isVideoEnded, setVideoEnded] = useState(false);
@@ -207,6 +210,7 @@ const EnrollKelas = () => {
                         }
 
                         // semua data
+                        setEnrollClassName(kelas.getName());
                         setMateri(kelas.getMateri());
                         setQuiz(kelas.getQuiz());
                         setProgress(kelas.getProgress());
@@ -674,7 +678,7 @@ const EnrollKelas = () => {
             } else if (cleanCommand.includes('cetak')) {
                 if (cleanCommand.includes('sertifikat')) {
                     speechAction({
-                        text: 'Anda akan mendapatkan sertifikat JavaScript',
+                        text: `Anda akan mendapatkan sertifikat ${enrollClassName}`,
                         actionOnEnd: () => {
                             setCetakSertifikat(true);
                             setLoadData(true);
@@ -691,13 +695,14 @@ const EnrollKelas = () => {
                     text: `Kita sedang di halaman pembelajaran`,
                 });
             }
+            setTrancript(cleanCommand);
             console.log(cleanCommand);
         };
 
         recognition.onend = () => {
             recognition.start();
         };
-    }, [router, materi, name, token, isAnswerMode, isQuizMode, quiz, idxQuiz]);
+    }, [router, materi, name, token, isAnswerMode, isQuizMode, quiz, idxQuiz, enrollClassName]);
 
     return (
         <div className='h-screen bg-[#EDF3F3]'>
@@ -859,17 +864,17 @@ const EnrollKelas = () => {
                                     </PDFViewer>
                                 </div> */}
                                 <PDFDownloadLink
-                                    document={<Certificate name={'arief'} kelas={'JavaScript'} />}
+                                    document={<Certificate name={userName} kelas={enrollClassName} />}
                                     // fileName="Jamal Certificate.pdf"
                                 >
-                                    {({ blob, url, loading, error }) => {
+                                    {({ blob, loading, error }) => {
                                         if (loading) {
                                             return 'Loading document...';
                                         } else if (error) {
                                             return `Error: ${error}`;
                                         } else if (blob) {
                                             // auto download
-                                            saveBlobToDevice(blob, `${userName} Certificate.pdf`);
+                                            saveBlobToDevice(blob, `${userName}-${enrollClassName}-Certificate.pdf`);
                                             // setCetakSertifikat(false);
                                             return null;
                                             // return setCetakSertifikat(false);
@@ -881,6 +886,7 @@ const EnrollKelas = () => {
                     </>
                 </div>
             </div>
+            <Transkrip transcript={transcript} />
         </div>
     );
 };

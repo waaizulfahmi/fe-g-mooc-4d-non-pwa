@@ -1,48 +1,48 @@
-"use client";
+'use client';
 
 //core
-import { forwardRef, useState } from "react";
-import PropTypes from "prop-types";
+import { forwardRef, useState } from 'react';
+import PropTypes from 'prop-types';
 
 //third party
-import { FiEye, FiEyeOff } from "react-icons/fi";
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 const PasswordInputRef = forwardRef(function PasswordInputRef(
     {
         id,
         isError = false,
-        placeholder = "Your placeholder",
-        className = "bg-neutral-6  border-neutral-6 px-6 py-[17px] text-body-2 font-normal focus:border-primary-1 ",
+        placeholder = 'Your placeholder',
+        className = 'bg-neutral-6  border-neutral-6 px-6 py-[17px] text-body-2 font-normal focus:border-primary-1 ',
         ...props
     },
-    ref
+    ref,
 ) {
     const [showPassword, setShowPassword] = useState(false);
     const togglePassword = () => setShowPassword(!showPassword);
 
     return (
-        <div className="relative w-full">
+        <div className='relative w-full'>
             <input
-                autoComplete="on"
+                autoComplete='on'
                 {...props}
                 ref={ref}
                 id={id}
                 placeholder={placeholder}
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 className={`${className} font-poppins w-full appearance-none  border-2 outline-none`}
             />
             {showPassword ? (
                 <FiEye
                     onClick={togglePassword}
                     className={`${
-                        isError ? "text-alert-1" : "text-primary-1"
+                        isError ? 'text-alert-1' : 'text-primary-1'
                     } absolute right-1 top-[50%] mr-3 h-5 w-5 translate-y-[-50%] cursor-pointer `}
                 />
             ) : (
                 <FiEyeOff
                     onClick={togglePassword}
                     className={`${
-                        isError ? "text-alert-1" : "text-neutral-3"
+                        isError ? 'text-alert-1' : 'text-neutral-3'
                     } absolute right-1 top-[50%] mr-3 h-5 w-5 translate-y-[-50%] cursor-pointer `}
                 />
             )}

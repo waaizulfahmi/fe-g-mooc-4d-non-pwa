@@ -35,6 +35,7 @@ import { useSession } from 'next-auth/react';
 import FillButton from '@/components/FillButton';
 import Navbar from '@/components/Navbar';
 import BorderedButton from '@/components/BorderedButton';
+import Transkrip from '@/components/Transkrip';
 
 // datas
 import { Rapot } from '@/data/model';
@@ -93,6 +94,7 @@ const Rapor = () => {
     const [nilai, setNilai] = useState(0);
     const [runningClass, setRunningClass] = useState([]);
     const [totalPelajaran, setTotalPelajaran] = useState([]);
+    const [transcript, setTrancript] = useState('');
 
     // FUNC
     //---
@@ -198,6 +200,7 @@ const Rapor = () => {
                 });
             }
 
+            setTrancript(cleanCommand);
             console.log(cleanCommand);
         };
         recognition.onend = () => {
@@ -280,6 +283,7 @@ const Rapor = () => {
                     </div>
                 </section>
             </main>
+            <Transkrip transcript={transcript} />
         </div>
     );
 };

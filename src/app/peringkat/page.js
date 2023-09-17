@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /* 
 @DOCS :
@@ -19,29 +19,30 @@
 */
 
 // core
-import { useEffect, useState } from "react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 // third party
-import { useSession } from "next-auth/react";
+import { useSession } from 'next-auth/react';
 
 // redux
 // ---
 
 // components
-import Navbar from "@/components/Navbar";
+import Navbar from '@/components/Navbar';
+import Transkrip from '@/components/Transkrip';
 
 // datas
 // ---
 
 // apis
-import { userGetPeringkatApi } from "@/axios/user";
+import { userGetPeringkatApi } from '@/axios/user';
 
 // utils
-import { ApiResponseError } from "@/utils/error-handling";
-import { recognition } from "@/utils/speech-recognition";
-import { speechAction } from "@/utils/text-to-speech";
+import { ApiResponseError } from '@/utils/error-handling';
+import { recognition } from '@/utils/speech-recognition';
+import { speechAction } from '@/utils/text-to-speech';
 
 const Peringkat = () => {
     const { data } = useSession();
@@ -53,6 +54,7 @@ const Peringkat = () => {
     const [loadData, setLoadData] = useState(true);
     const [rank, setRank] = useState([]);
     const [userRank, setUserRank] = useState(null);
+    const [transcript, setTrancript] = useState('');
 
     // const dataMhs = [
     //     {
@@ -81,16 +83,16 @@ const Peringkat = () => {
     const handleColorPeringkat = (urutan) => {
         switch (urutan) {
             case 1: {
-                return "bg-[#FFD700]";
+                return 'bg-[#FFD700]';
             }
             case 2: {
-                return "bg-[#C0C0C0]";
+                return 'bg-[#C0C0C0]';
             }
             case 3: {
-                return "bg-[#CD7F32]";
+                return 'bg-[#CD7F32]';
             }
             default: {
-                return "bg-[#EDF3F3]";
+                return 'bg-[#EDF3F3]';
             }
         }
     };
@@ -111,10 +113,7 @@ const Peringkat = () => {
                         });
                     } catch (error) {
                         if (error instanceof ApiResponseError) {
-                            console.log(
-                                `ERR CLASS ENROLLMENT API MESSAGE: `,
-                                error.message
-                            );
+                            console.log(`ERR CLASS ENROLLMENT API MESSAGE: `, error.message);
                             console.log(error.data);
                             return;
                         }
@@ -138,10 +137,10 @@ const Peringkat = () => {
     useEffect(() => {
         recognition.onresult = (event) => {
             const command = event?.results[0][0]?.transcript?.toLowerCase();
-            const cleanCommand = command?.replace(".", "");
+            const cleanCommand = command?.replace('.', '');
 
-            if (cleanCommand.includes("peringkat")) {
-                if (cleanCommand.includes("saya")) {
+            if (cleanCommand.includes('peringkat')) {
+                if (cleanCommand.includes('saya')) {
                     if (userRank.ranking === 1) {
                         speechAction({
                             text: `Selamat, Anda sedang diperingkat ke ${userRank.ranking}.`,
@@ -172,35 +171,35 @@ const Peringkat = () => {
                         });
                     }
                 }
-            } else if (cleanCommand.includes("pergi")) {
-                if (cleanCommand.includes("kelas")) {
+            } else if (cleanCommand.includes('pergi')) {
+                if (cleanCommand.includes('kelas')) {
                     // moving to /kelas
                     speechAction({
                         text: `Anda akan menuju halaman Daftar Kelas`,
                         actionOnEnd: () => {
-                            router.push("/kelas");
+                            router.push('/kelas');
                         },
                     });
-                } else if (cleanCommand.includes("beranda")) {
+                } else if (cleanCommand.includes('beranda')) {
                     // moving to /beranda
                     speechAction({
                         text: `Anda akan menuju halaman beranda`,
                         actionOnEnd: () => {
-                            router.push("/");
+                            router.push('/');
                         },
                     });
-                } else if (cleanCommand.includes("rapor")) {
+                } else if (cleanCommand.includes('rapor')) {
                     // moving to /rapor
                     speechAction({
                         text: `Anda akan menuju halaman Rapor`,
                         actionOnEnd: () => {
-                            router.push("/rapor");
+                            router.push('/rapor');
                         },
                     });
                 }
-            } else if (cleanCommand.includes("muat")) {
-                if (cleanCommand.includes("ulang")) {
-                    if (cleanCommand.includes("halaman")) {
+            } else if (cleanCommand.includes('muat')) {
+                if (cleanCommand.includes('ulang')) {
+                    if (cleanCommand.includes('halaman')) {
                         speechAction({
                             text: `Anda akan load halaman ini!`,
                             actionOnEnd: () => {
@@ -210,16 +209,16 @@ const Peringkat = () => {
                     }
                 }
             } else if (
-                cleanCommand.includes("saya sekarang dimana") ||
-                cleanCommand.includes("saya sekarang di mana") ||
-                cleanCommand.includes("saya di mana") ||
-                cleanCommand.includes("saya dimana")
+                cleanCommand.includes('saya sekarang dimana') ||
+                cleanCommand.includes('saya sekarang di mana') ||
+                cleanCommand.includes('saya di mana') ||
+                cleanCommand.includes('saya dimana')
             ) {
                 speechAction({
                     text: `Kita sedang di halaman Peringkat`,
                 });
             }
-
+            setTrancript(cleanCommand);
             console.log(cleanCommand);
         };
 
@@ -229,58 +228,42 @@ const Peringkat = () => {
     }, [router, userName, userRank]);
 
     return (
-        <section className="h-screen bg-primary-1">
+        <section className='h-screen bg-primary-1'>
             <Navbar />
-            <main className="mx-auto max-w-screen-xl  pt-[80px] ">
-                <div className="mt-[20px] flex items-center justify-center gap-[60px]">
-                    <Image
-                        alt=""
-                        src={"/images/mahkota.svg"}
-                        width={80}
-                        height={40}
-                    />
-                    <h1 className="text-[48px] font-bold text-white">
-                        Peringkat
-                    </h1>
+            <main className='mx-auto max-w-screen-xl  pt-[80px] '>
+                <div className='mt-[20px] flex items-center justify-center gap-[60px]'>
+                    <Image alt='' src={'/images/mahkota.svg'} width={80} height={40} />
+                    <h1 className='text-[48px] font-bold text-white'>Peringkat</h1>
                 </div>
                 <div
-                    style={{ height: "calc(100vh - 222px)" }}
-                    className="mt-[40px] overflow-y-scroll rounded-rad-7 bg-white p-[12px]"
-                >
+                    style={{ height: 'calc(100vh - 222px)' }}
+                    className='mt-[40px] overflow-y-scroll rounded-rad-7 bg-white p-[12px]'>
                     {rank?.length
                         ? rank.map((mhs, idx) => (
                               <div
                                   key={idx + 1}
                                   className={`${handleColorPeringkat(
-                                      mhs.ranking
-                                  )} mb-[12px] flex h-[80px] items-center  justify-between overflow-hidden rounded-rad-7 `}
-                              >
-                                  <div className="flex h-full items-center gap-[24px]">
+                                      mhs.ranking,
+                                  )} mb-[12px] flex h-[80px] items-center  justify-between overflow-hidden rounded-rad-7 `}>
+                                  <div className='flex h-full items-center gap-[24px]'>
                                       <div
                                           style={{
-                                              boxShadow:
-                                                  "4px 0px 4px 0px rgba(0, 0, 0, 0.25)",
+                                              boxShadow: '4px 0px 4px 0px rgba(0, 0, 0, 0.25)',
                                           }}
                                           className={`${handleColorPeringkat(
-                                              mhs.ranking
-                                          )} flex h-full w-[54px] items-center justify-center rounded-br-[20px]  rounded-tr-[20px]  `}
-                                      >
-                                          <span className="text-[26px] font-bold text-primary-1">
-                                              {idx + 1}
-                                          </span>
+                                              mhs.ranking,
+                                          )} flex h-full w-[54px] items-center justify-center rounded-br-[20px]  rounded-tr-[20px]  `}>
+                                          <span className='text-[26px] font-bold text-primary-1'>{idx + 1}</span>
                                       </div>
-                                      <p className="text-[26px] font-bold text-primary-1">
-                                          {mhs.user.name}
-                                      </p>
+                                      <p className='text-[26px] font-bold text-primary-1'>{mhs.user.name}</p>
                                   </div>
-                                  <h1 className="mr-[42px] text-[26px] font-bold text-primary-1">
-                                      {mhs.poin} Poin
-                                  </h1>
+                                  <h1 className='mr-[42px] text-[26px] font-bold text-primary-1'>{mhs.poin} Poin</h1>
                               </div>
                           ))
                         : null}
                 </div>
             </main>
+            <Transkrip transcript={transcript} />
         </section>
     );
 };

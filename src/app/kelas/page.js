@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /* 
 @DOCS :
@@ -19,45 +19,46 @@
 */
 
 // core
-import { useCallback, useEffect, useState } from "react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from 'react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 // third party
-import { useSession } from "next-auth/react";
-import axios from "axios";
+import { useSession } from 'next-auth/react';
+import axios from 'axios';
 
 //redux
 //---
 
 // components
-import Navbar from "@/components/Navbar";
-import ArrowButton from "@/components/ArrowButton";
+import Navbar from '@/components/Navbar';
+import ArrowButton from '@/components/ArrowButton';
+import Transkrip from '@/components/Transkrip';
 
 // datas
 // ---
 
 // apis
-import { userGetAllClassApi, userGetClassByLevel } from "@/axios/user";
+import { userGetAllClassApi, userGetClassByLevel } from '@/axios/user';
 
 // utils
-import { getImageFile } from "@/utils/get-server-storage";
-import { synth, speech, speechAction } from "@/utils/text-to-speech";
-import { formatDotString } from "@/utils/format-dot-string";
-import { recognition } from "@/utils/speech-recognition";
-import { ApiResponseError } from "@/utils/error-handling";
+import { getImageFile } from '@/utils/get-server-storage';
+import { synth, speech, speechAction } from '@/utils/text-to-speech';
+import { formatDotString } from '@/utils/format-dot-string';
+import { recognition } from '@/utils/speech-recognition';
+import { ApiResponseError } from '@/utils/error-handling';
 
 const fetchKelasByLevel = async (idLevel, token) => {
     try {
         const kelasLevel = {
-            1: "mudah",
-            2: "normal",
-            3: "sulit",
-            4: "semua",
+            1: 'mudah',
+            2: 'normal',
+            3: 'sulit',
+            4: 'semua',
         };
 
         let response;
-        if (kelasLevel[idLevel] === "semua") {
+        if (kelasLevel[idLevel] === 'semua') {
             response = await userGetAllClassApi({ token });
 
             if (!response?.data?.length) {
@@ -93,13 +94,13 @@ const fetchKelasByLevel = async (idLevel, token) => {
             console.log(`ERR API MESSAGE: `, error.message);
             console.log(error.data);
             speechAction({
-                text: "Kelas tidak ditemukan",
+                text: 'Kelas tidak ditemukan',
             });
             return;
         }
         console.log(`MESSAGE: `, error.message);
         speechAction({
-            text: "Kelas tidak ditemukan",
+            text: 'Kelas tidak ditemukan',
         });
     }
 };
@@ -117,6 +118,7 @@ const Kelas = () => {
         semua: true,
     });
     const [loadData, setLoadData] = useState(true);
+    const [transcript, setTrancript] = useState('');
 
     //FUNC
     const handlePilihKelas = (namaKelas) => {
@@ -125,7 +127,7 @@ const Kelas = () => {
 
     const handleCheckBoxChange = (level) => {
         switch (level) {
-            case "mudah":
+            case 'mudah':
                 setIsChecked({
                     mudah: true,
                     normal: false,
@@ -133,7 +135,7 @@ const Kelas = () => {
                     semua: false,
                 });
                 break;
-            case "normal":
+            case 'normal':
                 setIsChecked({
                     mudah: false,
                     normal: true,
@@ -141,7 +143,7 @@ const Kelas = () => {
                     semua: false,
                 });
                 break;
-            case "sulit":
+            case 'sulit':
                 setIsChecked({
                     mudah: false,
                     normal: false,
@@ -149,7 +151,7 @@ const Kelas = () => {
                     semua: false,
                 });
                 break;
-            case "semua":
+            case 'semua':
                 setIsChecked({
                     mudah: false,
                     normal: false,
@@ -174,40 +176,40 @@ const Kelas = () => {
         async (level) => {
             if (token) {
                 switch (level) {
-                    case "mudah": {
+                    case 'mudah': {
                         const kelasMudah = await fetchKelasByLevel(1, token);
                         setKelas(kelasMudah);
-                        handleCheckBoxChange("mudah");
+                        handleCheckBoxChange('mudah');
                         break;
                     }
-                    case "normal": {
+                    case 'normal': {
                         const kelasNormal = await fetchKelasByLevel(2, token);
                         setKelas(kelasNormal);
-                        handleCheckBoxChange("normal");
+                        handleCheckBoxChange('normal');
                         break;
                     }
-                    case "sulit": {
+                    case 'sulit': {
                         const kelasSulit = await fetchKelasByLevel(3, token);
                         setKelas(kelasSulit);
-                        handleCheckBoxChange("sulit");
+                        handleCheckBoxChange('sulit');
                         break;
                     }
-                    case "semua": {
+                    case 'semua': {
                         const semuaKelas = await fetchKelasByLevel(4, token);
                         setKelas(semuaKelas);
-                        handleCheckBoxChange("semua");
+                        handleCheckBoxChange('semua');
                         break;
                     }
                     default: {
                         const semuaKelas = await fetchKelasByLevel(4, token);
                         setKelas(semuaKelas);
-                        handleCheckBoxChange("semua");
+                        handleCheckBoxChange('semua');
                         break;
                     }
                 }
             }
         },
-        [token]
+        [token],
     );
 
     // EFFECTS
@@ -228,8 +230,8 @@ const Kelas = () => {
                         const response = await userGetAllClassApi({ token });
                         setKelas(response.data);
 
-                        console.log("data halaman kelas:", response.data);
-                        handleCheckBoxChange("semua");
+                        console.log('data halaman kelas:', response.data);
+                        handleCheckBoxChange('semua');
                         speechAction({
                             text: `Selamat datang di Kelas. Ditemukan ${response.data.length} kelas tersedia.`,
                         });
@@ -238,13 +240,13 @@ const Kelas = () => {
                             console.log(`ERR API MESSAGE: `, error.message);
                             console.log(error.data);
                             speechAction({
-                                text: "Kelas tidak ditemukan",
+                                text: 'Kelas tidak ditemukan',
                             });
                             return;
                         }
                         console.log(`MESSAGE: `, error.message);
                         speechAction({
-                            text: "Kelas tidak ditemukan",
+                            text: 'Kelas tidak ditemukan',
                         });
                     }
                 };
@@ -258,22 +260,19 @@ const Kelas = () => {
         // SPEECH RECOGNITION RESULT
         recognition.onresult = (event) => {
             const command = event.results[0][0].transcript.toLowerCase();
-            const cleanCommand = command?.replace(".", "");
+            const cleanCommand = command?.replace('.', '');
 
             if (isCari) {
                 if (token) {
                     synth.speak(speech(`Mencari ${command}`));
                     const fetchApiClassByName = async () => {
                         try {
-                            const response = await axios.get(
-                                `https://nurz.site/api/user/kelasByName/${cleanCommand}`,
-                                {
-                                    headers: {
-                                        "Content-Type": "application/json",
-                                        Authorization: `Bearer ${token}`,
-                                    },
-                                }
-                            );
+                            const response = await axios.get(`https://nurz.site/api/user/kelasByName/${cleanCommand}`, {
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    Authorization: `Bearer ${token}`,
+                                },
+                            });
 
                             console.log(response.data);
 
@@ -285,15 +284,9 @@ const Kelas = () => {
 
                             if (response.data.data.length > 0) {
                                 setKelas(response.data.data);
-                                synth.speak(speech("Ditemukan kelas"));
-                                for (
-                                    let i = 0;
-                                    i < response.data.data.length;
-                                    i++
-                                ) {
-                                    synth.speak(
-                                        speech(` ${response.data.data[i].name}`)
-                                    );
+                                synth.speak(speech('Ditemukan kelas'));
+                                for (let i = 0; i < response.data.data.length; i++) {
+                                    synth.speak(speech(` ${response.data.data[i].name}`));
                                 }
                                 setCari(false);
                             }
@@ -306,36 +299,31 @@ const Kelas = () => {
                 }
             }
 
-            if (cleanCommand.includes("cari")) {
+            if (cleanCommand.includes('cari')) {
                 //search class by level
-                const level = cleanCommand
-                    .replace("cari", "")
-                    .trim()
-                    .toLowerCase();
-                if (level.includes("semua kelas")) {
+                const level = cleanCommand.replace('cari', '').trim().toLowerCase();
+                if (level.includes('semua kelas')) {
                     // semua
-                    handleFetchKelasByLevelName("semua");
-                } else if (level.includes("mudah")) {
+                    handleFetchKelasByLevelName('semua');
+                } else if (level.includes('mudah')) {
                     // mudah
-                    handleFetchKelasByLevelName("mudah");
-                } else if (level.includes("normal")) {
+                    handleFetchKelasByLevelName('mudah');
+                } else if (level.includes('normal')) {
                     // normal
-                    handleFetchKelasByLevelName("normal");
-                } else if (level.includes("sulit")) {
+                    handleFetchKelasByLevelName('normal');
+                } else if (level.includes('sulit')) {
                     // sulit
-                    handleFetchKelasByLevelName("sulit");
+                    handleFetchKelasByLevelName('sulit');
                 }
-            } else if (cleanCommand.includes("belajar")) {
+            } else if (cleanCommand.includes('belajar')) {
                 //enroll the class
-                const kelasCommand = cleanCommand.replace("belajar", "").trim();
-                const findKelas = kelas.find(
-                    (k) => k.name.toLowerCase() === kelasCommand
-                );
+                const kelasCommand = cleanCommand.replace('belajar', '').trim();
+                const findKelas = kelas.find((k) => k.name.toLowerCase() === kelasCommand);
                 if (!findKelas) {
                     // kelas not found
                     console.log(cleanCommand);
                     speechAction({
-                        text: "Kelas tidak ditemukan",
+                        text: 'Kelas tidak ditemukan',
                     });
                     return;
                 }
@@ -346,8 +334,8 @@ const Kelas = () => {
                         router.push(`/kelas/${findKelas.name.toLowerCase()}`);
                     },
                 });
-            } else if (cleanCommand.includes("mode")) {
-                if (cleanCommand.includes("cari")) {
+            } else if (cleanCommand.includes('mode')) {
+                if (cleanCommand.includes('cari')) {
                     //enter mode cari
                     speechAction({
                         text: `Sedang dalam mode cari`,
@@ -356,52 +344,50 @@ const Kelas = () => {
                         },
                     });
                 }
-            } else if (cleanCommand.includes("pergi")) {
+            } else if (cleanCommand.includes('pergi')) {
                 // moving page with speech
-                if (cleanCommand.includes("beranda")) {
+                if (cleanCommand.includes('beranda')) {
                     // moving to /beranda
                     speechAction({
-                        text: "Anda akan menuju halaman Beranda",
+                        text: 'Anda akan menuju halaman Beranda',
                         actionOnEnd: () => {
-                            router.push("/");
+                            router.push('/');
                         },
                     });
-                } else if (cleanCommand.includes("rapor")) {
+                } else if (cleanCommand.includes('rapor')) {
                     // moving to /rapot
                     speechAction({
-                        text: "Anda akan menuju halaman Rapor",
+                        text: 'Anda akan menuju halaman Rapor',
                         actionOnEnd: () => {
-                            router.push("/rapor");
+                            router.push('/rapor');
                         },
                     });
-                } else if (cleanCommand.includes("peringkat")) {
+                } else if (cleanCommand.includes('peringkat')) {
                     // moving to /peringkat
                     speechAction({
-                        text: "Anda akan menuju halaman Peringkat",
+                        text: 'Anda akan menuju halaman Peringkat',
                         actionOnEnd: () => {
-                            router.push("/peringkat");
+                            router.push('/peringkat');
                         },
                     });
                 }
-            } else if (cleanCommand.includes("sebutkan")) {
-                if (cleanCommand.includes("kelas")) {
+            } else if (cleanCommand.includes('sebutkan')) {
+                if (cleanCommand.includes('kelas')) {
                     // sebutkan kelas yang tersedia berdasarkan level
                     if (kelas.length > 0) {
                         let typeClass;
                         if (isChecked.mudah) {
-                            typeClass = "mudah";
+                            typeClass = 'mudah';
                         } else if (isChecked.normal) {
-                            typeClass = "normal";
+                            typeClass = 'normal';
                         } else if (isChecked.sulit) {
-                            typeClass = "sulit";
+                            typeClass = 'sulit';
                         } else if (isChecked.semua) {
-                            typeClass = "semua";
+                            typeClass = 'semua';
                         }
                         speechAction({
                             text: `Daftar kelas ${
-                                typeClass === "semua"
-                                    ? "pada semua level"
-                                    : `pada level ${typeClass}`
+                                typeClass === 'semua' ? 'pada semua level' : `pada level ${typeClass}`
                             } yaitu : `,
                             actionOnEnd: () => {
                                 for (let i = 0; i < kelas.length; i++) {
@@ -413,15 +399,15 @@ const Kelas = () => {
                         });
                     }
                 }
-            } else if (cleanCommand.includes("jumlah kelas")) {
+            } else if (cleanCommand.includes('jumlah kelas')) {
                 if (kelas.length) {
                     speechAction({
                         text: `Terdapat ${kelas.length} kelas.`,
                     });
                 }
-            } else if (cleanCommand.includes("muat")) {
-                if (cleanCommand.includes("ulang")) {
-                    if (cleanCommand.includes("halaman")) {
+            } else if (cleanCommand.includes('muat')) {
+                if (cleanCommand.includes('ulang')) {
+                    if (cleanCommand.includes('halaman')) {
                         speechAction({
                             text: `Anda akan load ulang halaman!`,
                             actionOnEnd: () => {
@@ -431,16 +417,16 @@ const Kelas = () => {
                     }
                 }
             } else if (
-                cleanCommand.includes("saya sekarang dimana") ||
-                cleanCommand.includes("saya sekarang di mana") ||
-                cleanCommand.includes("saya di mana") ||
-                cleanCommand.includes("saya dimana")
+                cleanCommand.includes('saya sekarang dimana') ||
+                cleanCommand.includes('saya sekarang di mana') ||
+                cleanCommand.includes('saya di mana') ||
+                cleanCommand.includes('saya dimana')
             ) {
                 speechAction({
                     text: `Kita sedang di halaman kelas`,
                 });
             }
-
+            setTrancript(cleanCommand);
             console.log(cleanCommand);
         };
 
@@ -451,156 +437,112 @@ const Kelas = () => {
     }, [router, kelas, isCari, token, isChecked, handleFetchKelasByLevelName]);
 
     return (
-        <div className="h-screen bg-[#EDF3F3]">
+        <div className='h-screen bg-[#EDF3F3]'>
             <Navbar />
-            <main
-                style={{ height: "calc(100vh - 90px)" }}
-                className="w-screen bg-[#EDF3F3] pt-[90px] "
-            >
-                <div className="grid max-w-screen-xl grid-cols-12 mx-auto">
-                    <div className="col-span-2">
-                        <h1 className="font-bold text-title-2 ">Level</h1>
-                        <div className="mt-[30px] flex flex-col gap-[18px] ">
-                            <div className="flex items-center gap-2">
+            <main style={{ height: 'calc(100vh - 90px)' }} className='w-screen bg-[#EDF3F3] pt-[90px] '>
+                <div className='mx-auto grid max-w-screen-xl grid-cols-12'>
+                    <div className='col-span-2'>
+                        <h1 className='text-title-2 font-bold '>Level</h1>
+                        <div className='mt-[30px] flex flex-col gap-[18px] '>
+                            <div className='flex items-center gap-2'>
                                 <input
-                                    type="checkbox"
-                                    id="check"
+                                    type='checkbox'
+                                    id='check'
                                     checked={isChecked.mudah}
                                     onChange={() => {
-                                        handleFetchKelasByLevelName("mudah");
+                                        handleFetchKelasByLevelName('mudah');
                                     }}
-                                    className="h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
+                                    className='h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600'
                                 />
-                                <label
-                                    htmlFor="check"
-                                    className="font-medium text-body-4"
-                                >
+                                <label htmlFor='check' className='text-body-4 font-medium'>
                                     Mudah
                                 </label>
                             </div>
-                            <div className="flex items-center gap-2 ">
+                            <div className='flex items-center gap-2 '>
                                 <input
-                                    type="checkbox"
-                                    id="check"
+                                    type='checkbox'
+                                    id='check'
                                     onChange={() => {
-                                        handleFetchKelasByLevelName("normal");
+                                        handleFetchKelasByLevelName('normal');
                                     }}
                                     checked={isChecked.normal}
-                                    className="h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
+                                    className='h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600'
                                 />
-                                <label
-                                    htmlFor="check"
-                                    className="font-medium text-body-4"
-                                >
+                                <label htmlFor='check' className='text-body-4 font-medium'>
                                     Normal
                                 </label>
                             </div>
-                            <div className="flex items-center gap-2 ">
+                            <div className='flex items-center gap-2 '>
                                 <input
-                                    type="checkbox"
-                                    id="check"
+                                    type='checkbox'
+                                    id='check'
                                     onChange={() => {
-                                        handleFetchKelasByLevelName("sulit");
+                                        handleFetchKelasByLevelName('sulit');
                                     }}
                                     checked={isChecked.sulit}
-                                    className="h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
+                                    className='h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600'
                                 />
-                                <label
-                                    htmlFor="check"
-                                    className="font-medium text-body-4"
-                                >
+                                <label htmlFor='check' className='text-body-4 font-medium'>
                                     Sulit
                                 </label>
                             </div>
-                            <div className="flex items-center gap-2 ">
+                            <div className='flex items-center gap-2 '>
                                 <input
-                                    type="checkbox"
-                                    id="check"
+                                    type='checkbox'
+                                    id='check'
                                     onChange={() => {
-                                        handleFetchKelasByLevelName("semua");
+                                        handleFetchKelasByLevelName('semua');
                                     }}
                                     checked={isChecked.semua}
-                                    className="h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
+                                    className='h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600'
                                 />
-                                <label
-                                    htmlFor="check"
-                                    className="font-medium text-body-4"
-                                >
+                                <label htmlFor='check' className='text-body-4 font-medium'>
                                     Semua
                                 </label>
                             </div>
                         </div>
                     </div>
                     <div
-                        style={{ height: "calc(100vh - 100px)" }}
-                        className="col-span-10 grid grid-cols-4 gap-[24px] overflow-y-scroll "
-                    >
+                        style={{ height: 'calc(100vh - 100px)' }}
+                        className='col-span-10 grid grid-cols-4 gap-[24px] overflow-y-scroll '>
                         {kelas?.length
                             ? kelas.map((kelasData, index) => {
                                   return (
                                       <div
                                           key={index}
-                                          className="relative h-[400px] rounded-rad-7  bg-white  p-[14px] shadow-lg lg:col-span-1"
-                                      >
-                                          <div className="relative  h-[200px] w-full overflow-hidden rounded-rad-7">
+                                          className='relative h-[400px] rounded-rad-7  bg-white  p-[14px] shadow-lg lg:col-span-1'>
+                                          <div className='relative  h-[200px] w-full overflow-hidden rounded-rad-7'>
                                               <Image
-                                                  alt=""
-                                                  src={getImageFile(
-                                                      kelasData.image
-                                                  )}
+                                                  alt=''
+                                                  src={getImageFile(kelasData.image)}
                                                   fill
-                                                  style={{ objectFit: "cover" }}
+                                                  style={{ objectFit: 'cover' }}
                                               />
                                           </div>
-                                          <h1 className="mt-[14px] text-body-1 font-bold">
-                                              {kelasData.name}
-                                          </h1>
-                                          <p className="mt-[6px]">
-                                              {formatDotString(
-                                                  kelasData.description,
-                                                  40
-                                              )}
-                                          </p>
-                                          {kelasData.status === "jalan" ? (
-                                              <div className="absolute bottom-[16px] right-[16px] flex items-center gap-5  rounded-[20px] bg-neutral-2  p-[10px]">
-                                                  <span className="font-bold text-white">
-                                                      Lanjutkan belajar
-                                                  </span>
+                                          <h1 className='mt-[14px] text-body-1 font-bold'>{kelasData.name}</h1>
+                                          <p className='mt-[6px]'>{formatDotString(kelasData.description, 40)}</p>
+                                          {kelasData.status === 'jalan' ? (
+                                              <div className='absolute bottom-[16px] right-[16px] flex items-center gap-5  rounded-[20px] bg-neutral-2  p-[10px]'>
+                                                  <span className='font-bold text-white'>Lanjutkan belajar</span>
                                                   <ArrowButton
-                                                      onClick={() =>
-                                                          handlePilihKelas(
-                                                              kelasData.name.toLowerCase()
-                                                          )
-                                                      }
-                                                      directionIcon={"right"}
+                                                      onClick={() => handlePilihKelas(kelasData.name.toLowerCase())}
+                                                      directionIcon={'right'}
                                                   />
                                               </div>
-                                          ) : kelasData.status === "selesai" ? (
-                                              <div className=" absolute bottom-[16px] right-[16px] flex items-center gap-5  rounded-[20px] bg-secondary-1 p-[10px]">
-                                                  <span className="font-bold text-white">
-                                                      Belajar kembali
-                                                  </span>
+                                          ) : kelasData.status === 'selesai' ? (
+                                              <div className=' absolute bottom-[16px] right-[16px] flex items-center gap-5  rounded-[20px] bg-secondary-1 p-[10px]'>
+                                                  <span className='font-bold text-white'>Belajar kembali</span>
                                                   <ArrowButton
-                                                      onClick={() =>
-                                                          handlePilihKelas(
-                                                              kelasData.name.toLowerCase()
-                                                          )
-                                                      }
-                                                      directionIcon={"right"}
+                                                      onClick={() => handlePilihKelas(kelasData.name.toLowerCase())}
+                                                      directionIcon={'right'}
                                                   />
                                               </div>
                                           ) : (
-                                              <div className="absolute bottom-[16px] right-[16px] flex items-center gap-5  rounded-[20px] border-2 bg-primary-1  p-[10px] shadow-low">
-                                                  <span className="font-bold text-white">
-                                                      Enroll Kelas
-                                                  </span>
+                                              <div className='absolute bottom-[16px] right-[16px] flex items-center gap-5  rounded-[20px] border-2 bg-primary-1  p-[10px] shadow-low'>
+                                                  <span className='font-bold text-white'>Enroll Kelas</span>
                                                   <ArrowButton
-                                                      onClick={() =>
-                                                          handlePilihKelas(
-                                                              kelasData.name.toLowerCase()
-                                                          )
-                                                      }
-                                                      directionIcon={"right"}
+                                                      onClick={() => handlePilihKelas(kelasData.name.toLowerCase())}
+                                                      directionIcon={'right'}
                                                   />
                                               </div>
                                           )}
@@ -611,6 +553,7 @@ const Kelas = () => {
                     </div>
                 </div>
             </main>
+            <Transkrip transcript={transcript} />
         </div>
     );
 };
