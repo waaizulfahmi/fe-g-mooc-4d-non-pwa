@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /* 
 @DOCS :
@@ -19,41 +19,37 @@
 */
 
 // core
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
+import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 // third party
-import { useSession } from "next-auth/react";
-import { MdPlayCircleOutline, MdOutlineQuestionAnswer } from "react-icons/md";
-import { PDFDownloadLink } from "@react-pdf/renderer/lib/react-pdf.browser.es.js";
+import { useSession } from 'next-auth/react';
+import { MdPlayCircleOutline, MdOutlineQuestionAnswer } from 'react-icons/md';
+import { PDFDownloadLink } from '@react-pdf/renderer/lib/react-pdf.browser.es.js';
 
 // redux
 // ---
 
 // components
-import HeroIcon from "@/components/HeroIcon";
-import NavbarButton from "@/components/NavbarButton";
-import VideoFrame from "@/components/VideoFrame";
-import Certificate from "@/components/Certificate";
+import HeroIcon from '@/components/HeroIcon';
+import NavbarButton from '@/components/NavbarButton';
+import VideoFrame from '@/components/VideoFrame';
+import Certificate from '@/components/Certificate';
 
 // datas
-import { Kelas, ListMateri, ListQuiz } from "@/data/model";
+import { Kelas, ListMateri, ListQuiz } from '@/data/model';
 
 // apis
-import {
-    userGetEnroll,
-    userSendAnswer,
-    userUpdateVideoMateri,
-} from "@/axios/user";
+import { userGetEnroll, userSendAnswer, userUpdateVideoMateri } from '@/axios/user';
 
 // utils
-import { recognition } from "@/utils/speech-recognition";
-import { speechAction } from "@/utils/text-to-speech";
-import { getYoutubeVideoId } from "@/utils/get-youtube-videoId";
-import { getImageFile } from "@/utils/get-server-storage";
-import { convertStringToNum } from "@/utils/convert-stringNum-to-num";
-import { ApiResponseError } from "@/utils/error-handling";
+import { recognition } from '@/utils/speech-recognition';
+import { speechAction } from '@/utils/text-to-speech';
+import { getYoutubeVideoId } from '@/utils/get-youtube-videoId';
+import { getImageFile } from '@/utils/get-server-storage';
+import { convertStringToNum } from '@/utils/convert-stringNum-to-num';
+import { ApiResponseError } from '@/utils/error-handling';
 
 const EnrollKelas = () => {
     const { data } = useSession();
@@ -72,20 +68,20 @@ const EnrollKelas = () => {
     const [quiz, setQuiz] = useState([]);
     const [idxQuiz, setIdxQuiz] = useState(0);
     const [currentQuiz, setCurrentQuiz] = useState({});
-    const [userAnswer, setUserAnswer] = useState("");
+    const [userAnswer, setUserAnswer] = useState('');
     const [isQuizMode, setQuizMode] = useState(false);
     const [isAnswerMode, setAnswerMode] = useState(false);
     // materi
     const [playback, setPlayback] = useState(10);
     const [materi, setMateri] = useState([]);
     const [currentMateri, setCurrentMateri] = useState({});
-    const [videoId, setVideoId] = useState("");
+    const [videoId, setVideoId] = useState('');
     // intro
     const [isIntro, setIntro] = useState(false);
     const [introData, setIntroData] = useState({
-        name: "",
-        description: "",
-        imageUrl: "",
+        name: '',
+        description: '',
+        imageUrl: '',
     });
     //sertifikat
     const userName = data?.user?.name;
@@ -100,7 +96,7 @@ const EnrollKelas = () => {
     // FUNC
     const saveBlobToDevice = (blob, fileName) => {
         const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
+        const a = document.createElement('a');
         a.href = url;
         a.download = fileName;
         document.body.appendChild(a);
@@ -110,8 +106,8 @@ const EnrollKelas = () => {
 
     const handleEditMateri = (curr, statusCode) => {
         const statusVideo = {
-            1: "selesai",
-            2: "pause",
+            1: 'selesai',
+            2: 'pause',
         };
 
         const dataUpdate = {
@@ -120,9 +116,9 @@ const EnrollKelas = () => {
             playback: curr,
         };
 
-        if (statusVideo[statusCode] === "selesai") {
-            if (currentMateri.status === "selesai") {
-                console.log("ketika video end tidak fetch");
+        if (statusVideo[statusCode] === 'selesai') {
+            if (currentMateri.status === 'selesai') {
+                console.log('ketika video end tidak fetch');
                 return;
             }
             const fetchApiUpdateVideoMateri = async () => {
@@ -134,17 +130,17 @@ const EnrollKelas = () => {
                         token,
                     });
 
-                    console.log("success update selesai materi", response.data);
+                    console.log('success update selesai materi', response.data);
                     setLoadData(true);
                 } catch (error) {
-                    console.log("ERROR", error);
+                    console.log('ERROR', error);
                 }
             };
             fetchApiUpdateVideoMateri();
-            console.log("data", dataUpdate, `dengan status SELESAI`);
-        } else if (statusVideo[statusCode] === "pause") {
-            if (currentMateri.status === "selesai") {
-                console.log("ketika pause tidak update");
+            console.log('data', dataUpdate, `dengan status SELESAI`);
+        } else if (statusVideo[statusCode] === 'pause') {
+            if (currentMateri.status === 'selesai') {
+                console.log('ketika pause tidak update');
                 return;
             }
             const fetchApiUpdateVideoMateri = async () => {
@@ -154,14 +150,14 @@ const EnrollKelas = () => {
                         playback: dataUpdate.playback,
                         token,
                     });
-                    console.log("success update progres materi", response.data);
+                    console.log('success update progres materi', response.data);
                     // console.log('current materi: ', currentMateri);
                 } catch (error) {
-                    console.log("ERROR", error);
+                    console.log('ERROR', error);
                 }
             };
             fetchApiUpdateVideoMateri();
-            console.log("data", dataUpdate, `dengan status UPDATE`);
+            console.log('data', dataUpdate, `dengan status UPDATE`);
         }
     };
 
@@ -196,22 +192,18 @@ const EnrollKelas = () => {
                             status: response.data.data.status,
                         });
 
-                        console.log("Qurrent Quiz: ", currentQuiz);
+                        // console.log('Qurrent Quiz: ', currentQuiz);
 
                         if (kelas.materiBerjalan()) {
                             // current data ketika ada materi berjalan
                             setCurrentMateri(kelas.materiBerjalan());
                             setPlayback(kelas.materiBerjalan().playback);
-                            setVideoId(
-                                getYoutubeVideoId(kelas.materiBerjalan().url)
-                            );
+                            setVideoId(getYoutubeVideoId(kelas.materiBerjalan().url));
                         } else {
                             // current data ketika ada materi berakhir
                             setCurrentMateri(kelas.lastMateri());
-                            setPlayback(kelas.lastMateri("playback"));
-                            setVideoId(
-                                getYoutubeVideoId(kelas.lastMateri("url"))
-                            );
+                            setPlayback(kelas.lastMateri('playback'));
+                            setVideoId(getYoutubeVideoId(kelas.lastMateri('url')));
                         }
 
                         // semua data
@@ -224,7 +216,7 @@ const EnrollKelas = () => {
                         //cetak sertifikat
                         if (isCetakSertifikat) {
                             speechAction({
-                                text: "Sertifikat sudah didownload!",
+                                text: 'Sertifikat sudah didownload!',
                                 actionOnEnd: () => {
                                     setCetakSertifikat(false);
                                 },
@@ -261,19 +253,14 @@ const EnrollKelas = () => {
                             });
                         } else {
                             // Kondisi sudah ada materi berjalan dengan adanya playback
-                            if (
-                                kelas.lastMateri("status") === "belum" ||
-                                kelas.lastMateri("status") === "jalan"
-                            ) {
+                            if (kelas.lastMateri('status') === 'belum' || kelas.lastMateri('status') === 'jalan') {
                                 // Kondisi materi terakhir 'belum' atau 'jalan'
                                 speechAction({
                                     text: `Selamat datang kembali di kelas ${kelas.getName()}. Anda sedang belajar pada materi ke- ${
                                         kelas.idxMateriBerjalan() + 1
                                     }. Jangan lupa klik tombol q untuk menjalankan video, dan klik tombol w untuk pause video. `,
                                 });
-                            } else if (
-                                kelas.lastMateri("status") === "selesai"
-                            ) {
+                            } else if (kelas.lastMateri('status') === 'selesai') {
                                 // Kondisi materi terakhir 'selesai'
                                 if (isQuizMode) {
                                     //kondisi  mode kerjakan quiz
@@ -287,101 +274,61 @@ const EnrollKelas = () => {
                                             });
 
                                             // mencari option id yg dijawab dari user
-                                            const answerData =
-                                                currentQuiz.options.find(
-                                                    (curr) =>
-                                                        curr.kunci.toLowerCase() ===
-                                                        userAnswer.toLowerCase()
-                                                );
+                                            const answerData = currentQuiz.options.find(
+                                                (curr) => curr.kunci.toLowerCase() === userAnswer.toLowerCase(),
+                                            );
 
                                             // data yg akan dikirm
                                             const userAnswerData = {
-                                                id_quiz_history: Number(
-                                                    currentQuiz.id_quiz_history
-                                                ),
-                                                id_option: Number(
-                                                    answerData.id_option
-                                                ),
+                                                id_quiz_history: Number(currentQuiz.id_quiz_history),
+                                                id_option: Number(answerData.id_option),
                                             };
 
-                                            const fetchApiSendAnswerQuiz =
-                                                async () => {
-                                                    try {
-                                                        const response =
-                                                            await userSendAnswer(
-                                                                {
-                                                                    id_quiz_history:
-                                                                        userAnswerData.id_quiz_history,
-                                                                    id_option:
-                                                                        userAnswerData.id_option,
-                                                                    token,
-                                                                }
-                                                            );
-                                                        if (
-                                                            !response?.data
-                                                                ?.data?.answer
-                                                        ) {
-                                                            // kondisi jawaban salah
-                                                            speechAction({
-                                                                text: `Maaf, Jawaban Anda Salah!`,
-                                                                actionOnEnd:
-                                                                    () => {
-                                                                        setIdxQuiz(
-                                                                            idxQuiz +
-                                                                                1
-                                                                        );
-                                                                        setAnswerMode(
-                                                                            false
-                                                                        );
-                                                                        setLoadData(
-                                                                            true
-                                                                        );
-                                                                        setUserAnswer(
-                                                                            ""
-                                                                        );
-                                                                    },
-                                                            });
-                                                            return;
-                                                        }
-
-                                                        // kondisi jawaban benar
+                                            const fetchApiSendAnswerQuiz = async () => {
+                                                try {
+                                                    const response = await userSendAnswer({
+                                                        id_quiz_history: userAnswerData.id_quiz_history,
+                                                        id_option: userAnswerData.id_option,
+                                                        token,
+                                                    });
+                                                    if (!response?.data?.data?.answer) {
+                                                        // kondisi jawaban salah
                                                         speechAction({
-                                                            text: `Selamat, Jawaban Anda benar!`,
+                                                            text: `Maaf, Jawaban Anda Salah!`,
                                                             actionOnEnd: () => {
-                                                                setIdxQuiz(
-                                                                    idxQuiz + 1
-                                                                );
-                                                                setAnswerMode(
-                                                                    false
-                                                                );
-                                                                setLoadData(
-                                                                    true
-                                                                );
-                                                                setUserAnswer(
-                                                                    ""
-                                                                );
+                                                                setIdxQuiz(idxQuiz + 1);
+                                                                setCurrentQuiz({
+                                                                    options: [],
+                                                                    question: '',
+                                                                });
+                                                                setAnswerMode(false);
+                                                                setLoadData(true);
+                                                                setUserAnswer('');
                                                             },
                                                         });
-                                                    } catch (error) {
-                                                        if (
-                                                            error instanceof
-                                                            ApiResponseError
-                                                        ) {
-                                                            console.log(
-                                                                `ERR SEND ANSWER API MESSAGE: `,
-                                                                error.message
-                                                            );
-                                                            console.log(
-                                                                error.data
-                                                            );
-                                                            return;
-                                                        }
-                                                        console.log(
-                                                            `MESSAGE: `,
-                                                            error.message
-                                                        );
+                                                        return;
                                                     }
-                                                };
+
+                                                    // kondisi jawaban benar
+                                                    speechAction({
+                                                        text: `Selamat, Jawaban Anda benar!`,
+                                                        actionOnEnd: () => {
+                                                            setIdxQuiz(idxQuiz + 1);
+                                                            setCurrentQuiz({});
+                                                            setAnswerMode(false);
+                                                            setLoadData(true);
+                                                            setUserAnswer('');
+                                                        },
+                                                    });
+                                                } catch (error) {
+                                                    if (error instanceof ApiResponseError) {
+                                                        console.log(`ERR SEND ANSWER API MESSAGE: `, error.message);
+                                                        console.log(error.data);
+                                                        return;
+                                                    }
+                                                    console.log(`MESSAGE: `, error.message);
+                                                }
+                                            };
                                             fetchApiSendAnswerQuiz();
                                         }
                                     } else {
@@ -398,31 +345,23 @@ const EnrollKelas = () => {
                                             });
                                         } else {
                                             // kondisi ada quiz
-                                            const currentQuiz =
-                                                kelas.getQuiz(idxQuiz);
-                                            const currentQuizSoal =
-                                                kelas.getQuiz(idxQuiz).question;
-                                            const currentQuizOption =
-                                                kelas.getQuiz(idxQuiz).options;
+                                            const currentQuiz = kelas.getQuiz(idxQuiz);
+                                            const currentQuizSoal = kelas.getQuiz(idxQuiz).question;
+                                            const currentQuizOption = kelas.getQuiz(idxQuiz).options;
+
+                                            console.log('CURRENT QUIZ', currentQuiz);
 
                                             //  quiz yg berjalan
                                             setCurrentQuiz(currentQuiz);
 
                                             // soal quiz dibacakan
                                             speechAction({
-                                                text: `Soal no ${
-                                                    idxQuiz + 1
-                                                }. ${currentQuizSoal}`,
+                                                text: `Soal no ${idxQuiz + 1}. ${currentQuizSoal}`,
                                             });
 
                                             // option quiz dibacakan
-                                            for (
-                                                let i = 0;
-                                                i < currentQuizOption.length;
-                                                i++
-                                            ) {
-                                                const userOption =
-                                                    currentQuizOption[i];
+                                            for (let i = 0; i < currentQuizOption.length; i++) {
+                                                const userOption = currentQuizOption[i];
                                                 speechAction({
                                                     text: `${userOption.kunci}. ${userOption.option}`,
                                                 });
@@ -456,10 +395,7 @@ const EnrollKelas = () => {
                         }
                     } catch (error) {
                         if (error instanceof ApiResponseError) {
-                            console.log(
-                                `ERR CLASS ENROLLMENT API MESSAGE: `,
-                                error.message
-                            );
+                            console.log(`ERR CLASS ENROLLMENT API MESSAGE: `, error.message);
                             console.log(error.data);
                             return;
                         }
@@ -470,33 +406,21 @@ const EnrollKelas = () => {
             }
         }
         setLoadData(false);
-    }, [
-        name,
-        loadData,
-        token,
-        isQuizMode,
-        userAnswer,
-        isAnswerMode,
-        idxQuiz,
-        currentQuiz,
-        isCetakSertifikat,
-    ]);
+    }, [name, loadData, token, isQuizMode, userAnswer, isAnswerMode, idxQuiz, currentQuiz, isCetakSertifikat]);
 
     useEffect(() => {
         recognition.onresult = (event) => {
             const command = event.results[0][0].transcript.toLowerCase();
-            const cleanCommand = command?.replace(".", "");
+            const cleanCommand = command?.replace('.', '');
 
             if (isQuizMode) {
                 console.log(`quiz berjalan: `, cleanCommand);
                 console.log(`is answer mode: `, isAnswerMode);
                 if (isAnswerMode) {
-                    if (cleanCommand.includes("ulangi")) {
-                        if (cleanCommand.includes("soal")) {
+                    if (cleanCommand.includes('ulangi')) {
+                        if (cleanCommand.includes('soal')) {
                             speechAction({
-                                text: `Soal nomor ${
-                                    idxQuiz + 1
-                                } akan dibaca ulang`,
+                                text: `Soal nomor ${idxQuiz + 1} akan dibaca ulang`,
                                 actionOnEnd: () => {
                                     setAnswerMode(false);
                                     setLoadData(true);
@@ -504,32 +428,63 @@ const EnrollKelas = () => {
                                 },
                             });
                         }
-                    } else if (cleanCommand.includes("pilih")) {
-                        const quizCommand = cleanCommand
-                            .replace("pilih", "")
-                            .trim()
-                            .toLowerCase();
-                        if (quizCommand === "a") {
-                            console.log("Anda memilih A");
-                            setUserAnswer("A");
+                    } else if (cleanCommand.includes('pilih')) {
+                        const quizCommand = cleanCommand.replace('pilih', '').trim().toLowerCase();
+                        if (quizCommand === 'a') {
+                            console.log('Anda memilih A');
+                            setUserAnswer('A');
                             setLoadData(true);
-                        } else if (quizCommand === "b") {
-                            console.log("Anda memilih B");
-                            setUserAnswer("B");
+                        } else if (quizCommand === 'b') {
+                            console.log('Anda memilih B');
+                            setUserAnswer('B');
                             setLoadData(true);
-                        } else if (quizCommand === "c") {
-                            console.log("Anda memilih C");
-                            setUserAnswer("C");
+                        } else if (quizCommand === 'c') {
+                            console.log('Anda memilih C');
+                            setUserAnswer('C');
                             setLoadData(true);
                         }
+                    } else if (cleanCommand.includes('hentikan')) {
+                        if (
+                            cleanCommand.includes('quiz') ||
+                            cleanCommand.includes('quis') ||
+                            cleanCommand.includes('kuis') ||
+                            cleanCommand.includes('kuiz')
+                        ) {
+                            const listQuiz = new ListQuiz({
+                                listQuiz: quiz,
+                            });
+                            speechAction({
+                                text: `Anda berhenti untuk menjawab quiz di soal ke ${idxQuiz + 1}`,
+                                actionOnEnd: () => {
+                                    if (listQuiz.getIdxQuizBerjalan() === -1) {
+                                        setIdxQuiz(0);
+                                    } else {
+                                        setIdxQuiz(listQuiz.getIdxQuizBerjalan());
+                                    }
+                                    setUserAnswer('');
+                                    setAnswerMode(false);
+                                    setQuizMode(false);
+                                    setLoadData(true);
+                                },
+                            });
+                        }
+                    } else if (
+                        cleanCommand.includes('saya sekarang dimana') ||
+                        cleanCommand.includes('saya sekarang di mana') ||
+                        cleanCommand.includes('saya di mana') ||
+                        cleanCommand.includes('saya dimana')
+                    ) {
+                        speechAction({
+                            text: `Kita sedang dalam mode quiz di halaman pembelajaran`,
+                        });
                     }
                 }
-            } else if (cleanCommand.includes("kerjakan")) {
+            } else if (cleanCommand.includes('kerjakan')) {
                 if (
-                    cleanCommand.includes("quiz") ||
-                    cleanCommand.includes("quis") ||
-                    cleanCommand.includes("kuis") ||
-                    cleanCommand.includes("kuiz")
+                    cleanCommand.includes('quiz') ||
+                    cleanCommand.includes('quis') ||
+                    cleanCommand.includes('kuis') ||
+                    cleanCommand.includes('kuiz')
                 ) {
                     const listMateri = new ListMateri({
                         listMateri: materi,
@@ -542,8 +497,7 @@ const EnrollKelas = () => {
                     if (listMateri.getMateriBerjalan()) {
                         speechAction({
                             text: `Anda tidak bisa mengerjakan quiz karena masih ada ${
-                                listMateri.getList().length -
-                                listMateri.getMateriSelesai().length
+                                listMateri.getList().length - listMateri.getMateriSelesai().length
                             } materi yang belum diselesaikan.`,
                         });
                         return;
@@ -558,9 +512,7 @@ const EnrollKelas = () => {
 
                     if (listQuiz.getIdxQuizBerjalan() > 0) {
                         speechAction({
-                            text: `Anda melanjutkan mengerjakan quiz ke- ${
-                                listQuiz.getIdxQuizBerjalan() + 1
-                            }`,
+                            text: `Anda melanjutkan mengerjakan quiz ke- ${listQuiz.getIdxQuizBerjalan() + 1}`,
                             actionOnEnd: () => {
                                 setIdxQuiz(listQuiz.getIdxQuizBerjalan());
                                 setQuizMode(true);
@@ -578,34 +530,28 @@ const EnrollKelas = () => {
                         },
                     });
                 }
-            } else if (cleanCommand.includes("pilih")) {
-                if (cleanCommand.includes("materi")) {
-                    const materiCommand = cleanCommand
-                        .replace("pilih materi", "")
-                        .trim()
-                        .toLowerCase();
+            } else if (cleanCommand.includes('pilih')) {
+                if (cleanCommand.includes('materi')) {
+                    const materiCommand = cleanCommand.replace('pilih materi', '').trim().toLowerCase();
                     const materiIdx = convertStringToNum(materiCommand) - 1;
                     const listMateri = new ListMateri({
                         listMateri: materi,
                     });
                     const findMateri = listMateri.getMateriByIdx(materiIdx);
-                    const findIndexMateriBerjalan =
-                        listMateri.getIdxMateriBerjalan();
+                    const findIndexMateriBerjalan = listMateri.getIdxMateriBerjalan();
                     // const findMateri = materi.find((_, index) => index === materiIdx);
                     // const findIndexMateriBerjalan = materi.findIndex((m) => m.status === 'jalan');
 
                     if (!findMateri) {
                         speechAction({
-                            text: `Materi ke ${
-                                materiIdx + 1
-                            } tidak ditemukan, perlu diperhatikan jumlah materi sampai ${
+                            text: `Materi ke ${materiIdx + 1} tidak ditemukan, perlu diperhatikan jumlah materi sampai ${
                                 materi.length
                             }!`,
                         });
                         return;
                     }
 
-                    if (materiCommand === "sekarang") {
+                    if (materiCommand === 'sekarang') {
                         speechAction({
                             text: `Anda akan memilih materi sekarang atau materi yang sedang berjalan`,
                             actionOnEnd: () => {
@@ -615,12 +561,9 @@ const EnrollKelas = () => {
                                             namaKelas: name,
                                             token,
                                         });
-                                        const materiBerjalan =
-                                            response.data.data.kelas.materi.find(
-                                                (materiItem) =>
-                                                    materiItem.status ===
-                                                    "jalan"
-                                            );
+                                        const materiBerjalan = response.data.data.kelas.materi.find(
+                                            (materiItem) => materiItem.status === 'jalan',
+                                        );
 
                                         if (!materiBerjalan) {
                                             speechAction({
@@ -632,25 +575,14 @@ const EnrollKelas = () => {
                                         speechAction({
                                             text: `Anda sedang belajar materi sekarang atau materi yang sedang berjalan.  Jangan lupa klik tombol q untuk menjalankan video, dan klik tombol w untuk pause video.`,
                                             actionOnStart: () => {
-                                                setCurrentMateri(
-                                                    materiBerjalan
-                                                );
-                                                setPlayback(
-                                                    materiBerjalan.playback
-                                                );
-                                                setVideoId(
-                                                    getYoutubeVideoId(
-                                                        materiBerjalan.url
-                                                    )
-                                                );
+                                                setCurrentMateri(materiBerjalan);
+                                                setPlayback(materiBerjalan.playback);
+                                                setVideoId(getYoutubeVideoId(materiBerjalan.url));
                                             },
                                         });
                                     } catch (error) {
                                         if (error instanceof ApiResponseError) {
-                                            console.log(
-                                                `ERR CLASS ENROLLMENT API FROM MATERI SEKARANG MESSAGE: `,
-                                                error.message
-                                            );
+                                            console.log(`ERR CLASS ENROLLMENT API FROM MATERI SEKARANG MESSAGE: `, error.message);
                                             console.log(error.data);
                                             return;
                                         }
@@ -663,15 +595,11 @@ const EnrollKelas = () => {
                         return;
                     }
 
-                    if (findMateri.status === "belum") {
+                    if (findMateri.status === 'belum') {
                         speechAction({
-                            text: `Materi ke ${
-                                materiIdx + 1
-                            } tidak dapat diakses. Anda perlu menyelesaikan materi sampai ${
+                            text: `Materi ke ${materiIdx + 1} tidak dapat diakses. Anda perlu menyelesaikan materi sampai ${
                                 materi.length
-                            } dan sekarang Anda sedang di materi ke ${
-                                findIndexMateriBerjalan + 1
-                            }`,
+                            } dan sekarang Anda sedang di materi ke ${findIndexMateriBerjalan + 1}`,
                         });
                         return;
                     }
@@ -690,40 +618,40 @@ const EnrollKelas = () => {
                         },
                     });
                 }
-            } else if (cleanCommand.includes("pergi")) {
-                if (cleanCommand.includes("kelas")) {
+            } else if (cleanCommand.includes('pergi')) {
+                if (cleanCommand.includes('kelas')) {
                     speechAction({
                         text: `Anda akan menuju halaman Daftar Kelas`,
                         actionOnEnd: () => {
-                            router.push("/kelas");
+                            router.push('/kelas');
                         },
                     });
-                } else if (cleanCommand.includes("beranda")) {
+                } else if (cleanCommand.includes('beranda')) {
                     speechAction({
                         text: `Anda akan menuju halaman beranda`,
                         actionOnEnd: () => {
-                            router.push("/");
+                            router.push('/');
                         },
                     });
-                } else if (cleanCommand.includes("rapor")) {
+                } else if (cleanCommand.includes('rapor')) {
                     speechAction({
                         text: `Anda akan menuju halaman Rapor`,
                         actionOnEnd: () => {
-                            router.push("/rapor");
+                            router.push('/rapor');
                         },
                     });
-                } else if (cleanCommand.includes("peringkat")) {
+                } else if (cleanCommand.includes('peringkat')) {
                     // moving to /peringkat
                     speechAction({
-                        text: "Anda akan menuju halaman Peringkat",
+                        text: 'Anda akan menuju halaman Peringkat',
                         actionOnEnd: () => {
-                            router.push("/peringkat");
+                            router.push('/peringkat');
                         },
                     });
                 }
-            } else if (cleanCommand.includes("muat")) {
-                if (cleanCommand.includes("ulang")) {
-                    if (cleanCommand.includes("halaman")) {
+            } else if (cleanCommand.includes('muat')) {
+                if (cleanCommand.includes('ulang')) {
+                    if (cleanCommand.includes('halaman')) {
                         const listQuiz = new ListQuiz({
                             listQuiz: quiz,
                         });
@@ -731,18 +659,22 @@ const EnrollKelas = () => {
                         speechAction({
                             text: `Anda akan load halaman ini!`,
                             actionOnEnd: () => {
-                                setIdxQuiz(listQuiz.getIdxQuizBerjalan());
-                                setUserAnswer("");
+                                if (listQuiz.getIdxQuizBerjalan() === -1) {
+                                    setIdxQuiz(0);
+                                } else {
+                                    setIdxQuiz(listQuiz.getIdxQuizBerjalan());
+                                }
+                                setUserAnswer('');
                                 setLoadData(true);
                                 setQuizMode(false);
                             },
                         });
                     }
                 }
-            } else if (cleanCommand.includes("cetak")) {
-                if (cleanCommand.includes("sertifikat")) {
+            } else if (cleanCommand.includes('cetak')) {
+                if (cleanCommand.includes('sertifikat')) {
                     speechAction({
-                        text: "Anda akan mendapatkan sertifikat JavaScript",
+                        text: 'Anda akan mendapatkan sertifikat JavaScript',
                         actionOnEnd: () => {
                             setCetakSertifikat(true);
                             setLoadData(true);
@@ -750,10 +682,10 @@ const EnrollKelas = () => {
                     });
                 }
             } else if (
-                cleanCommand.includes("saya sekarang dimana") ||
-                cleanCommand.includes("saya sekarang di mana") ||
-                cleanCommand.includes("saya di mana") ||
-                cleanCommand.includes("saya dimana")
+                cleanCommand.includes('saya sekarang dimana') ||
+                cleanCommand.includes('saya sekarang di mana') ||
+                cleanCommand.includes('saya di mana') ||
+                cleanCommand.includes('saya dimana')
             ) {
                 speechAction({
                     text: `Kita sedang di halaman pembelajaran`,
@@ -768,133 +700,84 @@ const EnrollKelas = () => {
     }, [router, materi, name, token, isAnswerMode, isQuizMode, quiz, idxQuiz]);
 
     return (
-        <div className="h-screen bg-[#EDF3F3]">
-            <nav
-                className={` fixed top-0 z-20 w-screen  bg-[#EDF3F3] py-[20px]`}
-            >
-                <div className="flex items-center justify-between max-w-screen-xl mx-auto ">
-                    <HeroIcon
-                        alt="icons"
-                        imgUrl={"/images/voice-icon.svg"}
-                        height={100}
-                        width={100}
-                    />
-                    <div className=" flex items-center gap-[200px]">
-                        <div className="flex items-center gap-[20px] ">
-                            <div className="flex items-center gap-[14px]">
-                                <div className="flex h-[20px] w-[20px] items-center justify-center rounded-full  border-[4px] border-black  p-3 font-bold">
+        <div className='h-screen bg-[#EDF3F3]'>
+            <nav className={` fixed top-0 z-20 w-screen  bg-[#EDF3F3] py-[20px]`}>
+                <div className='mx-auto flex max-w-screen-xl items-center justify-between '>
+                    <HeroIcon alt='icons' imgUrl={'/images/voice-icon.svg'} height={100} width={100} />
+                    <div className=' flex items-center gap-[200px]'>
+                        <div className='flex items-center gap-[20px] '>
+                            <div className='flex items-center gap-[14px]'>
+                                <div className='flex h-[20px] w-[20px] items-center justify-center rounded-full  border-[4px] border-black  p-3 font-bold'>
                                     C
-                                </div>{" "}
-                                <span className=" text-[16px] font-bold leading-[20px]">
-                                    {poin}
-                                </span>
+                                </div>{' '}
+                                <span className=' text-[16px] font-bold leading-[20px]'>{poin}</span>
                             </div>
-                            <div className="flex items-center gap-[14px]">
-                                <div className="flex h-[20px] w-[20px] items-center justify-center rounded-full  border-[4px] border-black  p-3 font-bold">
+                            <div className='flex items-center gap-[14px]'>
+                                <div className='flex h-[20px] w-[20px] items-center justify-center rounded-full  border-[4px] border-black  p-3 font-bold'>
                                     N
-                                </div>{" "}
-                                <span className=" text-[16px] font-bold leading-[20px]">
-                                    {nilai}
-                                </span>
+                                </div>{' '}
+                                <span className=' text-[16px] font-bold leading-[20px]'>{nilai}</span>
                             </div>
-                            <div className="flex items-center gap-[14px]">
-                                <div className="flex h-[20px] w-[20px] items-center justify-center rounded-full  border-[4px] border-black  p-3 font-bold">
+                            <div className='flex items-center gap-[14px]'>
+                                <div className='flex h-[20px] w-[20px] items-center justify-center rounded-full  border-[4px] border-black  p-3 font-bold'>
                                     P
-                                </div>{" "}
-                                <span className=" text-[16px] font-bold leading-[20px]">
-                                    {progress}%{" "}
-                                </span>
+                                </div>{' '}
+                                <span className=' text-[16px] font-bold leading-[20px]'>{progress}% </span>
                             </div>
                         </div>
                         <NavbarButton />
                     </div>
                 </div>
             </nav>
-            <div
-                style={{ height: "calc(100vh - 88px)" }}
-                className="mx-auto grid max-w-screen-xl grid-cols-12 gap-5 pt-[92px]"
-            >
-                <div
-                    style={{ height: "calc(100vh - 110px)" }}
-                    className="col-span-3  rounded-[20px]  bg-white p-[24px]"
-                >
-                    <div
-                        style={{ height: "calc(100vh - 150px)" }}
-                        className="rounded-[10px] p-[16px]"
-                    >
-                        <div className="rounded-[10px] bg-[#E7A645] p-[16px]">
-                            <h1 className="font-bold text-white">
-                                Persiapan Kelas
-                            </h1>
-                            <p className="text-[12px] text-white">
-                                Trailer Kelas
-                            </p>
+            <div style={{ height: 'calc(100vh - 88px)' }} className='mx-auto grid max-w-screen-xl grid-cols-12 gap-5 pt-[92px]'>
+                <div style={{ height: 'calc(100vh - 110px)' }} className='col-span-3  rounded-[20px]  bg-white p-[24px]'>
+                    <div style={{ height: 'calc(100vh - 150px)' }} className='rounded-[10px] p-[16px]'>
+                        <div className='rounded-[10px] bg-[#E7A645] p-[16px]'>
+                            <h1 className='font-bold text-white'>Persiapan Kelas</h1>
+                            <p className='text-[12px] text-white'>Trailer Kelas</p>
                         </div>
                         <div
-                            style={{ height: "calc(100vh - 270px)" }}
-                            className="mt-[20px]  flex flex-col gap-[10px] rounded-[10px] bg-[#E7A645] p-[16px]"
-                        >
-                            <div
-                                style={{ height: "calc(100vh - 400px)" }}
-                                className="overflow-y-scroll "
-                            >
+                            style={{ height: 'calc(100vh - 270px)' }}
+                            className='mt-[20px]  flex flex-col gap-[10px] rounded-[10px] bg-[#E7A645] p-[16px]'>
+                            <div style={{ height: 'calc(100vh - 400px)' }} className='overflow-y-scroll '>
                                 <div>
-                                    <h1 className="font-bold text-white">
-                                        Materi
-                                    </h1>
-                                    <p className="text-[12px] text-white">
-                                        3 Video
-                                    </p>
+                                    <h1 className='font-bold text-white'>Materi</h1>
+                                    <p className='text-[12px] text-white'>{materi.length} Video</p>
                                 </div>
-                                <div className="mt-[18px] flex flex-col gap-3">
+                                <div className='mt-[18px] flex flex-col gap-3'>
                                     {materi &&
                                         materi.map((item, index) => {
                                             return (
                                                 <div
                                                     key={index}
                                                     className={`${
-                                                        item.status ===
-                                                            "selesai" ||
-                                                        (item.status ===
-                                                            "jalan" &&
-                                                            !isIntro)
-                                                            ? "bg-[#CF8618] text-white"
-                                                            : "bg-white text-[#CF8618]"
-                                                    }  flex items-center gap-[8px] rounded-[10px]  p-[20px] font-bold  `}
-                                                >
-                                                    <MdPlayCircleOutline className="h-[20px] w-[20px]" />{" "}
-                                                    <span>
-                                                        Video {index + 1}
-                                                    </span>
+                                                        item.status === 'selesai' || (item.status === 'jalan' && !isIntro)
+                                                            ? 'bg-[#CF8618] text-white'
+                                                            : 'bg-white text-[#CF8618]'
+                                                    }  flex items-center gap-[8px] rounded-[10px]  p-[20px] font-bold  `}>
+                                                    <MdPlayCircleOutline className='h-[20px] w-[20px]' />{' '}
+                                                    <span>Video {index + 1}</span>
                                                 </div>
                                             );
                                         })}
                                 </div>
                             </div>
-                            <div
-                                style={{ height: "calc(100vh - 500px)" }}
-                                className="overflow-y-scroll "
-                            >
-                                <div className="mt-[18px]">
-                                    <h1 className="font-bold text-white">
-                                        Quiz
-                                    </h1>
-                                    <p className="text-[12px] text-white">
-                                        1 soal
-                                    </p>
+                            <div style={{ height: 'calc(100vh - 500px)' }} className='overflow-y-scroll '>
+                                <div className='mt-[18px]'>
+                                    <h1 className='font-bold text-white'>Quiz</h1>
+                                    <p className='text-[12px] text-white'>{quiz.length} soal</p>
                                 </div>
-                                <div className="mt-[10px] flex flex-col gap-3">
+                                <div className='mt-[10px] flex flex-col gap-3'>
                                     {quiz &&
                                         quiz.map((item, index) => (
                                             <div
                                                 key={index}
                                                 className={`${
-                                                    item.status === "selesai"
-                                                        ? "bg-[#CF8618] text-white"
-                                                        : "bg-white text-[#CF8618]"
-                                                } flex items-center gap-[8px] rounded-[10px]  p-[20px] font-bold `}
-                                            >
-                                                <MdOutlineQuestionAnswer className="h-[20px] w-[20px]" />{" "}
+                                                    item.status === 'selesai'
+                                                        ? 'bg-[#CF8618] text-white'
+                                                        : 'bg-white text-[#CF8618]'
+                                                } flex items-center gap-[8px] rounded-[10px]  p-[20px] font-bold `}>
+                                                <MdOutlineQuestionAnswer className='h-[20px] w-[20px]' />{' '}
                                                 <span>Soal {index + 1}</span>
                                             </div>
                                         ))}
@@ -903,65 +786,69 @@ const EnrollKelas = () => {
                         </div>
                     </div>
                 </div>
-                <div className="col-span-9 h-[500px] w-full overflow-hidden overflow-y-scroll rounded-[20px]">
+                <div className='col-span-9 h-[500px] w-full overflow-hidden overflow-y-scroll rounded-[20px]'>
                     <>
                         {isIntro && !isQuizMode && (
-                            <div
-                                style={{ height: "calc(100vh - 88px)" }}
-                                className=" bg-white p-[20px]"
-                            >
-                                <h1 className="text-[46px] font-bold leading-[57px]">
-                                    Kelas {introData?.name}
-                                </h1>
-                                <div className="mt-[40px] ">
+                            <div style={{ height: 'calc(100vh - 88px)' }} className=' bg-white p-[20px]'>
+                                <h1 className='text-[46px] font-bold leading-[57px]'>Kelas {introData?.name}</h1>
+                                <div className='mt-[40px] '>
                                     <Image
-                                        alt=""
+                                        alt=''
                                         src={getImageFile(introData?.imageUrl)}
                                         width={300}
                                         height={300}
-                                        className="rounded-rad-5"
+                                        className='rounded-rad-5'
                                     />
-                                    <div className="mt-[20px]">
-                                        <h3 className="text-[24px] font-bold leading-[32px]">
-                                            Deskripsi
-                                        </h3>
-                                        <p className="mt-[10px] text-[18px] leading-[32px]">
-                                            {introData?.description}
-                                        </p>
+                                    <div className='mt-[20px]'>
+                                        <h3 className='text-[24px] font-bold leading-[32px]'>Deskripsi</h3>
+                                        <p className='mt-[10px] text-[18px] leading-[32px]'>{introData?.description}</p>
                                     </div>
                                 </div>
                             </div>
                         )}
                         {videoId && !isIntro && !isQuizMode && (
-                            <div className="w-full h-full">
-                                <VideoFrame
-                                    handleEditMateri={handleEditMateri}
-                                    playback={playback}
-                                    videoId={videoId}
-                                />
+                            <div className='h-full w-full'>
+                                <VideoFrame handleEditMateri={handleEditMateri} playback={playback} videoId={videoId} />
                             </div>
                         )}
 
                         {Object.keys(currentQuiz).length > 0 && isQuizMode && (
                             <div>
-                                <h1>
-                                    {idxQuiz + 1}.{currentQuiz.question}
-                                </h1>
-                                {currentQuiz.options.map((op, idx) => {
-                                    return (
-                                        <p
-                                            key={idx + 1}
-                                            className={`${
-                                                op.kunci.toLowerCase() ===
-                                                userAnswer.toLowerCase()
-                                                    ? "font-bold text-red-600"
-                                                    : ""
-                                            }`}
-                                        >
-                                            {op.kunci}. {op.option}
-                                        </p>
-                                    );
-                                })}
+                                <h1 className='mt-[20px] text-center text-[60px] font-bold leading-[48px]'>Quiz</h1>
+                                {currentQuiz?.question && (
+                                    <div className='mt-[60px] flex  items-start gap-[20px]'>
+                                        <div className='flex h-[46px] w-[46px] items-center justify-center rounded-full bg-secondary-1 text-[20px] font-bold leading-[20px] text-white'>
+                                            {idxQuiz + 1}
+                                        </div>
+                                        <div>
+                                            <p className='text-[20px] font-semibold leading-[20px]'> {currentQuiz.question}</p>
+                                            <div className='mt-[36px] flex flex-col gap-[18px]'>
+                                                {currentQuiz.options.map((op, idx) => {
+                                                    return (
+                                                        <div key={idx + 1} className='flex items-center gap-[20px]'>
+                                                            <div
+                                                                className={`${
+                                                                    op.kunci.toLowerCase() === userAnswer.toLowerCase()
+                                                                        ? ''
+                                                                        : 'bg-opacity-60'
+                                                                } flex h-[30px] w-[30px] items-center justify-center rounded-[6px] bg-secondary-1  text-[18px] font-bold leading-[18px] text-white`}>
+                                                                {op.kunci}
+                                                            </div>
+                                                            <p
+                                                                className={`${
+                                                                    op.kunci.toLowerCase() === userAnswer.toLowerCase()
+                                                                        ? 'font-bold '
+                                                                        : 'font-medium'
+                                                                }`}>
+                                                                {op.option}
+                                                            </p>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                         {isCetakSertifikat && (
@@ -972,25 +859,17 @@ const EnrollKelas = () => {
                                     </PDFViewer>
                                 </div> */}
                                 <PDFDownloadLink
-                                    document={
-                                        <Certificate
-                                            name={"arief"}
-                                            kelas={"JavaScript"}
-                                        />
-                                    }
+                                    document={<Certificate name={'arief'} kelas={'JavaScript'} />}
                                     // fileName="Jamal Certificate.pdf"
                                 >
                                     {({ blob, url, loading, error }) => {
                                         if (loading) {
-                                            return "Loading document...";
+                                            return 'Loading document...';
                                         } else if (error) {
                                             return `Error: ${error}`;
                                         } else if (blob) {
                                             // auto download
-                                            saveBlobToDevice(
-                                                blob,
-                                                `${userName} Certificate.pdf`
-                                            );
+                                            saveBlobToDevice(blob, `${userName} Certificate.pdf`);
                                             // setCetakSertifikat(false);
                                             return null;
                                             // return setCetakSertifikat(false);

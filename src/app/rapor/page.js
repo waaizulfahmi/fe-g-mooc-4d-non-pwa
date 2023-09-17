@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /* 
 @DOCS :
@@ -19,43 +19,43 @@
 */
 
 // core
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 // third party
-import { AxiosError } from "axios";
-import { useSession } from "next-auth/react";
+import { AxiosError } from 'axios';
+import { useSession } from 'next-auth/react';
 
 // redux
 // import { useSelector, useDispatch } from 'react-redux';
 // import { getListening, speechRecognitionSlice } from '@/redux/speech-recognition';
 
 // components
-import FillButton from "@/components/FillButton";
-import Navbar from "@/components/Navbar";
-import BorderedButton from "@/components/BorderedButton";
+import FillButton from '@/components/FillButton';
+import Navbar from '@/components/Navbar';
+import BorderedButton from '@/components/BorderedButton';
 
 // datas
-import { Rapot } from "@/data/model";
+import { Rapot } from '@/data/model';
 
 // apis
 //---
 
 // utils
-import { speechAction } from "@/utils/text-to-speech";
-import { recognition } from "@/utils/speech-recognition";
-import { ApiResponseError } from "@/utils/error-handling";
-import { getImageFile } from "@/utils/get-server-storage";
-import { apiInstance } from "@/axios/instance";
+import { speechAction } from '@/utils/text-to-speech';
+import { recognition } from '@/utils/speech-recognition';
+import { ApiResponseError } from '@/utils/error-handling';
+import { getImageFile } from '@/utils/get-server-storage';
+import { apiInstance } from '@/axios/instance';
 
 const userGetRapotApi = async ({ token }) => {
     try {
-        if (!token) throw new Error("Token must be submitted!");
+        if (!token) throw new Error('Token must be submitted!');
 
         const response = await apiInstance.get(`/user/rapor`, {
             headers: {
-                "Content-Type": "application/json",
+                'Content-Type': 'application/json',
                 Authorization: `Bearer ${token}`,
             },
         });
@@ -64,7 +64,10 @@ const userGetRapotApi = async ({ token }) => {
     } catch (error) {
         if (error instanceof AxiosError) {
             //custom from backend
-            const errorMsg = error?.response?.data?.metadata?.message;
+
+            // const errorMsgGJadi = error?.response?.data?.metadata?.message; // yg g jadi
+            const errorMsg = error?.response?.data?.message; // yg jadi
+
             const errorData = error?.response;
 
             throw new ApiResponseError({
@@ -85,7 +88,7 @@ const Rapor = () => {
     // STATE
     const [loadData, setLoadData] = useState(true);
     const [countFinishedClass, setCountFinishedClass] = useState(0);
-    const [rataProgress, setRataProgress] = useState("");
+    const [rataProgress, setRataProgress] = useState('');
     const [totalPoin, setTotalPoin] = useState(0);
     const [nilai, setNilai] = useState(0);
     const [runningClass, setRunningClass] = useState([]);
@@ -127,18 +130,12 @@ const Rapor = () => {
                         setNilai(rapot.getNilai());
                         setTotalPelajaran(rapot.getSemuaPelajaran());
 
-                        console.log(
-                            "semua peljara:",
-                            rapot.getSemuaPelajaran()
-                        );
+                        console.log('semua peljara:', rapot.getSemuaPelajaran());
                         console.log(response);
                         console.log(rapot);
                     } catch (error) {
                         if (error instanceof ApiResponseError) {
-                            console.log(
-                                `ERR RAPOT API MESSAGE: `,
-                                error.message
-                            );
+                            console.log(`ERR RAPOT API MESSAGE: `, error.message);
                             console.log(error.data);
                             return;
                         }
@@ -154,34 +151,34 @@ const Rapor = () => {
     useEffect(() => {
         recognition.onresult = (event) => {
             const command = event.results[0][0].transcript.toLowerCase();
-            const cleanCommand = command?.replace(".", "");
+            const cleanCommand = command?.replace('.', '');
 
-            if (cleanCommand.includes("pergi")) {
-                if (cleanCommand.includes("beranda")) {
+            if (cleanCommand.includes('pergi')) {
+                if (cleanCommand.includes('beranda')) {
                     speechAction({
-                        text: "Anda akan menuju halaman Beranda",
+                        text: 'Anda akan menuju halaman Beranda',
                         actionOnEnd: () => {
-                            router.push("/");
+                            router.push('/');
                         },
                     });
-                } else if (cleanCommand.includes("kelas")) {
+                } else if (cleanCommand.includes('kelas')) {
                     speechAction({
-                        text: "Anda akan menuju halaman Kelas",
+                        text: 'Anda akan menuju halaman Kelas',
                         actionOnEnd: () => {
-                            router.push("/kelas");
+                            router.push('/kelas');
                         },
                     });
-                } else if (cleanCommand.includes("peringkat")) {
+                } else if (cleanCommand.includes('peringkat')) {
                     speechAction({
-                        text: "Anda akan menuju halaman Peringkat",
+                        text: 'Anda akan menuju halaman Peringkat',
                         actionOnEnd: () => {
-                            router.push("/peringkat");
+                            router.push('/peringkat');
                         },
                     });
                 }
-            } else if (cleanCommand.includes("muat")) {
-                if (cleanCommand.includes("ulang")) {
-                    if (cleanCommand.includes("halaman")) {
+            } else if (cleanCommand.includes('muat')) {
+                if (cleanCommand.includes('ulang')) {
+                    if (cleanCommand.includes('halaman')) {
                         speechAction({
                             text: `Anda akan load halaman ini!`,
                             actionOnEnd: () => {
@@ -191,10 +188,10 @@ const Rapor = () => {
                     }
                 }
             } else if (
-                command.includes("saya sekarang dimana") ||
-                command.includes("saya sekarang di mana") ||
-                command.includes("saya di mana") ||
-                command.includes("saya dimana")
+                command.includes('saya sekarang dimana') ||
+                command.includes('saya sekarang di mana') ||
+                command.includes('saya di mana') ||
+                command.includes('saya dimana')
             ) {
                 speechAction({
                     text: `Kita sedang di halaman rapot`,
@@ -209,93 +206,51 @@ const Rapor = () => {
     }, [router]);
 
     return (
-        <div className="h-screen bg-primary-1">
+        <div className='h-screen bg-primary-1'>
             <Navbar />
-            <main
-                style={{ height: "calc(100vh - 90px)" }}
-                className="w-screen bg-primary-1 pt-[90px] "
-            >
-                <section className="mx-auto grid max-w-screen-xl grid-cols-12 gap-[78px] ">
-                    <div className="col-span-8 pt-[10px]">
-                        <div className="mb-[16px] flex items-center justify-between rounded-rad-7 bg-[#F5F5F5] py-[20px] ">
-                            <div className="ml-[39px]">
-                                <h1 className="text-[32px] font-bold leading-[60px]">
-                                    Hallo, {userName}!
-                                </h1>
-                                <p className="text-[16px]  leading-[20px]">
-                                    Senang bertemu denganmu lagi
-                                </p>
+            <main style={{ height: 'calc(100vh - 90px)' }} className='w-screen bg-primary-1 pt-[90px] '>
+                <section className='mx-auto grid max-w-screen-xl grid-cols-12 gap-[78px] '>
+                    <div className='col-span-8 pt-[10px]'>
+                        <div className='mb-[16px] flex items-center justify-between rounded-rad-7 bg-[#F5F5F5] py-[20px] '>
+                            <div className='ml-[39px]'>
+                                <h1 className='text-[32px] font-bold leading-[60px]'>Hallo, {userName}!</h1>
+                                <p className='text-[16px]  leading-[20px]'>Senang bertemu denganmu lagi</p>
                             </div>
-                            <Image
-                                alt=""
-                                src={"/images/avatar.svg"}
-                                width={117}
-                                height={159}
-                                className="mr-[95px]"
-                            />
+                            <Image alt='' src={'/images/avatar.svg'} width={117} height={159} className='mr-[95px]' />
                         </div>
 
-                        <div
-                            style={{ height: "calc(100vh - 324px)" }}
-                            className=""
-                        >
+                        <div style={{ height: 'calc(100vh - 324px)' }} className=''>
                             <div>
-                                <h1 className="py-[16px] text-3xl font-bold text-white">
-                                    Semua Pembelajaran
-                                </h1>
+                                <h1 className='py-[16px] text-3xl font-bold text-white'>Semua Pembelajaran</h1>
                             </div>
-                            <div
-                                style={{ height: "calc(100vh - 394px)" }}
-                                className="flex flex-col gap-3 overflow-y-scroll"
-                            >
+                            <div style={{ height: 'calc(100vh - 394px)' }} className='flex flex-col gap-3 overflow-y-scroll'>
                                 {totalPelajaran?.length
                                     ? totalPelajaran.map((rClass, idx) => (
                                           <div
                                               key={idx + 1}
-                                              className="flex items-center justify-between rounded-rad-7 bg-[#F5F5F5] px-[24px] py-[14px]"
-                                          >
-                                              <div className="flex items-center gap-[34px]">
-                                                  <Image
-                                                      alt=""
-                                                      src={getImageFile(
-                                                          rClass.image
-                                                      )}
-                                                      width={54}
-                                                      height={54}
-                                                  />
-                                                  <p className="text-[18px] font-bold leading-[24px]">
-                                                      {rClass.name}
-                                                  </p>
+                                              className='flex items-center justify-between rounded-rad-7 bg-[#F5F5F5] px-[24px] py-[14px]'>
+                                              <div className='flex items-center gap-[34px]'>
+                                                  <Image alt='' src={getImageFile(rClass.image)} width={54} height={54} />
+                                                  <p className='text-[18px] font-bold leading-[24px]'>{rClass.name}</p>
                                               </div>
-                                              <div className="flex items-center gap-[16px]">
-                                                  <div className="flex flex-col rounded-rad-3 bg-secondary-1 px-[21px] py-[8px]">
-                                                      <span className="text-[24px] font-bold text-white">
-                                                          {rClass.max_poin}
-                                                      </span>
-                                                      <span className="text-[12px] font-bold text-white ">
-                                                          Nilai
-                                                      </span>
+                                              <div className='flex items-center gap-[16px]'>
+                                                  <div className='flex flex-col rounded-rad-3 bg-secondary-1 px-[21px] py-[8px]'>
+                                                      <span className='text-[24px] font-bold text-white'>{rClass.max_poin}</span>
+                                                      <span className='text-[12px] font-bold text-white '>Nilai</span>
                                                   </div>
-                                                  <div className="flex flex-col rounded-rad-3 bg-secondary-1 px-[21px] py-[8px]">
-                                                      <span className="text-[24px] font-bold text-white ">
-                                                          {rClass.progress}
-                                                      </span>
-                                                      <span className="text-[12px] font-bold text-white">
-                                                          Progress
-                                                      </span>
+                                                  <div className='flex flex-col rounded-rad-3 bg-secondary-1 px-[21px] py-[8px]'>
+                                                      <span className='text-[24px] font-bold text-white '>{rClass.progress}</span>
+                                                      <span className='text-[12px] font-bold text-white'>Progress</span>
                                                   </div>
-                                                  {rClass.progress ===
-                                                  "100%" ? (
+                                                  {rClass.progress === '100%' ? (
                                                       //   <FillButton className=px-[58px] py-[18px] text-[24px]'>
                                                       //       Selesai'
                                                       //   </FillButton>
-                                                      <BorderedButton className="border-primary-1 px-[58px] py-[18px] text-[24px] text-primary-1">
+                                                      <BorderedButton className='border-primary-1 px-[58px] py-[18px] text-[24px] text-primary-1'>
                                                           Selesai
                                                       </BorderedButton>
                                                   ) : (
-                                                      <FillButton className=" px-[58px] py-[18px] text-[24px]">
-                                                          Lanjut
-                                                      </FillButton>
+                                                      <FillButton className=' px-[58px] py-[18px] text-[24px]'>Lanjut</FillButton>
                                                   )}
                                               </div>
                                           </div>
@@ -304,38 +259,23 @@ const Rapor = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="col-span-4 pt-[10px]">
-                        <div className="mb-[50px] flex justify-between gap-[30px]">
-                            <div className="rounded-rad-7 bg-secondary-1 px-[18px] py-[20px]">
-                                <h1 className="text-[48px] font-bold  leading-[60px] text-white">
-                                    {rataProgress}
-                                </h1>
-                                <span className="font-bold text-white">
-                                    Rata Rata Progress
-                                </span>
+                    <div className='col-span-4 pt-[10px]'>
+                        <div className='mb-[50px] flex justify-between gap-[30px]'>
+                            <div className='rounded-rad-7 bg-secondary-1 px-[18px] py-[20px]'>
+                                <h1 className='text-[48px] font-bold  leading-[60px] text-white'>{rataProgress}</h1>
+                                <span className='font-bold text-white'>Rata Rata Progress</span>
                             </div>
-                            <div className="rounded-rad-7 bg-secondary-1 px-[18px] py-[20px]">
-                                <h1 className="text-[48px] font-bold  leading-[60px] text-white">
-                                    {countFinishedClass}
-                                </h1>
-                                <span className="font-bold text-white ">
-                                    Kelas di selesaikan
-                                </span>
+                            <div className='rounded-rad-7 bg-secondary-1 px-[18px] py-[20px]'>
+                                <h1 className='text-[48px] font-bold  leading-[60px] text-white'>{countFinishedClass}</h1>
+                                <span className='font-bold text-white '>Kelas di selesaikan</span>
                             </div>
                         </div>
-                        <div className="flex items-center justify-center gap-[77px] rounded-rad-7 bg-[#F5F5F5] px-[100px] py-[50px]">
-                            <div className="flex flex-col">
-                                <h1 className=" mb-[12px] text-[56px] font-bold leading-[60px] text-secondary-1">
-                                    {totalPoin}
-                                </h1>
-                                <p className="font-bold"> poin</p>
+                        <div className='flex items-center justify-center gap-[77px] rounded-rad-7 bg-[#F5F5F5] px-[100px] py-[50px]'>
+                            <div className='flex flex-col'>
+                                <h1 className=' mb-[12px] text-[56px] font-bold leading-[60px] text-secondary-1'>{totalPoin}</h1>
+                                <p className='font-bold'> poin</p>
                             </div>
-                            <Image
-                                alt=""
-                                src={"/images/trophy.svg"}
-                                width={130}
-                                height={130}
-                            />
+                            <Image alt='' src={'/images/trophy.svg'} width={130} height={130} />
                         </div>
                     </div>
                 </section>
