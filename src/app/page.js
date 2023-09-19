@@ -76,6 +76,8 @@ export default function Beranda() {
         recognition.onresult = (event) => {
             const command = event.results[0][0].transcript.toLowerCase();
             const cleanCommand = command?.replace('.', '');
+            setTrancript(cleanCommand);
+            console.log(cleanCommand);
 
             if (cleanCommand.includes('pergi')) {
                 if (cleanCommand.includes('kelas')) {
@@ -118,9 +120,6 @@ export default function Beranda() {
                     text: `Kita sedang di halaman utama`,
                 });
             }
-
-            setTrancript(cleanCommand);
-            console.log(cleanCommand);
         };
 
         recognition.onend = () => {

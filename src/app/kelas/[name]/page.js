@@ -195,7 +195,7 @@ const EnrollKelas = () => {
                             status: response.data.data.status,
                         });
 
-                        // console.log('Qurrent Quiz: ', currentQuiz);
+                        console.log('Qurrent Materi: ', kelas.getMateri());
 
                         if (kelas.materiBerjalan()) {
                             // current data ketika ada materi berjalan
@@ -416,6 +416,8 @@ const EnrollKelas = () => {
         recognition.onresult = (event) => {
             const command = event.results[0][0].transcript.toLowerCase();
             const cleanCommand = command?.replace('.', '');
+            setTrancript(cleanCommand);
+            console.log(cleanCommand);
 
             if (isQuizMode) {
                 console.log(`quiz berjalan: `, cleanCommand);
@@ -695,8 +697,6 @@ const EnrollKelas = () => {
                     text: `Kita sedang di halaman pembelajaran`,
                 });
             }
-            setTrancript(cleanCommand);
-            console.log(cleanCommand);
         };
 
         recognition.onend = () => {
@@ -713,7 +713,7 @@ const EnrollKelas = () => {
                         <div className='flex items-center gap-[20px] '>
                             <div className='flex items-center gap-[14px]'>
                                 <div className='flex h-[20px] w-[20px] items-center justify-center rounded-full  border-[4px] border-black  p-3 font-bold'>
-                                    C
+                                    P
                                 </div>{' '}
                                 <span className=' text-[16px] font-bold leading-[20px]'>{poin}</span>
                             </div>
@@ -725,7 +725,7 @@ const EnrollKelas = () => {
                             </div>
                             <div className='flex items-center gap-[14px]'>
                                 <div className='flex h-[20px] w-[20px] items-center justify-center rounded-full  border-[4px] border-black  p-3 font-bold'>
-                                    P
+                                    K
                                 </div>{' '}
                                 <span className=' text-[16px] font-bold leading-[20px]'>{progress}% </span>
                             </div>

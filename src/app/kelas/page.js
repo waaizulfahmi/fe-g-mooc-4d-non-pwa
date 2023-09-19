@@ -267,13 +267,15 @@ const Kelas = () => {
             }
             setLoadData(false);
         }
-    }, [token, loadData]);
+    }, [token, loadData, router]);
 
     useEffect(() => {
         // SPEECH RECOGNITION RESULT
         recognition.onresult = (event) => {
             const command = event.results[0][0].transcript.toLowerCase();
             const cleanCommand = command?.replace('.', '');
+            setTrancript(cleanCommand);
+            console.log(cleanCommand);
 
             if (isCari) {
                 if (token) {
@@ -439,8 +441,6 @@ const Kelas = () => {
                     text: `Kita sedang di halaman kelas`,
                 });
             }
-            setTrancript(cleanCommand);
-            console.log(cleanCommand);
         };
 
         // HANDLING SPEECH RECOGNITION FROM DEATH
@@ -552,7 +552,7 @@ const Kelas = () => {
                                               </div>
                                           ) : (
                                               <div className='absolute bottom-[16px] right-[16px] flex items-center gap-5  rounded-[20px] border-2 bg-primary-1  p-[10px] shadow-low'>
-                                                  <span className='font-bold text-white'>Enroll Kelas</span>
+                                                  <span className='font-bold text-white'>Masuk Kelas</span>
                                                   <ArrowButton
                                                       onClick={() => handlePilihKelas(kelasData.name.toLowerCase())}
                                                       directionIcon={'right'}
@@ -570,7 +570,5 @@ const Kelas = () => {
         </div>
     );
 };
-
-Kelas.propTypes = {};
 
 export default Kelas;

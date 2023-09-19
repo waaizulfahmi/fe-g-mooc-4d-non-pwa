@@ -138,6 +138,8 @@ const Peringkat = () => {
         recognition.onresult = (event) => {
             const command = event?.results[0][0]?.transcript?.toLowerCase();
             const cleanCommand = command?.replace('.', '');
+            setTrancript(cleanCommand);
+            console.log(cleanCommand);
 
             if (cleanCommand.includes('peringkat')) {
                 if (cleanCommand.includes('saya')) {
@@ -218,8 +220,6 @@ const Peringkat = () => {
                     text: `Kita sedang di halaman Peringkat`,
                 });
             }
-            setTrancript(cleanCommand);
-            console.log(cleanCommand);
         };
 
         recognition.onend = () => {
@@ -233,7 +233,7 @@ const Peringkat = () => {
             <main className='mx-auto max-w-screen-xl  pt-[80px] '>
                 <div className='mt-[20px] flex items-center justify-center gap-[60px]'>
                     <Image alt='' src={'/images/mahkota.svg'} width={80} height={40} />
-                    <h1 className='text-[48px] font-bold text-white'>Peringkat</h1>
+                    <h1 className='text-[48px] font-bold text-white'>Papan Peringkat</h1>
                 </div>
                 <div
                     style={{ height: 'calc(100vh - 222px)' }}
