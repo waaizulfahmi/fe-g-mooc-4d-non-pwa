@@ -256,9 +256,6 @@ const Rapor = () => {
                     text: `Kita sedang di halaman rapot`,
                 });
             } else if (command.includes('cari')) {
-                // if (cleanCommand.includes('nilai')) {
-
-                // }
                 if (cleanCommand.includes('kelas')) {
                     if (cleanCommand.includes('selesai')) {
                         console.log('Kelaas selese: ', finishedClass);
@@ -317,6 +314,27 @@ const Rapor = () => {
                             });
                             console.log(`nilai ${kelasCommand}:`, findKelas);
                         }
+                    }
+                }
+            } else if (command.includes('belajar')) {
+                if (command.includes('lagi')) {
+                    const enrollClass = cleanCommand.replace('belajar lagi', '').trim();
+                    const findKelas = runningClass.find((k) => k.name.toLowerCase() === enrollClass);
+
+                    // if (!findKelas) {
+                    //     speechAction({
+                    //         text: `Kelas tidak ditemukan!`,
+                    //     });
+                    //     return;
+                    // }
+
+                    if (findKelas) {
+                        speechAction({
+                            text: `Anda akan belajar lagi kelas ${enrollClass}`,
+                            actionOnEnd: () => {
+                                router.push(`/kelas/${enrollClass}`);
+                            },
+                        });
                     }
                 }
             }

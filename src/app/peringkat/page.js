@@ -143,6 +143,13 @@ const Peringkat = () => {
 
             if (cleanCommand.includes('peringkat')) {
                 if (cleanCommand.includes('saya')) {
+                    if (!userRank.ranking) {
+                        speechAction({
+                            text: `Anda belum ada materi, Silahkan belajar terlebih dahulu!`,
+                        });
+                        return;
+                    }
+
                     if (userRank.ranking === 1) {
                         speechAction({
                             text: `Selamat, Anda sedang diperingkat ke ${userRank.ranking}.`,
