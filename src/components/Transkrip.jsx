@@ -23,7 +23,7 @@ import { useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 // third party
-// ---
+import { useSession } from 'next-auth/react';
 
 // redux
 import { useSelector, useDispatch } from 'react-redux';
@@ -41,10 +41,12 @@ import { getIsTranscriptOn, checkPermissionSlice } from '@/redux/check-permissio
 // utils
 import { speechAction } from '@/utils/text-to-speech';
 
-const Transkrip = ({ transcript = '' }) => {
+const Transkrip = ({ transcript = '', isTrigger = false }) => {
     const isTranscriptOn = useSelector(getIsTranscriptOn);
     const { setTanscriptOn } = checkPermissionSlice.actions;
     const dispatch = useDispatch();
+    const { data } = useSession();
+    const userName = data?.user?.name;
 
     useEffect(() => {
         const handleTranskrip = (e) => {
@@ -78,9 +80,9 @@ const Transkrip = ({ transcript = '' }) => {
 
     return (
         <>
-            {isTranscriptOn && (
-                <div className='absolute bottom-[20px] left-[50%] z-30  flex h-[65px] w-[80%] translate-x-[-50%] items-center justify-center rounded-[20px] bg-slate-600  text-center text-[30px] font-bold text-white opacity-80'>
-                    <p>{transcript}</p>
+            {isTrigger && isTranscriptOn && (
+                <div className='absolute bottom-[20px] left-[50%] z-30  flex h-[65px] w-[80%] translate-x-[-50%] items-center justify-center rounded-[20px] bg-slate-600  text-center text-[24px] font-bold text-white opacity-80'>
+                    <p>{transcript.includes('uli') ? transcript.replace('uli', userName).trim().toLowerCase() : transcript}</p>
                 </div>
             )}
         </>
@@ -89,6 +91,7 @@ const Transkrip = ({ transcript = '' }) => {
 
 Transkrip.propTypes = {
     transcript: PropTypes.string,
+    isTrigger: PropTypes.bool,
 };
 
 export default Transkrip;

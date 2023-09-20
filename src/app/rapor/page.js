@@ -140,6 +140,9 @@ const Rapor = () => {
     const [finishedClass, setFinishedClass] = useState([]);
     const [totalPelajaran, setTotalPelajaran] = useState([]);
     const [transcript, setTrancript] = useState('');
+    const [speechOn, setSpeechOn] = useState(false);
+    const [skipTrigger, setSkipTrigger] = useState(false);
+    const [introPage, setIntroPage] = useState(true);
 
     // FUNC
 
@@ -182,7 +185,28 @@ const Rapor = () => {
                         console.log('response selesai : ', rapot.getKelasSelesai());
 
                         speechAction({
-                            text: `Selamat datang di halaman rapor, ${userName}.`,
+                            text: `Selamat datang di halaman rapor, ${userName}. total poin anda adalah ${rapot.getTotalPoin()},  ${
+                                rapot.getKelasSelesai().length === 0
+                                    ? 'namun, Anda belum menyelesaikan kelas apapun'
+                                    : `jumlah kelas yang sudah di selesaikan adalah ${rapot.getKelasSelesai().length} kelas`
+                            } `,
+                        });
+
+                        speechAction({
+                            text: `Dalam halaman ini, terdapat kelas yang sedang berjalan dan yang sudah selesai, `,
+                        });
+                        speechAction({
+                            text: ` untuk mencari kelas berjalan, Anda dapat mengucapkan cari kelas berjalan. untuk mencari kelas selesai,  Anda dapat mengucapkan cari kelas selesai`,
+                        });
+                        speechAction({
+                            text: 'Jangan lupa untuk panggil saya terlebih dahulu dengan hai atau halo uli.agar saya bisa mendengar Anda',
+                        });
+
+                        speechAction({
+                            text: 'Jika Anda masih bingung, Anda bisa ucapkan intruksi agar mendapatkan penjelasan lebih banyak.',
+                            actionOnEnd: () => {
+                                setIntroPage(false);
+                            },
                         });
 
                         console.log('semua peljara:', rapot.getSemuaPelajaran());
@@ -210,129 +234,150 @@ const Rapor = () => {
             setTrancript(cleanCommand);
             console.log(cleanCommand);
 
-            if (cleanCommand.includes('pergi')) {
-                if (cleanCommand.includes('beranda')) {
-                    speechAction({
-                        text: 'Anda akan menuju halaman Beranda',
-                        actionOnEnd: () => {
-                            router.push('/');
-                        },
-                    });
-                } else if (cleanCommand.includes('kelas')) {
-                    speechAction({
-                        text: 'Anda akan menuju halaman Kelas',
-                        actionOnEnd: () => {
-                            router.push('/kelas');
-                        },
-                    });
-                } else if (cleanCommand.includes('peringkat')) {
-                    speechAction({
-                        text: 'Anda akan menuju halaman Peringkat',
-                        actionOnEnd: () => {
-                            router.push('/peringkat');
-                        },
-                    });
-                }
-            } else if (cleanCommand.includes('muat')) {
-                if (cleanCommand.includes('ulang')) {
-                    if (cleanCommand.includes('halaman')) {
+            if (speechOn && !skipTrigger) {
+                if (cleanCommand.includes('pergi')) {
+                    if (cleanCommand.includes('beranda')) {
                         speechAction({
-                            text: `Anda akan load halaman ini!`,
+                            text: 'Anda akan menuju halaman Beranda',
                             actionOnEnd: () => {
-                                setClassShow('progress');
-                                // setFirstLoad(true);
-                                setLoadData(true);
+                                setSpeechOn(false);
+                                router.push('/');
+                            },
+                        });
+                    } else if (cleanCommand.includes('kelas')) {
+                        speechAction({
+                            text: 'Anda akan menuju halaman Kelas',
+                            actionOnEnd: () => {
+                                setSpeechOn(false);
+                                router.push('/kelas');
+                            },
+                        });
+                    } else if (cleanCommand.includes('peringkat')) {
+                        speechAction({
+                            text: 'Anda akan menuju halaman Peringkat',
+                            actionOnEnd: () => {
+                                setSpeechOn(false);
+                                router.push('/peringkat');
                             },
                         });
                     }
-                }
-            } else if (
-                command.includes('saya sekarang dimana') ||
-                command.includes('saya sekarang di mana') ||
-                command.includes('saya di mana') ||
-                command.includes('saya dimana')
-            ) {
-                speechAction({
-                    text: `Kita sedang di halaman rapot`,
-                });
-            } else if (command.includes('cari')) {
-                if (cleanCommand.includes('kelas')) {
-                    if (cleanCommand.includes('selesai')) {
-                        console.log('Kelaas selese: ', finishedClass);
-                        if (finishedClass.length === 0) {
+                } else if (
+                    command.includes('saya sekarang dimana') ||
+                    command.includes('saya sekarang di mana') ||
+                    command.includes('saya di mana') ||
+                    command.includes('saya dimana')
+                ) {
+                    setSpeechOn(false);
+                    speechAction({
+                        text: `Kita sedang di halaman rapot`,
+                    });
+                } else if (command.includes('cari')) {
+                    if (cleanCommand.includes('kelas')) {
+                        if (cleanCommand.includes('selesai')) {
+                            setSpeechOn(false);
+                            console.log('Kelaas selese: ', finishedClass);
+                            if (finishedClass.length === 0) {
+                                speechAction({
+                                    text: `Belum ada nilai!, Anda belum menyelesaikan kelas satu pun!`,
+                                });
+                                return;
+                            }
                             speechAction({
-                                text: `Belum ada nilai!, Anda belum menyelesaikan kelas satu pun!`,
+                                text: `Berikut daftar kelas yang telah selesai`,
+                                actionOnEnd: () => {
+                                    setClassShow('done');
+                                    setTotalPelajaran(finishedClass);
+                                },
                             });
-                            return;
+                            for (let i = 0; i < finishedClass.length; i++) {
+                                const namaKelas = finishedClass[i].name;
+                                // const nilaiKelas = runningClass[i].max_poin;
+                                const progress = finishedClass[i].progress;
+                                speechAction({
+                                    text: `${namaKelas} dengan kemajuan ${progress}`,
+                                });
+                            }
+                        } else if (cleanCommand.includes('berjalan')) {
+                            setSpeechOn(false);
+                            console.log('Kelaas jalan: ', runningClass);
+                            speechAction({
+                                text: `Berikut daftar kelas yang sedang berjalan`,
+                                actionOnEnd: () => {
+                                    setClassShow('progress');
+                                    setTotalPelajaran(runningClass);
+                                },
+                            });
+                            for (let i = 0; i < runningClass.length; i++) {
+                                const namaKelas = runningClass[i].name;
+                                // const nilaiKelas = runningClass[i].max_poin;
+                                const progress = runningClass[i].progress;
+                                speechAction({
+                                    text: `${namaKelas} dengan kemajuan ${progress}`,
+                                });
+                            }
+                            if (runningClass?.length > 0) {
+                                speechAction({
+                                    text: `Untuk melanjutkan kelas, Anda dapat mengucapkan belajar lagi diikuti nama kelas, contohnya belajar lagi kelas ${runningClass[0].name}`,
+                                });
+                            }
+                        } else {
+                            const kelasCommand = cleanCommand.replace('cari kelas', '').trim();
+                            if (classShow === 'progress') {
+                                setSpeechOn(false);
+                                console.log('kelas: ', kelasCommand);
+                                console.log('ru', runningClass);
+                                const findKelas = runningClass.find((k) => k.name.toLowerCase() === kelasCommand);
+                                speechAction({
+                                    text: `Ditemukan nilai dari kelas yang masih berjalan, yaitu ${kelasCommand}`,
+                                });
+                                speechAction({
+                                    text: `Pada kelas ${kelasCommand}, kemajuan pembelajaran Anda adalah ${findKelas.progress}.`,
+                                });
+                                speechAction({
+                                    text: 'Ayo selesaikan kelas Anda, agar dapat menjadi peringkat teratas!',
+                                });
+                                console.log(`nilai ${kelasCommand}:`, findKelas);
+                            }
                         }
-                        speechAction({
-                            text: `Berikut daftar kelas yang telah selesai`,
-                            actionOnEnd: () => {
-                                setClassShow('done');
-                                setTotalPelajaran(finishedClass);
-                            },
-                        });
-                        for (let i = 0; i < finishedClass.length; i++) {
-                            const namaKelas = finishedClass[i].name;
-                            // const nilaiKelas = runningClass[i].max_poin;
-                            const progress = finishedClass[i].progress;
+                    }
+                } else if (command.includes('belajar')) {
+                    if (command.includes('lagi')) {
+                        const enrollClass = cleanCommand.replace('belajar lagi', '').trim();
+                        const findKelas = runningClass.find((k) => k.name.toLowerCase() === enrollClass);
+                        if (findKelas) {
+                            setSpeechOn(false);
                             speechAction({
-                                text: `${namaKelas} dengan kemajuan ${progress}`,
+                                text: `Anda akan belajar lagi kelas ${enrollClass}`,
+                                actionOnEnd: () => {
+                                    router.push(`/kelas/${enrollClass}`);
+                                },
                             });
-                        }
-                    } else if (cleanCommand.includes('berjalan')) {
-                        console.log('Kelaas jalan: ', runningClass);
-                        speechAction({
-                            text: `Berikut daftar kelas yang sedang berjalan`,
-                            actionOnEnd: () => {
-                                setClassShow('progress');
-                                setTotalPelajaran(runningClass);
-                            },
-                        });
-                        for (let i = 0; i < runningClass.length; i++) {
-                            const namaKelas = runningClass[i].name;
-                            // const nilaiKelas = runningClass[i].max_poin;
-                            const progress = runningClass[i].progress;
-                            speechAction({
-                                text: `${namaKelas} dengan kemajuan ${progress}`,
-                            });
-                        }
-                    } else {
-                        const kelasCommand = cleanCommand.replace('cari kelas', '').trim();
-                        if (classShow === 'progress') {
-                            console.log('kelas: ', kelasCommand);
-                            console.log('ru', runningClass);
-                            const findKelas = runningClass.find((k) => k.name.toLowerCase() === kelasCommand);
-                            speechAction({
-                                text: `Ditemukan nilai dari kelas yang masih berjalan, yaitu ${kelasCommand}`,
-                            });
-                            speechAction({
-                                text: `Pada kelas ${kelasCommand}, kemajuan pembelajaran Anda adalah ${findKelas.progress}.`,
-                            });
-                            speechAction({
-                                text: 'Ayo selesaikan kelas Anda, agar dapat menjadi peringkat teratas!',
-                            });
-                            console.log(`nilai ${kelasCommand}:`, findKelas);
                         }
                     }
                 }
-            } else if (command.includes('belajar')) {
-                if (command.includes('lagi')) {
-                    const enrollClass = cleanCommand.replace('belajar lagi', '').trim();
-                    const findKelas = runningClass.find((k) => k.name.toLowerCase() === enrollClass);
+            }
 
-                    // if (!findKelas) {
-                    //     speechAction({
-                    //         text: `Kelas tidak ditemukan!`,
-                    //     });
-                    //     return;
-                    // }
-
-                    if (findKelas) {
+            if (!skipTrigger) {
+                if (cleanCommand.includes('muat')) {
+                    if (cleanCommand.includes('ulang')) {
+                        if (cleanCommand.includes('halaman')) {
+                            speechAction({
+                                text: `Anda akan load halaman ini!`,
+                                actionOnEnd: () => {
+                                    setSpeechOn(false);
+                                    setClassShow('progress');
+                                    // setFirstLoad(true);
+                                    setLoadData(true);
+                                },
+                            });
+                        }
+                    }
+                } else if (cleanCommand.includes('hallo') || cleanCommand.includes('halo') || cleanCommand.includes('hai')) {
+                    if (cleanCommand.includes('uli')) {
                         speechAction({
-                            text: `Anda akan belajar lagi kelas ${enrollClass}`,
+                            text: `Hai ${userName}, saya mendengarkan Anda!`,
                             actionOnEnd: () => {
-                                router.push(`/kelas/${enrollClass}`);
+                                setSpeechOn(true);
                             },
                         });
                     }
@@ -343,7 +388,25 @@ const Rapor = () => {
         recognition.onend = () => {
             recognition.start();
         };
-    }, [router, finishedClass, runningClass, classShow]);
+
+        // CLEAR TRIGGER
+        console.log('TRIGGER CONDITION: ', speechOn);
+        if (speechOn) {
+            const timer = setTimeout(() => {
+                speechAction({
+                    text: 'saya diam',
+                    actionOnEnd: () => {
+                        console.log('speech diclear');
+                        setSpeechOn(false);
+                    },
+                });
+            }, 10000);
+
+            return () => {
+                clearTimeout(timer);
+            };
+        }
+    }, [router, finishedClass, runningClass, classShow, speechOn, skipTrigger, userName]);
 
     return (
         <div className='h-screen bg-primary-1'>
@@ -401,7 +464,7 @@ const Rapor = () => {
                     </div>
                 </section>
             </main>
-            <Transkrip transcript={transcript} />
+            <Transkrip transcript={transcript} isTrigger={speechOn} />
         </div>
     );
 };

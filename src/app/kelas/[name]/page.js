@@ -43,6 +43,7 @@ import { Kelas, ListMateri, ListQuiz } from '@/data/model';
 
 // apis
 import { userGetEnroll, userSendAnswer, userUpdateVideoMateri } from '@/axios/user';
+import axios from 'axios';
 
 // utils
 import { recognition } from '@/utils/speech-recognition';
@@ -89,6 +90,10 @@ const EnrollKelas = () => {
     const [isCetakSertifikat, setCetakSertifikat] = useState(false);
     const [transcript, setTrancript] = useState('');
     const [enrollClassName, setEnrollClassName] = useState('');
+
+    const [speechOn, setSpeechOn] = useState(false);
+    const [skipTrigger, setSkipTrigger] = useState(false);
+    const [introPage, setIntroPage] = useState(true);
 
     // BOOLEAN STATE
     // const [isVideoEnded, setVideoEnded] = useState(false);
@@ -184,6 +189,7 @@ const EnrollKelas = () => {
                             token,
                         });
                         const kelas = new Kelas({
+                            id_enrollment: response.data.data.id_enrollment,
                             name: response.data.data.kelas.name,
                             image: response.data.data.kelas.image,
                             materi: response.data.data.kelas.materi,
@@ -193,9 +199,11 @@ const EnrollKelas = () => {
                             nilai: response.data.data.nilai,
                             poin: response.data.data.poin,
                             status: response.data.data.status,
+                            quiz_count: response.data.data.quiz_count,
                         });
 
-                        console.log('Qurrent Materi: ', kelas.getMateri());
+                        console.log('Qurrent Response: ', response);
+                        console.log('Qurrent Id Enrollment: ', kelas.getIdxEnrollment());
 
                         if (kelas.materiBerjalan()) {
                             // current data ketika ada materi berjalan
@@ -243,17 +251,35 @@ const EnrollKelas = () => {
                             });
 
                             speechAction({
+                                text: `Sebelum Anda memulai pembelajaran, ada beberapa instruksi yang wajib Anda pahami. `,
+                            });
+
+                            speechAction({
+                                text: `Dalam pembelajaran ini terdapat video sebagai materi, untuk memulainya, Anda dapat  menekan tombol q, dan untuk menjeda video, Anda dapat menekan tombol w`,
+                            });
+
+                            speechAction({
+                                text: `Setelah materi selesai, Anda dapat mengerjakan quiz dengan mengucapkan perintah kerjakan quiz `,
+                            });
+
+                            speechAction({
+                                text: `Setelah soal dibacakan, Anda dapat memilih pilihan jawaban yang menurut Anda benar dengan mengucapkan pilih a, b, atau c`,
+                            });
+
+                            speechAction({
                                 text: `Pada tahap pertama, kita akan berkenalan dengan kelas ${kelas.getName()}. ${kelas.getDescription()}`,
                             });
 
                             speechAction({
-                                text: `Selanjutnya, kita akan belajar dengan dimulainya materi pertama`,
+                                text: `Selanjutnya, kita akan belajar dengan dimulainya materi pertama. Jangan lupa tekan tombol q untuk play video dan tombol w untuk pause video`,
+                            });
+
+                            speechAction({
+                                text: 'Jika Anda masih bingung, Anda bisa ucapkan intruksi agar mendapatkan penjelasan lebih banyak.',
                                 actionOnEnd: () => {
                                     setIntro(false);
+                                    setIntroPage(false);
                                 },
-                            });
-                            speechAction({
-                                text: ` Untuk petunjuk, klik tombol q untuk menjalankan video, dan klik tombol w untuk pause video.`,
                             });
                         } else {
                             // Kondisi sudah ada materi berjalan dengan adanya playback
@@ -273,9 +299,9 @@ const EnrollKelas = () => {
                                         if (userAnswer) {
                                             // kondisi ada input option user
 
-                                            speechAction({
-                                                text: `Anda menjawab ${userAnswer}`,
-                                            });
+                                            // speechAction({
+                                            //     text: `Anda menjawab ${userAnswer}`,
+                                            // });
 
                                             // mencari option id yg dijawab dari user
                                             const answerData = currentQuiz.options.find(
@@ -288,17 +314,36 @@ const EnrollKelas = () => {
                                                 id_option: Number(answerData.id_option),
                                             };
 
-                                            const fetchApiSendAnswerQuiz = async () => {
-                                                try {
-                                                    const response = await userSendAnswer({
-                                                        id_quiz_history: userAnswerData.id_quiz_history,
-                                                        id_option: userAnswerData.id_option,
-                                                        token,
-                                                    });
-                                                    if (!response?.data?.data?.answer) {
-                                                        // kondisi jawaban salah
+                                            // mengirimkan jawaban ke server
+                                            if (idxQuiz !== kelas.getQuizLength() - 1) {
+                                                const fetchApiSendAnswerQuiz = async () => {
+                                                    try {
+                                                        const response = await userSendAnswer({
+                                                            id_quiz_history: userAnswerData.id_quiz_history,
+                                                            id_option: userAnswerData.id_option,
+                                                            token,
+                                                        });
+                                                        if (!response?.data?.data?.answer) {
+                                                            // kondisi jawaban salah
+                                                            speechAction({
+                                                                text: `Anda menjawab ${userAnswer}`,
+                                                                actionOnEnd: () => {
+                                                                    setIdxQuiz(idxQuiz + 1);
+                                                                    setCurrentQuiz({
+                                                                        options: [],
+                                                                        question: '',
+                                                                    });
+                                                                    setAnswerMode(false);
+                                                                    setLoadData(true);
+                                                                    setUserAnswer('');
+                                                                },
+                                                            });
+                                                            return;
+                                                        }
+
+                                                        // kondisi jawaban benar
                                                         speechAction({
-                                                            text: `Maaf, Jawaban Anda Salah!`,
+                                                            text: `Anda menjawab ${userAnswer}`,
                                                             actionOnEnd: () => {
                                                                 setIdxQuiz(idxQuiz + 1);
                                                                 setCurrentQuiz({
@@ -310,36 +355,167 @@ const EnrollKelas = () => {
                                                                 setUserAnswer('');
                                                             },
                                                         });
-                                                        return;
+                                                    } catch (error) {
+                                                        if (error instanceof ApiResponseError) {
+                                                            console.log(`ERR SEND ANSWER API MESSAGE: `, error.message);
+                                                            console.log(error.data);
+                                                            return;
+                                                        }
+                                                        console.log(`MESSAGE: `, error.message);
                                                     }
+                                                };
+                                                fetchApiSendAnswerQuiz();
+                                            }
 
-                                                    // kondisi jawaban benar
-                                                    speechAction({
-                                                        text: `Selamat, Jawaban Anda benar!`,
-                                                        actionOnEnd: () => {
-                                                            setIdxQuiz(idxQuiz + 1);
-                                                            setCurrentQuiz({});
-                                                            setAnswerMode(false);
-                                                            setLoadData(true);
-                                                            setUserAnswer('');
-                                                        },
-                                                    });
-                                                } catch (error) {
-                                                    if (error instanceof ApiResponseError) {
-                                                        console.log(`ERR SEND ANSWER API MESSAGE: `, error.message);
-                                                        console.log(error.data);
-                                                        return;
+                                            // jika quiz terakhir, maka akan sampaikan rekap nilai
+                                            if (idxQuiz === kelas.getQuizLength() - 1) {
+                                                console.log('QUIZ terakhir');
+                                                const fetchApiSendAnswerQuiz = async () => {
+                                                    try {
+                                                        await userSendAnswer({
+                                                            id_quiz_history: userAnswerData.id_quiz_history,
+                                                            id_option: userAnswerData.id_option,
+                                                            token,
+                                                        });
+
+                                                        const responseLast = await axios.get(
+                                                            `https://nurz.site/api/user/enrollment/rekap/${kelas.getIdxEnrollment()}`,
+                                                            {
+                                                                headers: {
+                                                                    'Content-Type': 'application/json',
+                                                                    Authorization: `Bearer ${token}`,
+                                                                },
+                                                            },
+                                                        );
+
+                                                        const dts = responseLast?.data?.data;
+                                                        console.log('MY ANSWER: ', userAnswer);
+                                                        console.log('MY ANSWER DATA: ', userAnswerData);
+                                                        console.log('NILAI: ', kelas.getNilai());
+                                                        console.log('RESPONSE: ', dts);
+                                                        setNilai(dts.nilai);
+
+                                                        if (!dts?.ulang) {
+                                                            speechAction({
+                                                                text: `Anda menjawab ${userAnswer}`,
+                                                            });
+
+                                                            speechAction({
+                                                                text: 'Karena ini adalah quiz terkahir, Saya akan menyampaikan hasil quiz Anda!',
+                                                            });
+                                                            speechAction({
+                                                                text: 'Berikut ini adalah history jawaban Anda',
+                                                            });
+
+                                                            for (let i = 0; i < dts?.jawaban?.length; i++) {
+                                                                speechAction({
+                                                                    text: `Pada soal ke ${i + 1} Anda menjawab ${
+                                                                        dts?.jawaban[i]?.kunci
+                                                                    }`,
+                                                                });
+                                                            }
+
+                                                            speechAction({
+                                                                text: `Selamat, nilai akhir Anda ${
+                                                                    dts.nilai
+                                                                } sehingga Anda lulus kelas ${kelas.getName()}.`,
+                                                                actionOnEnd: () => {
+                                                                    console.log('Response last materi', responseLast);
+                                                                    setIdxQuiz(idxQuiz + 1);
+                                                                    setCurrentQuiz({
+                                                                        options: [],
+                                                                        question: '',
+                                                                    });
+                                                                    setUserAnswer('');
+                                                                    setAnswerMode(false);
+                                                                    setQuizMode(false);
+                                                                    setLoadData(true);
+                                                                },
+                                                            });
+                                                        }
+
+                                                        if (dts.ulang) {
+                                                            speechAction({
+                                                                text: `Anda menjawab ${userAnswer}`,
+                                                            });
+
+                                                            speechAction({
+                                                                text: 'Karena ini adalah quiz terkahir, Saya akan menyampaikan hasil quiz Anda!',
+                                                            });
+                                                            speechAction({
+                                                                text: 'Berikut ini adalah history jawaban Anda',
+                                                            });
+
+                                                            for (let i = 0; i < dts?.jawaban?.length; i++) {
+                                                                speechAction({
+                                                                    text: `Pada soal ke ${i + 1} Anda menjawab ${
+                                                                        dts?.jawaban[i]?.kunci
+                                                                    }`,
+                                                                });
+                                                            }
+
+                                                            speechAction({
+                                                                text: `Sayang sekali, nilai akhir Anda ${dts.nilai} sehingga Anda wajib mengulang mengerjakan quiz. Tetap semangat yaa`,
+                                                                actionOnEnd: () => {
+                                                                    console.log('Response last materi', responseLast);
+                                                                    setIdxQuiz(0);
+                                                                    setCurrentQuiz({
+                                                                        options: [],
+                                                                        question: '',
+                                                                    });
+                                                                    setUserAnswer('');
+                                                                    setAnswerMode(false);
+                                                                    setQuizMode(false);
+                                                                    setLoadData(true);
+                                                                },
+                                                            });
+                                                        }
+
+                                                        // if (!response?.data?.data?.answer) {
+                                                        //     // kondisi jawaban salah
+                                                        //     speechAction({
+                                                        //         text: `Maaf, Jawaban Anda Salah!`,
+                                                        //         actionOnEnd: () => {
+                                                        //             setIdxQuiz(idxQuiz + 1);
+                                                        //             setCurrentQuiz({
+                                                        //                 options: [],
+                                                        //                 question: '',
+                                                        //             });
+                                                        //             setAnswerMode(false);
+                                                        //             setLoadData(true);
+                                                        //             setUserAnswer('');
+                                                        //         },
+                                                        //     });
+                                                        //     return;
+                                                        // }
+
+                                                        // // kondisi jawaban benar
+                                                        // speechAction({
+                                                        //     text: `Selamat, Jawaban Anda benar!`,
+                                                        //     actionOnEnd: () => {
+                                                        //         setIdxQuiz(idxQuiz + 1);
+                                                        //         setCurrentQuiz({});
+                                                        //         setAnswerMode(false);
+                                                        //         setLoadData(true);
+                                                        //         setUserAnswer('');
+                                                        //     },
+                                                        // });
+                                                    } catch (error) {
+                                                        if (error instanceof ApiResponseError) {
+                                                            console.log(`ERR SEND ANSWER API MESSAGE: `, error.message);
+                                                            console.log(error.data);
+                                                            return;
+                                                        }
+                                                        console.log(`MESSAGE: `, error.message);
                                                     }
-                                                    console.log(`MESSAGE: `, error.message);
-                                                }
-                                            };
-                                            fetchApiSendAnswerQuiz();
+                                                };
+                                                fetchApiSendAnswerQuiz();
+                                            }
                                         }
                                     } else {
                                         // kondisi tidak  mode jawab hanya play soal and options
                                         if (idxQuiz >= kelas.getQuizLength()) {
                                             // kondisi quiz habis
-
                                             speechAction({
                                                 text: `Quiz sudah habis!`,
                                                 actionOnEnd: () => {
@@ -384,15 +560,33 @@ const EnrollKelas = () => {
                                     //kondisi tidak  mode kerjakan quiz
                                     if (kelas.isQuizEnded()) {
                                         //kondisi semua quiz selesai
-
                                         speechAction({
                                             text: `Selamat, materi dan quiz sudah selesai. Anda saat ini bisa memilih semua materi dan mendapatkan sertifikat dari kelas Anda. `,
                                         });
                                     } else {
-                                        //kondisi semua materi selesai dengan tidak  mode kerjakan quiz
-                                        speechAction({
-                                            text: `Selamat, materi sudah selesai. Anda saat ini bisa mengerjakan quiz!.`,
-                                        });
+                                        //
+                                        // if (kelas.getQuizCount() >= 1) {
+                                        //     speechAction({
+                                        //         text: `Sayang sekali, Anda harus mengulang quiz karena nilai Anda kurang memenuhi persyaratan kelulusan`,
+                                        //     });
+                                        //     return;
+                                        // }
+
+                                        if (kelas.getQuizCount() === 0) {
+                                            //kondisi semua materi selesai dengan tidak  mode kerjakan quiz
+                                            speechAction({
+                                                text: `Selamat, materi sudah selesai. Anda saat ini bisa mengerjakan quiz, ucapkan perintah kerjakan quiz, Agar bisa mengerjakan quiz `,
+                                                actionOnEnd: () => {
+                                                    setSkipTrigger(true);
+                                                },
+                                            });
+                                            speechAction({
+                                                text: 'Jangan lupa untuk panggil saya terlebih dahulu dengan hai atau halo uli.agar saya bisa mendengar Anda',
+                                                actionOnEnd: () => {
+                                                    setSkipTrigger(false);
+                                                },
+                                            });
+                                        }
                                     }
                                 }
                             }
@@ -437,14 +631,17 @@ const EnrollKelas = () => {
                     } else if (cleanCommand.includes('pilih')) {
                         const quizCommand = cleanCommand.replace('pilih', '').trim().toLowerCase();
                         if (quizCommand === 'a') {
+                            // setSpeechOn(false);
                             console.log('Anda memilih A');
                             setUserAnswer('A');
                             setLoadData(true);
                         } else if (quizCommand === 'b') {
+                            // setSpeechOn(false);
                             console.log('Anda memilih B');
                             setUserAnswer('B');
                             setLoadData(true);
                         } else if (quizCommand === 'c') {
+                            // setSpeechOn(false);
                             console.log('Anda memilih C');
                             setUserAnswer('C');
                             setLoadData(true);
@@ -462,6 +659,7 @@ const EnrollKelas = () => {
                             speechAction({
                                 text: `Anda berhenti untuk menjawab quiz di soal ke ${idxQuiz + 1}`,
                                 actionOnEnd: () => {
+                                    // setSpeechOn(false);
                                     if (listQuiz.getIdxQuizBerjalan() === -1) {
                                         setIdxQuiz(0);
                                     } else {
@@ -474,235 +672,321 @@ const EnrollKelas = () => {
                                 },
                             });
                         }
-                    } else if (
-                        cleanCommand.includes('saya sekarang dimana') ||
-                        cleanCommand.includes('saya sekarang di mana') ||
-                        cleanCommand.includes('saya di mana') ||
-                        cleanCommand.includes('saya dimana')
+                    }
+                }
+            }
+
+            if (speechOn && !skipTrigger) {
+                if (cleanCommand.includes('kerjakan')) {
+                    if (
+                        cleanCommand.includes('quiz') ||
+                        cleanCommand.includes('quis') ||
+                        cleanCommand.includes('kuis') ||
+                        cleanCommand.includes('kuiz')
                     ) {
-                        speechAction({
-                            text: `Kita sedang dalam mode quiz di halaman pembelajaran`,
+                        const listMateri = new ListMateri({
+                            listMateri: materi,
                         });
-                    }
-                }
-            } else if (cleanCommand.includes('kerjakan')) {
-                if (
-                    cleanCommand.includes('quiz') ||
-                    cleanCommand.includes('quis') ||
-                    cleanCommand.includes('kuis') ||
-                    cleanCommand.includes('kuiz')
-                ) {
-                    const listMateri = new ListMateri({
-                        listMateri: materi,
-                    });
 
-                    const listQuiz = new ListQuiz({
-                        listQuiz: quiz,
-                    });
-
-                    if (listMateri.getMateriBerjalan()) {
-                        speechAction({
-                            text: `Anda tidak bisa mengerjakan quiz karena masih ada ${
-                                listMateri.getList().length - listMateri.getMateriSelesai().length
-                            } materi yang belum diselesaikan.`,
-                        });
-                        return;
-                    }
-
-                    if (listQuiz.getIdxQuizBerjalan() === -1) {
-                        speechAction({
-                            text: `Quiz Anda sudah selesai!`,
-                        });
-                        return;
-                    }
-
-                    if (listQuiz.getIdxQuizBerjalan() > 0) {
-                        speechAction({
-                            text: `Anda melanjutkan mengerjakan quiz ke- ${listQuiz.getIdxQuizBerjalan() + 1}`,
-                            actionOnEnd: () => {
-                                setIdxQuiz(listQuiz.getIdxQuizBerjalan());
-                                setQuizMode(true);
-                                setLoadData(true);
-                            },
-                        });
-                        return;
-                    }
-
-                    speechAction({
-                        text: `Anda akan mengerjakan quiz pertama`,
-                        actionOnEnd: () => {
-                            setQuizMode(true);
-                            setLoadData(true);
-                        },
-                    });
-                }
-            } else if (cleanCommand.includes('pilih')) {
-                if (cleanCommand.includes('materi')) {
-                    const materiCommand = cleanCommand.replace('pilih materi', '').trim().toLowerCase();
-                    const materiIdx = convertStringToNum(materiCommand) - 1;
-                    const listMateri = new ListMateri({
-                        listMateri: materi,
-                    });
-                    const findMateri = listMateri.getMateriByIdx(materiIdx);
-                    const findIndexMateriBerjalan = listMateri.getIdxMateriBerjalan();
-                    // const findMateri = materi.find((_, index) => index === materiIdx);
-                    // const findIndexMateriBerjalan = materi.findIndex((m) => m.status === 'jalan');
-
-                    if (!findMateri) {
-                        speechAction({
-                            text: `Materi ke ${materiIdx + 1} tidak ditemukan, perlu diperhatikan jumlah materi sampai ${
-                                materi.length
-                            }!`,
-                        });
-                        return;
-                    }
-
-                    if (materiCommand === 'sekarang') {
-                        speechAction({
-                            text: `Anda akan memilih materi sekarang atau materi yang sedang berjalan`,
-                            actionOnEnd: () => {
-                                const fetchApiClassEnrollment = async () => {
-                                    try {
-                                        const response = await userGetEnroll({
-                                            namaKelas: name,
-                                            token,
-                                        });
-                                        const materiBerjalan = response.data.data.kelas.materi.find(
-                                            (materiItem) => materiItem.status === 'jalan',
-                                        );
-
-                                        if (!materiBerjalan) {
-                                            speechAction({
-                                                text: `Materi telah selesai semua!`,
-                                            });
-                                            return;
-                                        }
-
-                                        speechAction({
-                                            text: `Anda sedang belajar materi sekarang atau materi yang sedang berjalan.  Jangan lupa klik tombol q untuk menjalankan video, dan klik tombol w untuk pause video.`,
-                                            actionOnStart: () => {
-                                                setCurrentMateri(materiBerjalan);
-                                                setPlayback(materiBerjalan.playback);
-                                                setVideoId(getYoutubeVideoId(materiBerjalan.url));
-                                            },
-                                        });
-                                    } catch (error) {
-                                        if (error instanceof ApiResponseError) {
-                                            console.log(`ERR CLASS ENROLLMENT API FROM MATERI SEKARANG MESSAGE: `, error.message);
-                                            console.log(error.data);
-                                            return;
-                                        }
-                                        console.log(`MESSAGE: `, error.message);
-                                    }
-                                };
-                                fetchApiClassEnrollment();
-                            },
-                        });
-                        return;
-                    }
-
-                    if (findMateri.status === 'belum') {
-                        speechAction({
-                            text: `Materi ke ${materiIdx + 1} tidak dapat diakses. Anda perlu menyelesaikan materi sampai ${
-                                materi.length
-                            } dan sekarang Anda sedang di materi ke ${findIndexMateriBerjalan + 1}`,
-                        });
-                        return;
-                    }
-
-                    speechAction({
-                        text: `Anda akan memilih materi ke ${materiIdx + 1}`,
-                        actionOnEnd: () => {
-                            setCurrentMateri(findMateri);
-                            setPlayback(0);
-                            setVideoId(getYoutubeVideoId(findMateri.url));
-                            speechAction({
-                                text: `Anda belajar lagi materi ke ${
-                                    materiIdx + 1
-                                }.  Jangan lupa klik tombol q untuk menjalankan video, dan klik tombol w untuk pause video.`,
-                            });
-                        },
-                    });
-                }
-            } else if (cleanCommand.includes('pergi')) {
-                if (cleanCommand.includes('kelas')) {
-                    speechAction({
-                        text: `Anda akan menuju halaman Daftar Kelas`,
-                        actionOnEnd: () => {
-                            router.push('/kelas');
-                        },
-                    });
-                } else if (cleanCommand.includes('beranda')) {
-                    speechAction({
-                        text: `Anda akan menuju halaman beranda`,
-                        actionOnEnd: () => {
-                            router.push('/');
-                        },
-                    });
-                } else if (cleanCommand.includes('rapor')) {
-                    speechAction({
-                        text: `Anda akan menuju halaman Rapor`,
-                        actionOnEnd: () => {
-                            router.push('/rapor');
-                        },
-                    });
-                } else if (cleanCommand.includes('peringkat')) {
-                    // moving to /peringkat
-                    speechAction({
-                        text: 'Anda akan menuju halaman Peringkat',
-                        actionOnEnd: () => {
-                            router.push('/peringkat');
-                        },
-                    });
-                }
-            } else if (cleanCommand.includes('muat')) {
-                if (cleanCommand.includes('ulang')) {
-                    if (cleanCommand.includes('halaman')) {
                         const listQuiz = new ListQuiz({
                             listQuiz: quiz,
                         });
 
-                        speechAction({
-                            text: `Anda akan load halaman ini!`,
-                            actionOnEnd: () => {
-                                if (listQuiz.getIdxQuizBerjalan() === -1) {
-                                    setIdxQuiz(0);
-                                } else {
+                        if (listMateri.getMateriBerjalan()) {
+                            speechAction({
+                                text: `Anda tidak bisa mengerjakan quiz karena masih ada ${
+                                    listMateri.getList().length - listMateri.getMateriSelesai().length
+                                } materi yang belum diselesaikan.`,
+                                actionOnEnd: () => {
+                                    setSpeechOn(false);
+                                },
+                            });
+                            return;
+                        }
+
+                        if (listQuiz.getIdxQuizBerjalan() === -1) {
+                            speechAction({
+                                text: `Quiz Anda sudah selesai!`,
+                                actionOnEnd: () => {
+                                    setSpeechOn(false);
+                                },
+                            });
+                            return;
+                        }
+
+                        if (listQuiz.getIdxQuizBerjalan() > 0) {
+                            speechAction({
+                                text: `Anda melanjutkan mengerjakan quiz ke- ${listQuiz.getIdxQuizBerjalan() + 1}`,
+                                actionOnEnd: () => {
+                                    setSpeechOn(false);
                                     setIdxQuiz(listQuiz.getIdxQuizBerjalan());
-                                }
-                                setUserAnswer('');
+                                    setQuizMode(true);
+                                    setLoadData(true);
+                                },
+                            });
+                            return;
+                        }
+
+                        speechAction({
+                            text: `Anda akan mengerjakan quiz pertama`,
+                            actionOnEnd: () => {
+                                setSpeechOn(false);
+                                setQuizMode(true);
                                 setLoadData(true);
-                                setQuizMode(false);
+                            },
+                        });
+                    }
+                } else if (cleanCommand.includes('pilih')) {
+                    if (cleanCommand.includes('materi')) {
+                        setSpeechOn(false);
+                        const materiCommand = cleanCommand.replace('pilih materi', '').trim().toLowerCase();
+                        const materiIdx = convertStringToNum(materiCommand) - 1;
+                        const listMateri = new ListMateri({
+                            listMateri: materi,
+                        });
+                        console.log('MATERI COMMAND: ', materiCommand);
+                        const findMateri = listMateri.getMateriByIdx(materiIdx);
+                        const findIndexMateriBerjalan = listMateri.getIdxMateriBerjalan();
+                        // const findMateri = materi.find((_, index) => index === materiIdx);
+                        // const findIndexMateriBerjalan = materi.findIndex((m) => m.status === 'jalan');
+
+                        if (materiCommand === 'sekarang') {
+                            speechAction({
+                                text: `Anda akan memilih materi sekarang atau materi yang sedang berjalan`,
+                                actionOnEnd: () => {
+                                    const fetchApiClassEnrollment = async () => {
+                                        try {
+                                            const response = await userGetEnroll({
+                                                namaKelas: name,
+                                                token,
+                                            });
+                                            const materiBerjalan = response.data.data.kelas.materi.find(
+                                                (materiItem) => materiItem.status === 'jalan',
+                                            );
+
+                                            if (!materiBerjalan) {
+                                                console.log('RESPONSE MATERII: ', response);
+                                                const lastMateri =
+                                                    response.data.data.kelas.materi[response.data.data.kelas.materi.length - 1];
+                                                console.log('last materi : ', lastMateri);
+                                                speechAction({
+                                                    text: `Materi telah selesai semua, Anda akan diarahkan ke materi terkakhir dari kelas ini!`,
+                                                    actionOnEnd: () => {
+                                                        setCurrentMateri(lastMateri);
+                                                        setPlayback(0);
+                                                        setVideoId(getYoutubeVideoId(lastMateri.url));
+                                                        speechAction({
+                                                            text: `Anda belajar lagi materi ke ${
+                                                                response.data.data.kelas.materi.length - 1
+                                                            } atau materi yang terakhir.  Jangan lupa klik tombol q untuk menjalankan video, dan klik tombol w untuk pause video.`,
+                                                        });
+                                                    },
+                                                });
+                                                return;
+                                            }
+
+                                            speechAction({
+                                                text: `Anda sedang belajar materi sekarang atau materi yang sedang berjalan.  Jangan lupa klik tombol q untuk menjalankan video, dan klik tombol w untuk pause video.`,
+                                                actionOnStart: () => {
+                                                    //  setSpeechOn(false);
+                                                    setCurrentMateri(materiBerjalan);
+                                                    setPlayback(materiBerjalan.playback);
+                                                    setVideoId(getYoutubeVideoId(materiBerjalan.url));
+                                                },
+                                            });
+                                        } catch (error) {
+                                            if (error instanceof ApiResponseError) {
+                                                console.log(
+                                                    `ERR CLASS ENROLLMENT API FROM MATERI SEKARANG MESSAGE: `,
+                                                    error.message,
+                                                );
+                                                console.log(error.data);
+                                                return;
+                                            }
+                                            console.log(`MESSAGE: `, error.message);
+                                        }
+                                    };
+                                    fetchApiClassEnrollment();
+                                },
+                            });
+                            return;
+                        }
+
+                        if (!findMateri) {
+                            if (!materiCommand) {
+                                speechAction({
+                                    text: `Materi tidak ditemukan, perlu diperhatikan ketika Anda mencari materi. ucapkan pilih materi sesuai angka yang Anda pilih, misalnya pilih materi 1`,
+                                    // actionOnEnd: () => {
+                                    //     setSpeechOn(false);
+                                    // },
+                                });
+
+                                speechAction({
+                                    text: `Jika ada kelas yang masih berjalan, Anda juga bisa mencari materi tersebut dengan pilih materi sekarang`,
+                                    // actionOnEnd: () => {
+                                    //     setSpeechOn(false);
+                                    // },
+                                });
+                                return;
+                            }
+                            speechAction({
+                                text: `Materi ke ${materiIdx + 1} tidak ditemukan, perlu diperhatikan jumlah materi sampai ${
+                                    materi.length
+                                }!`,
+                                // actionOnEnd: () => {
+                                //     setSpeechOn(false);
+                                // },
+                            });
+                            return;
+                        }
+
+                        if (findMateri.status === 'belum') {
+                            speechAction({
+                                text: `Materi ke ${materiIdx + 1} tidak dapat diakses. Anda perlu menyelesaikan materi sampai ${
+                                    materi.length
+                                } dan sekarang Anda sedang di materi ke ${findIndexMateriBerjalan + 1}`,
+                                // actionOnEnd: () => {
+                                //     setSpeechOn(false);
+                                // },
+                            });
+                            return;
+                        }
+
+                        speechAction({
+                            text: `Anda akan memilih materi ke ${materiIdx + 1}`,
+                            actionOnEnd: () => {
+                                // setSpeechOn(false);
+                                setCurrentMateri(findMateri);
+                                setPlayback(0);
+                                setVideoId(getYoutubeVideoId(findMateri.url));
+                                speechAction({
+                                    text: `Anda belajar lagi materi ke ${
+                                        materiIdx + 1
+                                    }.  Jangan lupa klik tombol q untuk menjalankan video, dan klik tombol w untuk pause video.`,
+                                });
+                            },
+                        });
+                    }
+                } else if (cleanCommand.includes('pergi')) {
+                    if (cleanCommand.includes('kelas')) {
+                        speechAction({
+                            text: `Anda akan menuju halaman Daftar Kelas`,
+                            actionOnEnd: () => {
+                                setSpeechOn(false);
+                                router.push('/kelas');
+                            },
+                        });
+                    } else if (cleanCommand.includes('beranda')) {
+                        speechAction({
+                            text: `Anda akan menuju halaman beranda`,
+                            actionOnEnd: () => {
+                                setSpeechOn(false);
+                                router.push('/');
+                            },
+                        });
+                    } else if (cleanCommand.includes('rapor')) {
+                        speechAction({
+                            text: `Anda akan menuju halaman Rapor`,
+                            actionOnEnd: () => {
+                                setSpeechOn(false);
+                                router.push('/rapor');
+                            },
+                        });
+                    } else if (cleanCommand.includes('peringkat')) {
+                        // moving to /peringkat
+                        speechAction({
+                            text: 'Anda akan menuju halaman Peringkat',
+                            actionOnEnd: () => {
+                                setSpeechOn(false);
+                                router.push('/peringkat');
+                            },
+                        });
+                    }
+                } else if (cleanCommand.includes('cetak')) {
+                    if (cleanCommand.includes('sertifikat')) {
+                        speechAction({
+                            text: `Anda akan mendapatkan sertifikat ${enrollClassName}`,
+                            actionOnEnd: () => {
+                                setSpeechOn(false);
+                                setCetakSertifikat(true);
+                                setLoadData(true);
+                            },
+                        });
+                    }
+                } else if (
+                    cleanCommand.includes('saya sekarang dimana') ||
+                    cleanCommand.includes('saya sekarang di mana') ||
+                    cleanCommand.includes('saya di mana') ||
+                    cleanCommand.includes('saya dimana')
+                ) {
+                    speechAction({
+                        text: `Kita sedang di halaman pembelajaran`,
+                        actionOnEnd: () => {
+                            setSpeechOn(false);
+                        },
+                    });
+                }
+            }
+
+            if (!skipTrigger) {
+                if (cleanCommand.includes('muat')) {
+                    if (cleanCommand.includes('ulang')) {
+                        if (cleanCommand.includes('halaman')) {
+                            const listQuiz = new ListQuiz({
+                                listQuiz: quiz,
+                            });
+
+                            speechAction({
+                                text: `Anda akan load halaman ini!`,
+                                actionOnEnd: () => {
+                                    setSpeechOn(false);
+                                    if (listQuiz.getIdxQuizBerjalan() === -1) {
+                                        setIdxQuiz(0);
+                                    } else {
+                                        setIdxQuiz(listQuiz.getIdxQuizBerjalan());
+                                    }
+                                    setUserAnswer('');
+                                    setLoadData(true);
+                                    setQuizMode(false);
+                                },
+                            });
+                        }
+                    }
+                } else if (cleanCommand.includes('hallo') || cleanCommand.includes('halo') || cleanCommand.includes('hai')) {
+                    if (cleanCommand.includes('uli')) {
+                        speechAction({
+                            text: `Hai ${userName}, saya mendengarkan Anda!`,
+                            actionOnEnd: () => {
+                                setSpeechOn(true);
                             },
                         });
                     }
                 }
-            } else if (cleanCommand.includes('cetak')) {
-                if (cleanCommand.includes('sertifikat')) {
-                    speechAction({
-                        text: `Anda akan mendapatkan sertifikat ${enrollClassName}`,
-                        actionOnEnd: () => {
-                            setCetakSertifikat(true);
-                            setLoadData(true);
-                        },
-                    });
-                }
-            } else if (
-                cleanCommand.includes('saya sekarang dimana') ||
-                cleanCommand.includes('saya sekarang di mana') ||
-                cleanCommand.includes('saya di mana') ||
-                cleanCommand.includes('saya dimana')
-            ) {
-                speechAction({
-                    text: `Kita sedang di halaman pembelajaran`,
-                });
             }
         };
 
         recognition.onend = () => {
             recognition.start();
         };
-    }, [router, materi, name, token, isAnswerMode, isQuizMode, quiz, idxQuiz, enrollClassName]);
+
+        // CLEAR TRIGGER
+        console.log('TRIGGER CONDITION: ', speechOn);
+        if (speechOn) {
+            const timer = setTimeout(() => {
+                speechAction({
+                    text: 'saya diam',
+                    actionOnEnd: () => {
+                        console.log('speech diclear');
+                        setSpeechOn(false);
+                    },
+                });
+            }, 10000);
+
+            return () => {
+                clearTimeout(timer);
+            };
+        }
+    }, [router, materi, name, token, isAnswerMode, isQuizMode, quiz, idxQuiz, enrollClassName, speechOn, skipTrigger, userName]);
 
     return (
         <div className='h-screen bg-[#EDF3F3]'>
@@ -886,7 +1170,7 @@ const EnrollKelas = () => {
                     </>
                 </div>
             </div>
-            <Transkrip transcript={transcript} />
+            <Transkrip transcript={transcript} isTrigger={speechOn} />
         </div>
     );
 };

@@ -56,6 +56,10 @@ const Peringkat = () => {
     const [userRank, setUserRank] = useState(null);
     const [transcript, setTrancript] = useState('');
 
+    const [speechOn, setSpeechOn] = useState(false);
+    const [skipTrigger, setSkipTrigger] = useState(false);
+    const [introPage, setIntroPage] = useState(true);
+
     // const dataMhs = [
     //     {
     //         id: 1,
@@ -109,7 +113,17 @@ const Peringkat = () => {
 
                         console.log(response.ranking);
                         speechAction({
-                            text: `Selamat datang di halaman Peringkat, ${userName}.`,
+                            text: `Selamat datang di halaman Peringkat, ${userName}. Pada halaman ini Anda dapat mengetahui peringkat Anda saat ini, dengan mengucapkan peringkat saya`,
+                        });
+
+                        speechAction({
+                            text: `Saya juga akan diam, jika perintah sudah dilakukan. Tapi Anda jangan khawatir, panggil saja saya lagi dengan hi Uli atau hallo uli agar saya dapat mendengar Anda.`,
+                        });
+                        speechAction({
+                            text: 'Jika Anda masih bingung, Anda bisa ucapkan intruksi agar mendapatkan penjelasan lebih banyak.',
+                            actionOnEnd: () => {
+                                setIntroPage(false);
+                            },
                         });
                     } catch (error) {
                         if (error instanceof ApiResponseError) {
@@ -141,98 +155,137 @@ const Peringkat = () => {
             setTrancript(cleanCommand);
             console.log(cleanCommand);
 
-            if (cleanCommand.includes('peringkat')) {
-                if (cleanCommand.includes('saya')) {
-                    if (!userRank.ranking) {
-                        speechAction({
-                            text: `Anda belum ada materi, Silahkan belajar terlebih dahulu!`,
-                        });
-                        return;
-                    }
+            if (speechOn && !skipTrigger) {
+                if (cleanCommand.includes('peringkat')) {
+                    if (cleanCommand.includes('saya')) {
+                        setSpeechOn(false);
+                        if (!userRank.ranking) {
+                            speechAction({
+                                text: `Anda belum ada materi, Silahkan belajar terlebih dahulu!`,
+                            });
+                            return;
+                        }
 
-                    if (userRank.ranking === 1) {
+                        if (userRank.ranking === 1) {
+                            speechAction({
+                                text: `Selamat, Anda sedang diperingkat ke ${userRank.ranking}.`,
+                                actionOnEnd: () => {
+                                    console.log(userRank);
+                                },
+                            });
+                        } else if (userRank.ranking === 2) {
+                            speechAction({
+                                text: `Selamat, Anda sedang diperingkat ke ${userRank.ranking}. Ayo tingkatkan lagi!`,
+                                actionOnEnd: () => {
+                                    console.log(userRank);
+                                },
+                            });
+                        } else if (userRank.ranking === 3) {
+                            speechAction({
+                                text: `Selamat, Anda sedang diperingkat ke ${userRank.ranking}. Ayo lebih semangat lagi belajarnya ${userName}!`,
+                                actionOnEnd: () => {
+                                    console.log(userRank);
+                                },
+                            });
+                        } else {
+                            speechAction({
+                                text: `Anda sedang diperingkat ke - ${userRank.ranking}. Ayo lebih banyak lagi belajarnya ${userName}!`,
+                                actionOnEnd: () => {
+                                    console.log(userRank);
+                                },
+                            });
+                        }
+                    }
+                } else if (cleanCommand.includes('pergi')) {
+                    if (cleanCommand.includes('kelas')) {
+                        // moving to /kelas
                         speechAction({
-                            text: `Selamat, Anda sedang diperingkat ke ${userRank.ranking}.`,
+                            text: `Anda akan menuju halaman Daftar Kelas`,
                             actionOnEnd: () => {
-                                console.log(userRank);
+                                setSpeechOn(false);
+                                router.push('/kelas');
                             },
                         });
-                    } else if (userRank.ranking === 2) {
+                    } else if (cleanCommand.includes('beranda')) {
+                        // moving to /beranda
                         speechAction({
-                            text: `Selamat, Anda sedang diperingkat ke ${userRank.ranking}. Ayo tingkatkan lagi!`,
+                            text: `Anda akan menuju halaman beranda`,
                             actionOnEnd: () => {
-                                console.log(userRank);
+                                setSpeechOn(false);
+                                router.push('/');
                             },
                         });
-                    } else if (userRank.ranking === 3) {
+                    } else if (cleanCommand.includes('rapor')) {
+                        // moving to /rapor
                         speechAction({
-                            text: `Selamat, Anda sedang diperingkat ke ${userRank.ranking}. Ayo lebih semangat lagi belajarnya ${userName}!`,
+                            text: `Anda akan menuju halaman Rapor`,
                             actionOnEnd: () => {
-                                console.log(userRank);
+                                setSpeechOn(false);
+                                router.push('/rapor');
                             },
                         });
-                    } else {
+                    }
+                } else if (
+                    cleanCommand.includes('saya sekarang dimana') ||
+                    cleanCommand.includes('saya sekarang di mana') ||
+                    cleanCommand.includes('saya di mana') ||
+                    cleanCommand.includes('saya dimana')
+                ) {
+                    setSpeechOn(false);
+                    speechAction({
+                        text: `Kita sedang di halaman Peringkat`,
+                    });
+                }
+            }
+
+            if (!skipTrigger) {
+                if (cleanCommand.includes('muat')) {
+                    if (cleanCommand.includes('ulang')) {
+                        if (cleanCommand.includes('halaman')) {
+                            speechAction({
+                                text: `Anda akan load halaman ini!`,
+                                actionOnEnd: () => {
+                                    setSpeechOn(false);
+                                    setLoadData(true);
+                                },
+                            });
+                        }
+                    }
+                } else if (cleanCommand.includes('hallo') || cleanCommand.includes('halo') || cleanCommand.includes('hai')) {
+                    if (cleanCommand.includes('uli')) {
                         speechAction({
-                            text: `Anda sedang diperingkat ke - ${userRank.ranking}. Ayo lebih banyak lagi belajarnya ${userName}!`,
+                            text: `Hai ${userName}, saya mendengarkan Anda!`,
                             actionOnEnd: () => {
-                                console.log(userRank);
+                                setSpeechOn(true);
                             },
                         });
                     }
                 }
-            } else if (cleanCommand.includes('pergi')) {
-                if (cleanCommand.includes('kelas')) {
-                    // moving to /kelas
-                    speechAction({
-                        text: `Anda akan menuju halaman Daftar Kelas`,
-                        actionOnEnd: () => {
-                            router.push('/kelas');
-                        },
-                    });
-                } else if (cleanCommand.includes('beranda')) {
-                    // moving to /beranda
-                    speechAction({
-                        text: `Anda akan menuju halaman beranda`,
-                        actionOnEnd: () => {
-                            router.push('/');
-                        },
-                    });
-                } else if (cleanCommand.includes('rapor')) {
-                    // moving to /rapor
-                    speechAction({
-                        text: `Anda akan menuju halaman Rapor`,
-                        actionOnEnd: () => {
-                            router.push('/rapor');
-                        },
-                    });
-                }
-            } else if (cleanCommand.includes('muat')) {
-                if (cleanCommand.includes('ulang')) {
-                    if (cleanCommand.includes('halaman')) {
-                        speechAction({
-                            text: `Anda akan load halaman ini!`,
-                            actionOnEnd: () => {
-                                setLoadData(true);
-                            },
-                        });
-                    }
-                }
-            } else if (
-                cleanCommand.includes('saya sekarang dimana') ||
-                cleanCommand.includes('saya sekarang di mana') ||
-                cleanCommand.includes('saya di mana') ||
-                cleanCommand.includes('saya dimana')
-            ) {
-                speechAction({
-                    text: `Kita sedang di halaman Peringkat`,
-                });
             }
         };
 
         recognition.onend = () => {
             recognition.start();
         };
-    }, [router, userName, userRank]);
+
+        // CLEAR TRIGGER
+        console.log('TRIGGER CONDITION: ', speechOn);
+        if (speechOn) {
+            const timer = setTimeout(() => {
+                speechAction({
+                    text: 'saya diam',
+                    actionOnEnd: () => {
+                        console.log('speech diclear');
+                        setSpeechOn(false);
+                    },
+                });
+            }, 10000);
+
+            return () => {
+                clearTimeout(timer);
+            };
+        }
+    }, [router, userName, userRank, speechOn, skipTrigger]);
 
     return (
         <section className='h-screen bg-primary-1'>
@@ -270,7 +323,7 @@ const Peringkat = () => {
                         : null}
                 </div>
             </main>
-            <Transkrip transcript={transcript} />
+            <Transkrip transcript={transcript} isTrigger={speechOn} />
         </section>
     );
 };

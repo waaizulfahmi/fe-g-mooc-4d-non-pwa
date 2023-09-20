@@ -23,6 +23,5 @@ export const speechAction = ({ text, actionOnStart, actionOnEnd }) => {
             actionOnEnd();
         };
     }
-
     synth.speak(utterance);
 };

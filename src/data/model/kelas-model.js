@@ -1,5 +1,6 @@
 export class Kelas {
-    constructor({ name, description, image, materi, quiz, progress, nilai, poin, status }) {
+    constructor({ name, description, image, materi, quiz, progress, nilai, poin, status, id_enrollment, quiz_count }) {
+        this.id_enrollment = id_enrollment;
         this.name = name;
         this.description = description;
         this.image = image;
@@ -9,10 +10,18 @@ export class Kelas {
         this.nilai = nilai;
         this.poin = poin;
         this.status = status;
+        this.quiz_count = quiz_count;
+    }
+
+    getQuizCount() {
+        return this.quiz_count;
     }
 
     getStatusKelas() {
         return this.status;
+    }
+    getIdxEnrollment() {
+        return this.id_enrollment;
     }
 
     getProgress() {

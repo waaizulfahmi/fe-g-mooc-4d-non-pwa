@@ -51,8 +51,13 @@ export default function Beranda() {
     const userName = data?.user?.name;
     const isPermit = useSelector(getIsPermit);
 
+    //STATE
     const [transcript, setTrancript] = useState('');
+    const [speechOn, setSpeechOn] = useState(false);
+    const [skipTrigger, setSkipTrigger] = useState(false);
+    const [introPage, setIntroPage] = useState(true);
 
+    // EFFECTS
     // init recognition
     useEffect(() => {
         try {
@@ -68,6 +73,30 @@ export default function Beranda() {
                 speechAction({
                     text: `Selamat datang di ji muk fordi, ${userName}`,
                 });
+                speechAction({
+                    text: 'Perkenalkan saya Uli, saya akan memandu Anda untuk belajar. ucapkan hai atau hello uli agar saya dapat mendengar Anda',
+                });
+                speechAction({
+                    text: `Halaman ini dinamakan halaman beranda. Pada halaman ini adalah halaman pertama kali di aplikasi ini.`,
+                });
+                speechAction({
+                    text: 'Pada halaman ini terdapat berbagai perintah untuk pergi ke halaman lain, contohnya halaman kelas, raport, dan peringkat.',
+                });
+                speechAction({
+                    text: 'Untuk masuk halaman tersebut Anda bisa mengucapkan pergi ke halaman yang Anda tuju, misalnya, pergi ke kelas',
+                });
+                speechAction({
+                    text: 'Jangan lupa ucapkan hi Uli atau hallo uli agar saya bisa mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.',
+                });
+                speechAction({
+                    text: `Saya juga akan diam, jika perintah sudah dilakukan. Tapi Anda jangan khawatir, panggil saja saya lagi dengan hi Uli atau hallo uli agar saya dapat mendengar Anda.`,
+                });
+                speechAction({
+                    text: 'Jika Anda masih bingung, Anda bisa ucapkan intruksi agar mendapatkan penjelasan lebih banyak.',
+                    actionOnEnd: () => {
+                        setIntroPage(false);
+                    },
+                });
             }
         }
     }, [userName, isPermit]);
@@ -79,59 +108,133 @@ export default function Beranda() {
             setTrancript(cleanCommand);
             console.log(cleanCommand);
 
-            if (cleanCommand.includes('pergi')) {
-                if (cleanCommand.includes('kelas')) {
+            if (speechOn && !skipTrigger) {
+                if (cleanCommand.includes('pergi')) {
+                    if (cleanCommand.includes('kelas')) {
+                        speechAction({
+                            text: 'Anda akan menuju halaman Daftar Kelas',
+                            actionOnEnd: () => {
+                                setSpeechOn(false);
+                                router.push('/kelas');
+                            },
+                        });
+                    } else if (cleanCommand.includes('rapor')) {
+                        speechAction({
+                            text: 'Anda akan menuju halaman Rapor',
+                            actionOnEnd: () => {
+                                setSpeechOn(false);
+                                router.push('/rapor');
+                            },
+                        });
+                    } else if (cleanCommand.includes('peringkat')) {
+                        speechAction({
+                            text: 'Anda akan menuju halaman Peringkat',
+                            actionOnEnd: () => {
+                                setSpeechOn(false);
+                                router.push('/peringkat');
+                            },
+                        });
+                    }
+                } else if (
+                    cleanCommand.includes('saya sekarang dimana') ||
+                    cleanCommand.includes('saya sekarang di mana') ||
+                    cleanCommand.includes('saya di mana') ||
+                    cleanCommand.includes('saya dimana')
+                ) {
                     speechAction({
-                        text: 'Anda akan menuju halaman Daftar Kelas',
+                        text: `Kita sedang di halaman utama`,
                         actionOnEnd: () => {
-                            router.push('/kelas');
-                        },
-                    });
-                } else if (cleanCommand.includes('rapor')) {
-                    speechAction({
-                        text: 'Anda akan menuju halaman Rapor',
-                        actionOnEnd: () => {
-                            router.push('/rapor');
-                        },
-                    });
-                } else if (cleanCommand.includes('peringkat')) {
-                    speechAction({
-                        text: 'Anda akan menuju halaman Peringkat',
-                        actionOnEnd: () => {
-                            router.push('/peringkat');
+                            setSpeechOn(false);
                         },
                     });
                 }
-            } else if (cleanCommand.includes('muat')) {
-                if (cleanCommand.includes('ulang')) {
-                    if (cleanCommand.includes('halaman')) {
+            }
+
+            if (!skipTrigger) {
+                if (cleanCommand.includes('muat')) {
+                    if (cleanCommand.includes('ulang')) {
+                        if (cleanCommand.includes('halaman')) {
+                            speechAction({
+                                text: `Anda akan load ulang halaman!`,
+                                actionOnEnd: () => {
+                                    setSpeechOn(false);
+                                },
+                            });
+                        }
+                    }
+                } else if (cleanCommand.includes('hallo') || cleanCommand.includes('halo') || cleanCommand.includes('hai')) {
+                    if (cleanCommand.includes('uli')) {
                         speechAction({
-                            text: `Anda akan load ulang halaman!`,
+                            text: `Hai ${userName}, saya mendengarkan Anda!`,
+                            actionOnEnd: () => {
+                                setSpeechOn(true);
+                            },
                         });
                     }
                 }
-            } else if (
-                cleanCommand.includes('saya sekarang dimana') ||
-                cleanCommand.includes('saya sekarang di mana') ||
-                cleanCommand.includes('saya di mana') ||
-                cleanCommand.includes('saya dimana')
-            ) {
-                speechAction({
-                    text: `Kita sedang di halaman utama`,
-                });
+            }
+
+            if (!introPage) {
+                if (cleanCommand.includes('intruksi')) {
+                    speechAction({
+                        text: `Hai ${userName}, sekarang Anda mendengarkan intruksi.`,
+                        actionOnEnd: () => {
+                            if (speechOn) {
+                                setSpeechOn(false);
+                            }
+                            setSkipTrigger(true);
+                        },
+                    });
+                    speechAction({
+                        text: `Halaman ini dinamakan halaman beranda. Pada halaman ini adalah halaman pertama kali di aplikasi ini.`,
+                    });
+                    speechAction({
+                        text: 'Pada halaman ini terdapat berbagai perintah untuk pergi ke halaman lain, contohnya halaman kelas, raport, dan peringkat.',
+                    });
+                    speechAction({
+                        text: 'Untuk masuk halaman tersebut Anda bisa mengucapkan pergi ke halaman yang Anda tuju, misalnya, pergi ke kelas',
+                    });
+                    speechAction({
+                        text: 'Jangan lupa ucapkan hi Uli atau hallo uli agar saya bisa mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.',
+                    });
+                    speechAction({
+                        text: `Saya juga akan diam, jika perintah sudah dilakukan. Tapi Anda jangan khawatir, panggil saja saya lagi dengan hi Uli atau hallo uli agar saya dapat mendengar Anda.`,
+                        actionOnEnd: () => {
+                            setSkipTrigger(false);
+                        },
+                    });
+                }
             }
         };
 
         recognition.onend = () => {
             recognition.start();
         };
-    }, [router]);
+
+        console.log('TRIGGER CONDITION: ', speechOn);
+
+        if (speechOn) {
+            const timer = setTimeout(() => {
+                speechAction({
+                    text: 'saya diam',
+                    actionOnEnd: () => {
+                        console.log('speech diclear');
+                        setSpeechOn(false);
+                    },
+                });
+            }, 10000);
+
+            return () => {
+                clearTimeout(timer);
+            };
+        }
+    }, [router, speechOn, userName, skipTrigger, introPage]);
 
     return (
         <main className='h-screen '>
             <Navbar />
             <Hero />
-            <Transkrip transcript={transcript} />
+            <Transkrip transcript={transcript} isTrigger={speechOn} />
             <CheckPermission />
         </main>
     );
