@@ -80,7 +80,7 @@ const Transkrip = ({ transcript = '', isTrigger = false }) => {
 
     return (
         <>
-            {isTrigger && isTranscriptOn && (
+            {isTrigger && (
                 <div className='absolute bottom-[20px] left-[50%] z-30  flex h-[65px] w-[80%] translate-x-[-50%] items-center justify-center rounded-[20px] bg-slate-600  text-center text-[24px] font-bold text-white opacity-80'>
                     <p>{transcript.includes('uli') ? transcript.replace('uli', userName).trim().toLowerCase() : transcript}</p>
                 </div>
