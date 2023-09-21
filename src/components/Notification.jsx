@@ -43,7 +43,7 @@ const Notification = ({ isVisible, handleVisible, time, type, text }) => {
                 <div className="rounded-rad-7 flex h-[173px] w-[585px] flex-col items-center justify-center gap-[27px] bg-white">
                     {notifType[type].icon}
                     <p
-                        className={`${notifType[type].style} text-body-4 font-bold`}
+                        className={`${notifType[type].style} text-body-[12px] font-bold`}
                     >
                         {text}
                     </p>

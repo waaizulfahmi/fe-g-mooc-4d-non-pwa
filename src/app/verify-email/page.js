@@ -56,8 +56,8 @@ const VerifyEmail = () => {
                     <div className='mt-[50px] flex h-[400px] w-[540px] flex-col items-center justify-center gap-[30px] rounded-[20px] bg-[#EDF3F3]'>
                         <Image alt='' src={'/images/security-failed.png'} width={266} height={133} />
                         <p className='font-bold text-alert-1'>Oops ! Email Kamu Belum Terverifikasi</p>
-                        <FillButton onClick={() => router.push('/register', { scroll: false })} className='px-[60px] py-[18px]'>
-                            Ke Halaman Regist
+                        <FillButton onClick={() => router.push('/login', { scroll: false })} className='px-[60px] py-[18px]'>
+                            Check Email Anda
                         </FillButton>
                     </div>
                 </div>
@@ -77,7 +77,7 @@ const VerifyEmail = () => {
                         <Image alt='' src={'/images/security-success.png'} width={266} height={133} />
                         <p className='font-bold'>Yeay ! Email Kamu Sudah Terverifikasi</p>
                         <FillButton onClick={() => router.push('/login', { scroll: false })} className='px-[100px] py-[18px]'>
-                            Ke Beranda
+                            Ke Login
                         </FillButton>
                     </div>
                 </div>
