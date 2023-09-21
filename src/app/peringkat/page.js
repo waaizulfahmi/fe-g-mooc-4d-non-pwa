@@ -42,7 +42,7 @@ import { userGetPeringkatApi } from '@/axios/user';
 // utils
 import { ApiResponseError } from '@/utils/error-handling';
 import { recognition } from '@/utils/speech-recognition';
-import { speechAction, speechWithBatch } from '@/utils/text-to-speech';
+import { speechAction, speechWithBatch, stopSpeech } from '@/utils/text-to-speech';
 
 const Peringkat = () => {
     const { data } = useSession();
@@ -89,7 +89,7 @@ const Peringkat = () => {
                         setRank(response?.ranking);
                         setUserRank(response?.user);
 
-                        console.log(response.ranking);
+                        console.log(response);
                         speechWithBatch({
                             speechs: [
                                 {
@@ -142,7 +142,7 @@ const Peringkat = () => {
                         setSpeechOn(false);
                         if (!userRank.ranking) {
                             speechAction({
-                                text: `Anda belum ada materi, Silahkan belajar terlebih dahulu!`,
+                                text: `Anda belum menyelesaikan materi, Silahkan belajar terlebih dahulu!`,
                                 actionOnEnd: () => {
                                     setIsTrigger(false);
                                 },
@@ -152,7 +152,7 @@ const Peringkat = () => {
 
                         if (userRank.ranking === 1) {
                             speechAction({
-                                text: `Selamat, Anda sedang diperingkat ke ${userRank.ranking}.`,
+                                text: `Selamat, Anda sedang diperingkat ke ${userRank.ranking}, dengan ${userRank.poin} poin.`,
                                 actionOnEnd: () => {
                                     console.log(userRank);
                                     setIsTrigger(false);
@@ -160,7 +160,7 @@ const Peringkat = () => {
                             });
                         } else if (userRank.ranking === 2) {
                             speechAction({
-                                text: `Selamat, Anda sedang diperingkat ke ${userRank.ranking}. Ayo tingkatkan lagi!`,
+                                text: `Selamat, Anda sedang diperingkat ke ${userRank.ranking} dengan poin ${userRank.poin}. Ayo tingkatkan lagi!`,
                                 actionOnEnd: () => {
                                     console.log(userRank);
                                     setIsTrigger(false);
@@ -168,7 +168,7 @@ const Peringkat = () => {
                             });
                         } else if (userRank.ranking === 3) {
                             speechAction({
-                                text: `Selamat, Anda sedang diperingkat ke ${userRank.ranking}. Ayo lebih semangat lagi belajarnya ${userName}!`,
+                                text: `Selamat, Anda sedang diperingkat ke ${userRank.ranking} dengan poin ${userRank.poin}. Ayo lebih semangat lagi belajarnya ${userName}!`,
                                 actionOnEnd: () => {
                                     console.log(userRank);
                                     setIsTrigger(false);
@@ -176,7 +176,7 @@ const Peringkat = () => {
                             });
                         } else {
                             speechAction({
-                                text: `Anda sedang diperingkat ke - ${userRank.ranking}. Ayo lebih banyak lagi belajarnya ${userName}!`,
+                                text: `Anda sedang diperingkat ke - ${userRank.ranking} dengan poin ${userRank.poin}. Ayo lebih banyak lagi belajarnya ${userName}!`,
                                 actionOnEnd: () => {
                                     console.log(userRank);
                                     setIsTrigger(false);
@@ -248,6 +248,7 @@ const Peringkat = () => {
                     }
                 } else if (cleanCommand.includes('hallo') || cleanCommand.includes('halo') || cleanCommand.includes('hai')) {
                     if (cleanCommand.includes('uli')) {
+                        stopSpeech();
                         speechAction({
                             text: `Hai ${userName}, saya mendengarkan Anda!`,
                             actionOnStart: () => {
@@ -258,6 +259,39 @@ const Peringkat = () => {
                             },
                         });
                     }
+                }
+            }
+
+            if (!introPage) {
+                if (cleanCommand.includes('intruksi')) {
+                    setSpeechOn(false);
+                    speechWithBatch({
+                        speechs: [
+                            {
+                                text: `Hai ${userName}, sekarang Anda mendengarkan intruksi di halaman beranda.`,
+                                actionOnEnd: () => {
+                                    setSkipTrigger(true);
+                                    setIsTrigger(false);
+                                },
+                            },
+                            {
+                                text: `Perintah untuk mengetahui peringkat Anda dengan mengucapkan peringkat saya`,
+                            },
+                            {
+                                text: `Jika Anda tersesat, Anda dapat mengucapkan saya dimana`,
+                            },
+                            {
+                                text: `Untuk navigasi halaman, Anda dapat mengucapkan pergi ke halaman yang Anda tuju, misalnya pergi ke kelas, pada halaman ini Anda dapat pergi ke halaman kelas, raport, dan peringkat`,
+                            },
+
+                            {
+                                text: `jangan lupa, Anda harus ucapkan terlebih dahulu hi Uli atau hallo uli agar saya dapat mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.`,
+                                actionOnEnd: () => {
+                                    setSkipTrigger(false);
+                                },
+                            },
+                        ],
+                    });
                 }
             }
         };
@@ -274,6 +308,7 @@ const Peringkat = () => {
                     text: 'saya diam',
                     actionOnEnd: () => {
                         console.log('speech diclear');
+                        setIsTrigger(false);
                         setSpeechOn(false);
                     },
                 });
@@ -283,7 +318,7 @@ const Peringkat = () => {
                 clearTimeout(timer);
             };
         }
-    }, [router, userName, userRank, speechOn, skipTrigger]);
+    }, [router, userName, userRank, speechOn, skipTrigger, introPage]);
 
     return (
         <section className='h-screen bg-primary-1'>

@@ -9,6 +9,10 @@ export const speech = (text) => {
     return utterance;
 };
 
+export const stopSpeech = () => {
+    synth.cancel();
+};
+
 export const speechAction = ({ text, actionOnStart, actionOnEnd }) => {
     const utterance = speech(text);
 

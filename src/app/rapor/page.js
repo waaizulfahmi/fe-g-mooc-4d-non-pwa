@@ -44,7 +44,7 @@ import { Rapot } from '@/data/model';
 //---
 
 // utils
-import { speechAction, speechWithBatch } from '@/utils/text-to-speech';
+import { speechAction, speechWithBatch, stopSpeech } from '@/utils/text-to-speech';
 import { recognition } from '@/utils/speech-recognition';
 import { ApiResponseError } from '@/utils/error-handling';
 import { getImageFile } from '@/utils/get-server-storage';
@@ -84,40 +84,41 @@ const DisplayClass = ({ listClass }) => {
     console.log('Classs nilai: ', listClass);
     return (
         <>
-            {listClass?.length &&
-                listClass.map((rClass, idx) => {
-                    // console.log('Classs nilai: ', rClass);
-                    return (
-                        <div
-                            key={idx + 1}
-                            className='flex items-center justify-between rounded-rad-7 bg-[#F5F5F5] px-[24px] py-[14px]'>
-                            <div className='flex items-center gap-[34px]'>
-                                <Image alt='' src={getImageFile(rClass.image)} width={54} height={54} />
-                                <p className='text-[18px] font-bold leading-[24px]'>{rClass.name}</p>
-                            </div>
-                            <div className='flex items-center gap-[16px]'>
-                                {/* <div className='flex flex-col rounded-rad-3 bg-secondary-1 px-[21px] py-[8px]'>
+            {listClass?.length
+                ? listClass.map((rClass, idx) => {
+                      // console.log('Classs nilai: ', rClass);
+                      return (
+                          <div
+                              key={idx + 1}
+                              className='flex items-center justify-between rounded-rad-7 bg-[#F5F5F5] px-[24px] py-[14px]'>
+                              <div className='flex items-center gap-[34px]'>
+                                  <Image alt='' src={getImageFile(rClass.image)} width={54} height={54} />
+                                  <p className='text-[18px] font-bold leading-[24px]'>{rClass.name}</p>
+                              </div>
+                              <div className='flex items-center gap-[16px]'>
+                                  {/* <div className='flex flex-col rounded-rad-3 bg-secondary-1 px-[21px] py-[8px]'>
                                       <span className='text-[24px] font-bold text-white'>{rClass.max_poin}</span>
                                       <span className='text-[12px] font-bold text-white '>Nilai</span>
                                   </div> */}
-                                <div className='flex flex-col rounded-rad-3 bg-secondary-1 px-[21px] py-[8px]'>
-                                    <span className='text-[24px] font-bold text-white '>{rClass.progress}</span>
-                                    <span className='text-[12px] font-bold text-white'>Kemajuan</span>
-                                </div>
-                                {rClass.progress === '100%' ? (
-                                    //   <FillButton className=px-[58px] py-[18px] text-[24px]'>
-                                    //       Selesai'
-                                    //   </FillButton>
-                                    <BorderedButton className='border-primary-1 px-[58px] py-[18px] text-[24px] text-primary-1'>
-                                        Selesai
-                                    </BorderedButton>
-                                ) : (
-                                    <FillButton className=' px-[58px] py-[18px] text-[24px]'>Lanjut</FillButton>
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
+                                  <div className='flex flex-col rounded-rad-3 bg-secondary-1 px-[21px] py-[8px]'>
+                                      <span className='text-[24px] font-bold text-white '>{rClass.progress}</span>
+                                      <span className='text-[12px] font-bold text-white'>Kemajuan</span>
+                                  </div>
+                                  {rClass.progress === '100%' ? (
+                                      //   <FillButton className=px-[58px] py-[18px] text-[24px]'>
+                                      //       Selesai'
+                                      //   </FillButton>
+                                      <BorderedButton className='border-primary-1 px-[58px] py-[18px] text-[24px] text-primary-1'>
+                                          Selesai
+                                      </BorderedButton>
+                                  ) : (
+                                      <FillButton className=' px-[58px] py-[18px] text-[24px]'>Lanjut</FillButton>
+                                  )}
+                              </div>
+                          </div>
+                      );
+                  })
+                : null}
         </>
     );
 };
@@ -439,6 +440,7 @@ const Rapor = () => {
                     }
                 } else if (cleanCommand.includes('hallo') || cleanCommand.includes('halo') || cleanCommand.includes('hai')) {
                     if (cleanCommand.includes('uli')) {
+                        stopSpeech();
                         speechAction({
                             text: `Hai ${userName}, saya mendengarkan Anda!`,
                             actionOnStart: () => {
@@ -449,6 +451,42 @@ const Rapor = () => {
                             },
                         });
                     }
+                }
+            }
+
+            if (!introPage) {
+                if (cleanCommand.includes('intruksi')) {
+                    speechWithBatch({
+                        speechs: [
+                            {
+                                text: `Hai ${userName}, sekarang Anda mendengarkan intruksi di halaman raport.`,
+                                actionOnEnd: () => {
+                                    if (speechOn) {
+                                        setSpeechOn(false);
+                                    }
+                                    setSkipTrigger(true);
+                                },
+                            },
+                            {
+                                text: `Perintah untuk mencari kelas yang sudah Anda pelajari dengan mengucapkan Cari Kelas selesai`,
+                            },
+                            {
+                                text: `Perintah untuk mencari kelas yang sedang berjalan dengan mengucapkan Cari Kelas berjalan`,
+                            },
+                            {
+                                text: `Perintah untuk kembali belajar di kelas yang sedang berjalan dengan mengucapkan Belajar Kembali yang diikuti nama kelas, misalnya belajar kembali kelas html`,
+                            },
+                            {
+                                text: `Untuk navigasi halaman Anda dapat mengucapkan pergi ke halaman yang Anda tuju, misalnya pergi ke beranda, pada halaman ini Anda dapat pergi ke halaman beranda, kelas, dan peringkat`,
+                            },
+                            {
+                                text: `jangan lupa, Anda harus ucapkan terlebih dahulu hi Uli atau hallo uli agar saya dapat mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.`,
+                                actionOnEnd: () => {
+                                    setSkipTrigger(false);
+                                },
+                            },
+                        ],
+                    });
                 }
             }
         };
@@ -465,6 +503,7 @@ const Rapor = () => {
                     text: 'saya diam',
                     actionOnEnd: () => {
                         console.log('speech diclear');
+                        setIsTrigger(false);
                         setSpeechOn(false);
                     },
                 });
@@ -474,7 +513,7 @@ const Rapor = () => {
                 clearTimeout(timer);
             };
         }
-    }, [router, finishedClass, runningClass, classShow, speechOn, skipTrigger, userName]);
+    }, [router, finishedClass, runningClass, classShow, speechOn, skipTrigger, userName, introPage]);
 
     return (
         <div className='h-screen bg-primary-1'>
