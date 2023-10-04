@@ -52,6 +52,7 @@ import { getYoutubeVideoId } from '@/utils/get-youtube-videoId';
 import { getImageFile } from '@/utils/get-server-storage';
 import { convertStringToNum } from '@/utils/convert-stringNum-to-num';
 import { ApiResponseError } from '@/utils/error-handling';
+import { buttonAction } from '@/utils/space-button-action';
 
 const EnrollKelas = () => {
     const { data } = useSession();
@@ -96,6 +97,7 @@ const EnrollKelas = () => {
     const [introPage, setIntroPage] = useState(true);
     const [isTrigger, setIsTrigger] = useState(false);
     const [statusKelas, setStatusKelas] = useState('');
+    const [isClickButton, setClickButton] = useState(false);
 
     // BOOLEAN STATE
     // const [isVideoEnded, setVideoEnded] = useState(false);
@@ -254,6 +256,9 @@ const EnrollKelas = () => {
                                 speechs: [
                                     {
                                         text: `Selamat datang di Kelas ${name}. Pada kelas ini Anda akan belajar sebanyak ${kelas.getMateriLength()} materi dan mengerjakan ${kelas.getQuizLength()} quiz.`,
+                                        actionOnStart: () => {
+                                            setSkipTrigger(true);
+                                        },
                                     },
                                     {
                                         text: `Sebelum Anda memulai pembelajaran, ada beberapa instruksi yang wajib Anda pahami. `,
@@ -276,49 +281,16 @@ const EnrollKelas = () => {
                                     {
                                         text: 'Jika Anda masih bingung, Anda bisa ucapkan intruksi agar mendapatkan penjelasan lebih banyak.',
                                         actionOnEnd: () => {
+                                            setClickButton(true);
                                             setIntro(false);
                                             setIntroPage(false);
+                                            setSkipTrigger(false);
                                         },
                                     },
                                 ],
                             });
-
-                            // speechAction({
-                            //     text: `Selamat datang di Kelas ${name}. Pada kelas ini Anda akan belajar sebanyak ${kelas.getMateriLength()} materi dan mengerjakan ${kelas.getQuizLength()} quiz.`,
-                            // });
-
-                            // speechAction({
-                            //     text: `Sebelum Anda memulai pembelajaran, ada beberapa instruksi yang wajib Anda pahami. `,
-                            // });
-
-                            // speechAction({
-                            //     text: `Dalam pembelajaran ini terdapat video sebagai materi, untuk memulainya, Anda dapat  menekan tombol q, dan untuk menjeda video, Anda dapat menekan tombol w`,
-                            // });
-
-                            // speechAction({
-                            //     text: `Setelah materi selesai, Anda dapat mengerjakan quiz dengan mengucapkan perintah kerjakan quiz `,
-                            // });
-
-                            // speechAction({
-                            //     text: `Setelah soal dibacakan, Anda dapat memilih pilihan jawaban yang menurut Anda benar dengan mengucapkan pilih a, b, atau c`,
-                            // });
-
-                            // speechAction({
-                            //     text: `Pada tahap pertama, kita akan berkenalan dengan kelas ${kelas.getName()}. ${kelas.getDescription()}`,
-                            // });
-
-                            // speechAction({
-                            //     text: `Selanjutnya, kita akan belajar dengan dimulainya materi pertama. Jangan lupa tekan tombol q untuk play video dan tombol w untuk pause video`,
-                            // });
-
-                            // speechAction({
-                            //     text: 'Jika Anda masih bingung, Anda bisa ucapkan intruksi agar mendapatkan penjelasan lebih banyak.',
-                            //     actionOnEnd: () => {
-                            //         setIntro(false);
-                            //         setIntroPage(false);
-                            //     },
-                            // });
                         } else {
+                            setClickButton(true);
                             // Kondisi sudah ada materi berjalan dengan adanya playback
                             if (kelas.lastMateri('status') === 'belum' || kelas.lastMateri('status') === 'jalan') {
                                 // Kondisi materi terakhir 'belum' atau 'jalan'
@@ -1203,6 +1175,36 @@ const EnrollKelas = () => {
         introPage,
         statusKelas,
     ]);
+
+    //effects
+    useEffect(() => {
+        const spaceButtonIntroAction = (event) => {
+            buttonAction({
+                event: event,
+                key: ' ',
+                keyCode: 32,
+                action: () => {
+                    if (!isClickButton) {
+                        stopSpeech();
+                        speechAction({
+                            text: 'Anda melewati Intro Halaman',
+                            actionOnEnd: () => {
+                                setClickButton(true);
+                                setIntro(false);
+                                setIntroPage(false);
+                                setSkipTrigger(false);
+                            },
+                        });
+                    }
+                },
+            });
+        };
+        window.addEventListener('keydown', spaceButtonIntroAction);
+
+        return () => {
+            window.removeEventListener('keydown', spaceButtonIntroAction);
+        };
+    }, [isClickButton]);
 
     return (
         <div className='h-screen bg-[#EDF3F3]'>

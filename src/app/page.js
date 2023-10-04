@@ -43,6 +43,7 @@ import Transkrip from '@/components/Transkrip';
 // utils
 import { speechAction, speechWithBatch, stopSpeech } from '@/utils/text-to-speech';
 import { recognition } from '@/utils/speech-recognition';
+import { buttonAction } from '@/utils/space-button-action';
 import Hero from '@/components/Hero';
 
 export default function Beranda() {
@@ -57,6 +58,7 @@ export default function Beranda() {
     const [skipTrigger, setSkipTrigger] = useState(false); //skiping hi uli
     const [introPage, setIntroPage] = useState(true); // skiping  intruksi
     const [isTrigger, setIsTrigger] = useState(false);
+    const [isClickButton, setClickButton] = useState(false); //clicking for skiping introPage
 
     // EFFECTS
     // init recognition
@@ -81,9 +83,6 @@ export default function Beranda() {
                         },
                         {
                             text: 'Perkenalkan saya Uli, saya akan memandu Anda untuk belajar. ucapkan hai atau hello uli agar saya dapat mendengar Anda',
-                            actionOnEnd: () => {
-                                setSkipTrigger(false);
-                            },
                         },
                         {
                             text: `Halaman ini dinamakan halaman beranda, halaman ini merupakan halaman  pertama kali ketika Anda menggunakan aplikasi ini.`,
@@ -93,9 +92,6 @@ export default function Beranda() {
                         },
                         {
                             text: 'Untuk masuk halaman tersebut Anda bisa mengucapkan pergi ke halaman yang Anda tuju, misalnya, pergi ke kelas',
-                            actionOnStart: () => {
-                                setSkipTrigger(true);
-                            },
                         },
                         {
                             text: 'Jangan lupa ucapkan hi Uli atau hallo uli agar saya bisa mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.',
@@ -105,15 +101,13 @@ export default function Beranda() {
                         },
                         {
                             text: 'Satu lagi, Anda wajib menunggu saya berbicara sampai selesai, agar saya bisa mendengar Anda kembali',
-                            actionOnEnd: () => {
-                                setSkipTrigger(false);
-                            },
                         },
                         {
                             text: 'Jika Anda masih bingung, Anda bisa ucapkan intruksi agar mendapatkan penjelasan lebih banyak.',
                             actionOnEnd: () => {
+                                setClickButton(true);
                                 setIntroPage(false);
-                                // setSkipTrigger(false);
+                                setSkipTrigger(false);
                             },
                         },
                     ],
@@ -257,6 +251,35 @@ export default function Beranda() {
             };
         }
     }, [router, speechOn, userName, skipTrigger, introPage]);
+
+    //effects
+    useEffect(() => {
+        const spaceButtonIntroAction = (event) => {
+            buttonAction({
+                event: event,
+                key: ' ',
+                keyCode: 32,
+                action: () => {
+                    if (!isClickButton && isPermit) {
+                        stopSpeech();
+                        speechAction({
+                            text: 'Anda melewati Intro Halaman',
+                            actionOnEnd: () => {
+                                setIntroPage(false);
+                                setSkipTrigger(false);
+                                setClickButton(true);
+                            },
+                        });
+                    }
+                },
+            });
+        };
+        window.addEventListener('keydown', spaceButtonIntroAction);
+
+        return () => {
+            window.removeEventListener('keydown', spaceButtonIntroAction);
+        };
+    }, [isClickButton, isPermit]);
 
     return (
         <main className='h-screen '>

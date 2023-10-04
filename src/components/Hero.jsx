@@ -1,13 +1,46 @@
 'use client';
 
-//core
+/* 
+@DOCS :
+1. core
+    -> package from react / next
+2. third party
+    -> package from third party
+3. redux
+    -> redux global state management
+4. components
+    -> reusable component
+5. data
+    -> handle data model or application static data
+6. apis
+    -> api functions
+7. utils
+    -> utility functions
+*/
+
+// core
 import { useRouter } from 'next/navigation';
 import PropTypes from 'prop-types';
 import Image from 'next/image';
 
-//components
+// third party
+// ---
+
+// redux
+// ---
+
+// components
 import FillButton from './FillButton';
 import MicButton from './MicButton';
+
+// data
+// ---
+
+// apis
+// ---
+
+// utils
+// ---
 
 const Hero = ({ className }) => {
     const router = useRouter();
@@ -31,7 +64,7 @@ const Hero = ({ className }) => {
                     </div>
                 </div>
                 <div className='col-span-6 flex items-center justify-center '>
-                    <div className='flex  justify-center gap-3 '>
+                    <div className='flex justify-center gap-3 '>
                         <Image src={'/images/blind.svg'} width={353} height={442} alt='' />
                         <MicButton className='mt-[50px] h-max' />
                     </div>

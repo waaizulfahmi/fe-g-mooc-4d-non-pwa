@@ -1,12 +1,45 @@
-//core
-import PropTypes from "prop-types";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+/* 
+@DOCS :
+1. core
+    -> package from react / next
+2. third party
+    -> package from third party
+3. redux
+    -> redux global state management
+4. components
+    -> reusable component
+5. data
+    -> handle data model or application static data
+6. apis
+    -> api functions
+7. utils
+    -> utility functions
+*/
+
+// core
+import PropTypes from 'prop-types';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
+// third party
+// ---
+
+// redux
+// ---
+
+// components
+// ---
+
+// data
+// ---
+
+// apis
+// ---
 
 // utils
-// import { colorTheme } from '@/utils/colorTheme';
+// ---
 
-const Links = ({ className = "flex gap-[50px]", links }) => {
+const Links = ({ className = 'flex gap-[50px]', links }) => {
     const path = usePathname();
 
     return (
@@ -14,29 +47,26 @@ const Links = ({ className = "flex gap-[50px]", links }) => {
             {links &&
                 links.map((link, index) => {
                     return (
-                        <li key={index} className="relative">
+                        <li key={index} className='relative'>
                             <Link
                                 className={`${
                                     link?.href?.toLowerCase() === path
                                         ? `${
-                                              path === "/rapor" ||
-                                              path === "/peringkat"
-                                                  ? "text-white"
-                                                  : "text-primary-1 text-opacity-100"
+                                              path === '/rapor' || path === '/peringkat'
+                                                  ? 'text-white'
+                                                  : 'text-primary-1 text-opacity-100'
                                           }`
                                         : `${
-                                              path === "/rapor" ||
-                                              path === "/peringkat"
-                                                  ? "text-white text-opacity-50"
-                                                  : "text-black text-opacity-50"
+                                              path === '/rapor' || path === '/peringkat'
+                                                  ? 'text-white text-opacity-50'
+                                                  : 'text-black text-opacity-50'
                                           }`
                                 } cursor-pointer font-bold`}
-                                href={link?.href}
-                            >
+                                href={link?.href}>
                                 {link?.name}
                             </Link>
                             {link?.href?.toLowerCase() === path && (
-                                <div className="bg-secondary-1 absolute left-1/2 h-[10px] w-[10px] translate-x-[-50%] rounded-full"></div>
+                                <div className='absolute left-1/2 h-[10px] w-[10px] translate-x-[-50%] rounded-full bg-secondary-1'></div>
                             )}
                         </li>
                     );

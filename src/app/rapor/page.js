@@ -49,6 +49,7 @@ import { recognition } from '@/utils/speech-recognition';
 import { ApiResponseError } from '@/utils/error-handling';
 import { getImageFile } from '@/utils/get-server-storage';
 import { apiInstance } from '@/axios/instance';
+import { buttonAction } from '@/utils/space-button-action';
 
 const userGetRapotApi = async ({ token }) => {
     try {
@@ -149,6 +150,7 @@ const Rapor = () => {
     const [skipTrigger, setSkipTrigger] = useState(false);
     const [introPage, setIntroPage] = useState(true);
     const [isTrigger, setIsTrigger] = useState(false);
+    const [isClickButton, setClickButton] = useState(false); //clicking for skiping introPage
 
     // FUNC
 
@@ -200,6 +202,9 @@ const Rapor = () => {
                                                   rapot.getKelasSelesai().length
                                               } kelas`
                                     } `,
+                                    actionOnStart: () => {
+                                        setSkipTrigger(true);
+                                    },
                                 },
                                 {
                                     text: `Dalam halaman ini, terdapat kelas yang sedang berjalan dan yang sudah selesai, `,
@@ -214,35 +219,11 @@ const Rapor = () => {
                                     text: 'Jika Anda masih bingung, Anda bisa ucapkan intruksi agar mendapatkan penjelasan lebih banyak.',
                                     actionOnEnd: () => {
                                         setIntroPage(false);
+                                        setSkipTrigger(false);
                                     },
                                 },
                             ],
                         });
-
-                        // speechAction({
-                        //     text: `Selamat datang di halaman rapor, ${userName}. total poin anda adalah ${rapot.getTotalPoin()},  ${
-                        //         rapot.getKelasSelesai().length === 0
-                        //             ? 'namun, Anda belum menyelesaikan kelas apapun'
-                        //             : `jumlah kelas yang sudah di selesaikan adalah ${rapot.getKelasSelesai().length} kelas`
-                        //     } `,
-                        // });
-
-                        // speechAction({
-                        //     text: `Dalam halaman ini, terdapat kelas yang sedang berjalan dan yang sudah selesai, `,
-                        // });
-                        // speechAction({
-                        //     text: ` untuk mencari kelas berjalan, Anda dapat mengucapkan cari kelas berjalan. untuk mencari kelas selesai,  Anda dapat mengucapkan cari kelas selesai`,
-                        // });
-                        // speechAction({
-                        //     text: 'Jangan lupa untuk panggil saya terlebih dahulu dengan hai atau halo uli.agar saya bisa mendengar Anda',
-                        // });
-
-                        // speechAction({
-                        //     text: 'Jika Anda masih bingung, Anda bisa ucapkan intruksi agar mendapatkan penjelasan lebih banyak.',
-                        //     actionOnEnd: () => {
-                        //         setIntroPage(false);
-                        //     },
-                        // });
 
                         console.log('semua peljara:', rapot.getSemuaPelajaran());
                         console.log(response);
@@ -514,6 +495,35 @@ const Rapor = () => {
             };
         }
     }, [router, finishedClass, runningClass, classShow, speechOn, skipTrigger, userName, introPage]);
+
+    //effects
+    useEffect(() => {
+        const spaceButtonIntroAction = (event) => {
+            buttonAction({
+                event: event,
+                key: ' ',
+                keyCode: 32,
+                action: () => {
+                    if (!isClickButton) {
+                        stopSpeech();
+                        speechAction({
+                            text: 'Anda melewati Intro Halaman',
+                            actionOnEnd: () => {
+                                setIntroPage(false);
+                                setSkipTrigger(false);
+                                setClickButton(true);
+                            },
+                        });
+                    }
+                },
+            });
+        };
+        window.addEventListener('keydown', spaceButtonIntroAction);
+
+        return () => {
+            window.removeEventListener('keydown', spaceButtonIntroAction);
+        };
+    }, [isClickButton]);
 
     return (
         <div className='h-screen bg-primary-1'>

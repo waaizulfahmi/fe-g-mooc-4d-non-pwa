@@ -1,27 +1,49 @@
-"use client";
+'use client';
 
-import PropTypes from "prop-types";
-import { usePathname } from "next/navigation";
+/* 
+@DOCS :
+1. core
+    -> package from react / next
+2. third party
+    -> package from third party
+3. redux
+    -> redux global state management
+4. components
+    -> reusable component
+5. data
+    -> handle data model or application static data
+6. apis
+    -> api functions
+7. utils
+    -> utility functions
+*/
+
+// core
+import PropTypes from 'prop-types';
+import { usePathname } from 'next/navigation';
 
 // third party
-import { useSession, signOut } from "next-auth/react";
+import { useSession, signOut } from 'next-auth/react';
+import { AiOutlinePoweroff } from 'react-icons/ai';
 
-// axios
-// import { logoutApi } from '@/axios/auth';
-import { authLogout } from "@/axios/auth";
+// redux
+// ---
 
-// component
-import BorderedButton from "./BorderedButton";
-import FillButton from "./FillButton";
-import LabelPermission from "./LabelPermission";
+// components
+import BorderedButton from './BorderedButton';
+import FillButton from './FillButton';
+import LabelPermission from './LabelPermission';
 
-import { AiOutlinePoweroff } from "react-icons/ai";
+// data
+// ---
 
-const NavbarButton = ({
-    className = "gap-[33px]",
-    btnBorderedText = "Masuk",
-    btnFillText = "Daftar",
-}) => {
+// apis
+import { authLogout } from '@/axios/auth';
+
+// utils
+// ---
+
+const NavbarButton = ({ className = 'gap-[33px]', btnBorderedText = 'Masuk', btnFillText = 'Daftar' }) => {
     const path = usePathname();
     const { status, data } = useSession();
     const token = data?.user?.token;
@@ -30,7 +52,7 @@ const NavbarButton = ({
         if (token) {
             try {
                 const response = await authLogout({ token });
-                if (response?.metadata?.status === "success") {
+                if (response?.metadata?.status === 'success') {
                     signOut();
                 }
             } catch (_) {
@@ -40,27 +62,22 @@ const NavbarButton = ({
     };
 
     switch (status) {
-        case "loading":
+        case 'loading':
             return (
                 <div className={`${className} flex`}>
                     <LabelPermission />
                     <BorderedButton
-                        className="h-[24px]  w-[80px]"
-                        theme={
-                            path === "/rapor" || path === "/peringkat"
-                                ? "light"
-                                : "dark"
-                        }
-                    >
+                        className='h-[24px]  w-[80px]'
+                        theme={path === '/rapor' || path === '/peringkat' ? 'light' : 'dark'}>
                         Memuat Data...
                     </BorderedButton>
                 </div>
             );
-        case "authenticated":
+        case 'authenticated':
             return (
                 <div className={`${className} flex`}>
-                    {path === "/rapor" || path === "/peringkat" ? (
-                        <div className="flex items-center gap-[40px]">
+                    {path === '/rapor' || path === '/peringkat' ? (
+                        <div className='flex items-center gap-[40px]'>
                             <LabelPermission />
                             {/* <BorderedButton className='invisible px-[36px] py-[12px]' theme='dark'>
                                 {btnBorderedText}
@@ -69,14 +86,9 @@ const NavbarButton = ({
                             {/* <button>
                                 <AiOutlinePoweroff />
                             </button> */}
-                            <button
-                                onClick={handleSignOut}
-                                className="flex items-center gap-2"
-                            >
-                                <AiOutlinePoweroff className="h-[24px] w-[24px] text-white" />
-                                <span className="font-bold text-white">
-                                    Keluar
-                                </span>
+                            <button onClick={handleSignOut} className='flex items-center gap-2'>
+                                <AiOutlinePoweroff className='h-[24px] w-[24px] text-white' />
+                                <span className='font-bold text-white'>Keluar</span>
                             </button>
                             {/* <BorderedButton
                                 onClick={handleSignOut}
@@ -86,18 +98,15 @@ const NavbarButton = ({
                             </BorderedButton> */}
                         </div>
                     ) : (
-                        <div className="flex items-center gap-[40px]">
-                            {" "}
+                        <div className='flex items-center gap-[40px]'>
+                            {' '}
                             <LabelPermission />
                             {/* <BorderedButton className='invisible px-[36px] py-[12px]' theme='dark'>
                                 {btnBorderedText}
                             </BorderedButton> */}
-                            <button
-                                onClick={handleSignOut}
-                                className="flex items-center gap-2"
-                            >
-                                <AiOutlinePoweroff className="h-[24px] w-[24px]" />
-                                <span className="font-bold">Keluar</span>
+                            <button onClick={handleSignOut} className='flex items-center gap-2'>
+                                <AiOutlinePoweroff className='h-[24px] w-[24px]' />
+                                <span className='font-bold'>Keluar</span>
                             </button>
                             {/* <FillButton onClick={handleSignOut} className='w-[200px] py-[12px]'>
                                 Keluar
@@ -109,15 +118,10 @@ const NavbarButton = ({
         default:
             return (
                 <div className={`${className} flex`}>
-                    <BorderedButton
-                        className="px-[36px] py-[12px]"
-                        theme="dark"
-                    >
+                    <BorderedButton className='px-[36px] py-[12px]' theme='dark'>
                         {btnBorderedText}
                     </BorderedButton>
-                    <FillButton className="px-[36px] py-[12px]">
-                        {btnFillText}
-                    </FillButton>
+                    <FillButton className='px-[36px] py-[12px]'>{btnFillText}</FillButton>
                 </div>
             );
     }

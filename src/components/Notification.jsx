@@ -1,25 +1,56 @@
-"use client";
+'use client';
 
-//core
-import { useEffect } from "react";
-import PropTypes from "prop-types";
+/* 
+@DOCS :
+1. core
+    -> package from react / next
+2. third party
+    -> package from third party
+3. redux
+    -> redux global state management
+4. components
+    -> reusable component
+5. data
+    -> handle data model or application static data
+6. apis
+    -> api functions
+7. utils
+    -> utility functions
+*/
+
+// core
+import { useEffect } from 'react';
+import PropTypes from 'prop-types';
 
 // third party
-import { AiOutlineCloseCircle, AiOutlineCheckCircle } from "react-icons/ai";
+import { AiOutlineCloseCircle, AiOutlineCheckCircle } from 'react-icons/ai';
+
+// redux
+// ---
+
+// components
+// ---
+
+// data
+// ---
+
+// apis
+// ---
+
+// utils
+// ---
+
+//core
 
 const Notification = ({ isVisible, handleVisible, time, type, text }) => {
     const notifType = {
         error: {
-            style: "text-alert-1",
-            icon: (
-                <AiOutlineCloseCircle className="h-[40px] w-[40px] text-alert-1" />
-            ),
+            style: 'text-alert-1',
+            icon: <AiOutlineCloseCircle className='h-[40px] w-[40px] text-alert-1' />,
         },
         success: {
-            style: "text-primary-1",
-            icon: (
-                <AiOutlineCheckCircle className="h-[40px] w-[40px] text-primary-1" />
-            ),
+            style: 'text-primary-1',
+            icon: <AiOutlineCheckCircle className='h-[40px] w-[40px] text-primary-1' />,
         },
     };
 
@@ -37,16 +68,10 @@ const Notification = ({ isVisible, handleVisible, time, type, text }) => {
 
     if (isVisible) {
         return (
-            <div
-                className={`fixed  inset-0 z-30 flex items-center  justify-center bg-black bg-opacity-60 font-monsterrat`}
-            >
-                <div className="rounded-rad-7 flex h-[173px] w-[585px] flex-col items-center justify-center gap-[27px] bg-white">
+            <div className={`fixed  inset-0 z-30 flex items-center  justify-center bg-black bg-opacity-60 font-monsterrat`}>
+                <div className='flex h-[173px] w-[585px] flex-col items-center justify-center gap-[27px] rounded-rad-7 bg-white'>
                     {notifType[type].icon}
-                    <p
-                        className={`${notifType[type].style} text-body-[12px] font-bold`}
-                    >
-                        {text}
-                    </p>
+                    <p className={`${notifType[type].style} text-body-[12px] font-bold`}>{text}</p>
                 </div>
             </div>
         );

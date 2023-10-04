@@ -1,11 +1,44 @@
 'use client';
 
-//core
+/* 
+@DOCS :
+1. core
+    -> package from react / next
+2. third party
+    -> package from third party
+3. redux
+    -> redux global state management
+4. components
+    -> reusable component
+5. data
+    -> handle data model or application static data
+6. apis
+    -> api functions
+7. utils
+    -> utility functions
+*/
+
+// core
 import { forwardRef, useState } from 'react';
 import PropTypes from 'prop-types';
 
-//third party
+// third party
 import { FiEye, FiEyeOff } from 'react-icons/fi';
+
+// redux
+// ---
+
+// components
+// ---
+
+// data
+// ---
+
+// apis
+// ---
+
+// utils
+// ---
 
 const PasswordInputRef = forwardRef(function PasswordInputRef(
     {

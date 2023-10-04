@@ -47,6 +47,7 @@ import { speechAction, speechWithBatch, stopSpeech } from '@/utils/text-to-speec
 import { formatDotString } from '@/utils/format-dot-string';
 import { recognition } from '@/utils/speech-recognition';
 import { ApiResponseError } from '@/utils/error-handling';
+import { buttonAction } from '@/utils/space-button-action';
 
 const Kelas = () => {
     const { data } = useSession();
@@ -69,6 +70,7 @@ const Kelas = () => {
     const [skipTrigger, setSkipTrigger] = useState(false);
     const [introPage, setIntroPage] = useState(true);
     const [isTrigger, setIsTrigger] = useState(false);
+    const [isClickButton, setClickButton] = useState(false);
 
     //FUNC
     const handlePilihKelas = (namaKelas) => {
@@ -285,17 +287,15 @@ const Kelas = () => {
                     try {
                         const response = await userGetAllClassApi({ token });
                         setKelas(response.data);
-
-                        console.log('data halaman kelas:', response.data);
                         handleCheckBoxChange('semua');
-                        // speechAction({
-                        //     text: `Selamat datang di Daftar Kelas, ${userName}. Pada halaman ini ditemukan ${response.data.length} kelas tersedia.`,
-                        // });
 
                         speechWithBatch({
                             speechs: [
                                 {
                                     text: `Selamat datang di Daftar Kelas, ${userName}. Pada halaman ini terdapat kumpulan dari berbagai kelas yang dapat Anda pelajari.`,
+                                    actionOnStart: () => {
+                                        setSkipTrigger(true);
+                                    },
                                 },
                                 {
                                     text: ' Anda dapat mencari jumlah kelas yang tersedia dengan berdasarkan level, yaitu, Level Mudah, Normal, dan Sulit.',
@@ -318,41 +318,16 @@ const Kelas = () => {
                                 {
                                     text: 'Jika Anda masih bingung, Anda bisa ucapkan intruksi agar dapat mengulangi penjelasan ini.',
                                     actionOnEnd: () => {
+                                        setClickButton(true);
                                         setIntroPage(false);
+                                        setSkipTrigger(false);
                                     },
                                 },
                             ],
                         });
-                        // speechAction({
-                        //     text: `Selamat datang di Daftar Kelas, ${userName}. Pada halaman ini terdapat kumpulan dari berbagai kelas yang dapat Anda pelajari.`,
-                        // });
-                        // speechAction({
-                        //     text: ' Anda dapat mencari jumlah kelas yang tersedia dengan berdasarkan level, yaitu, Level Mudah, Normal, dan Sulit.',
-                        // });
-                        // speechAction({
-                        //     text: `Untuk perintahnya, Anda bisa mengucapkan cari kelas dengan level yang Anda inginkan, misalnya, cari kelas mudah`,
-                        // });
-                        // speechAction({
-                        //     text: 'Jika bingung,  Anda juga dapat mencari semua kelas dengan mengucapkan cari semua kelas.',
-                        // });
-                        // speechAction({
-                        //     text: 'Selanjutnya, Anda bisa ucapkan sebutkan kelas agar mengetahui apa saja kelas di level tersebut.',
-                        // });
-                        // speechAction({
-                        //     text: 'Anda juga dapat mengetahui jumlah kelas yang ada dengan mengucapkan perintah jumlah kelas.',
-                        // });
-                        // speechAction({
-                        //     text: 'Jika sudah menemukan kelas yang cocok, Anda bisa mengucapkan belajar dengan kelas yang Anda inginkan, misalnya Belajar bahasa.',
-                        // });
-                        // speechAction({
-                        //     text: 'Jika Anda masih bingung, Anda bisa ucapkan intruksi agar dapat mengulangi penjelasan ini.',
-                        //     actionOnEnd: () => {
-                        //         setIntroPage(false);
-                        //     },
-                        // });
                     } catch (error) {
                         if (error instanceof ApiResponseError) {
-                            console.log(`ERR API MESSAGE: `, error.message);
+                            console.log(`ERR API MESSAGE: `, error.data);
                             console.log(error.data);
 
                             if (
@@ -372,7 +347,7 @@ const Kelas = () => {
                             }
                             return;
                         }
-                        console.log(`MESSAGE: `, error.message);
+                        console.log(`MESSAGE: `, error.data);
                         speechAction({
                             text: 'Kelas tidak ditemukan',
                         });
@@ -680,6 +655,35 @@ const Kelas = () => {
             };
         }
     }, [router, kelas, token, isChecked, handleFetchKelasByLevelName, speechOn, userName, introPage, skipTrigger]);
+
+    //effects
+    useEffect(() => {
+        const spaceButtonIntroAction = (event) => {
+            buttonAction({
+                event: event,
+                key: ' ',
+                keyCode: 32,
+                action: () => {
+                    if (!isClickButton) {
+                        stopSpeech();
+                        speechAction({
+                            text: 'Anda melewati Intro Halaman',
+                            actionOnEnd: () => {
+                                setIntroPage(false);
+                                setSkipTrigger(false);
+                                setClickButton(true);
+                            },
+                        });
+                    }
+                },
+            });
+        };
+        window.addEventListener('keydown', spaceButtonIntroAction);
+
+        return () => {
+            window.removeEventListener('keydown', spaceButtonIntroAction);
+        };
+    }, [isClickButton]);
 
     return (
         <div className='h-screen bg-[#EDF3F3]'>

@@ -10,9 +10,11 @@
     -> redux global state management
 4. components
     -> reusable component
-5. apis
+5. data
+    -> handle data model or application static data
+6. apis
     -> api functions
-6. utils
+7. utils
     -> utility functions
 */
 
@@ -31,14 +33,15 @@ import { getMicrophoneStatus, checkPermissionSlice, getIsPermit } from '@/redux/
 import LabelPermission from './LabelPermission';
 import FillButton from './FillButton';
 
-// datas
+// data
 // ---
 
 // apis
 // ---
 
 // utils
-import { synth, speech } from '@/utils/text-to-speech';
+import { speechAction } from '@/utils/text-to-speech';
+import { buttonAction } from '@/utils/space-button-action';
 
 const CheckPermission = () => {
     const dispatch = useDispatch();
@@ -53,23 +56,29 @@ const CheckPermission = () => {
 
     //effects
     useEffect(() => {
-        const detectKeyDownNew = (e) => {
-            if (e.keyCode === 69) {
-                if (!isPermit) {
-                    //E key clicked
-                    let utterance = speech('Mikrofon dan Speaker sudah berjalan, Anda dapat mengikuti pembelajaran!');
-                    utterance.onend = () => {
-                        setStatusBtn(true);
-                        dispatch(setIsPermit(true));
-                    };
-                    synth.speak(utterance);
-                }
-            }
+        const spaceButtonAction = (event) => {
+            buttonAction({
+                event: event,
+                key: ' ',
+                keyCode: 32,
+                action: () => {
+                    if (!isPermit) {
+                        speechAction({
+                            text: 'Mikrofon dan Speaker sudah berjalan, Anda dapat mengikuti pembelajaran!',
+                            actionOnEnd: () => {
+                                setStatusBtn(true);
+                                dispatch(setIsPermit(true));
+                            },
+                        });
+                    }
+                },
+            });
         };
+        window.addEventListener('keydown', spaceButtonAction);
 
-        window.addEventListener('keydown', detectKeyDownNew);
-
-        return () => window.removeEventListener('keydown', detectKeyDownNew);
+        return () => {
+            window.removeEventListener('keydown', spaceButtonAction);
+        };
     }, [dispatch, isPermit, setIsPermit]);
 
     useEffect(() => {

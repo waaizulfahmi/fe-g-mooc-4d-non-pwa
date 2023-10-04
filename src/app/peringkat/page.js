@@ -43,6 +43,7 @@ import { userGetPeringkatApi } from '@/axios/user';
 import { ApiResponseError } from '@/utils/error-handling';
 import { recognition } from '@/utils/speech-recognition';
 import { speechAction, speechWithBatch, stopSpeech } from '@/utils/text-to-speech';
+import { buttonAction } from '@/utils/space-button-action';
 
 const Peringkat = () => {
     const { data } = useSession();
@@ -60,6 +61,7 @@ const Peringkat = () => {
     const [skipTrigger, setSkipTrigger] = useState(false);
     const [isTrigger, setIsTrigger] = useState(false);
     const [introPage, setIntroPage] = useState(true);
+    const [isClickButton, setClickButton] = useState(false); //clicking for skiping introPage
 
     // FUNC
     const handleColorPeringkat = (urutan) => {
@@ -94,6 +96,9 @@ const Peringkat = () => {
                             speechs: [
                                 {
                                     text: `Selamat datang di halaman Peringkat, ${userName}. Pada halaman ini Anda dapat mengetahui peringkat Anda saat ini, dengan mengucapkan peringkat saya`,
+                                    actionOnStart: () => {
+                                        setSkipTrigger(true);
+                                    },
                                 },
                                 {
                                     text: `Saya juga akan diam, jika perintah sudah dilakukan. Tapi Anda jangan khawatir, panggil saja saya lagi dengan hi Uli atau hallo uli agar saya dapat mendengar Anda.`,
@@ -102,6 +107,7 @@ const Peringkat = () => {
                                     text: 'Jika Anda masih bingung, Anda bisa ucapkan intruksi agar mendapatkan penjelasan lebih banyak.',
                                     actionOnEnd: () => {
                                         setIntroPage(false);
+                                        setSkipTrigger(false);
                                     },
                                 },
                             ],
@@ -319,6 +325,35 @@ const Peringkat = () => {
             };
         }
     }, [router, userName, userRank, speechOn, skipTrigger, introPage]);
+
+    //effects
+    useEffect(() => {
+        const spaceButtonIntroAction = (event) => {
+            buttonAction({
+                event: event,
+                key: ' ',
+                keyCode: 32,
+                action: () => {
+                    if (!isClickButton) {
+                        stopSpeech();
+                        speechAction({
+                            text: 'Anda melewati Intro Halaman',
+                            actionOnEnd: () => {
+                                setIntroPage(false);
+                                setSkipTrigger(false);
+                                setClickButton(true);
+                            },
+                        });
+                    }
+                },
+            });
+        };
+        window.addEventListener('keydown', spaceButtonIntroAction);
+
+        return () => {
+            window.removeEventListener('keydown', spaceButtonIntroAction);
+        };
+    }, [isClickButton]);
 
     return (
         <section className='h-screen bg-primary-1'>
