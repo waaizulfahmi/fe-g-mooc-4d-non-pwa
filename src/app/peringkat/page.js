@@ -52,6 +52,7 @@ const Peringkat = () => {
     const router = useRouter();
 
     // STATE
+    const [playingIntruksi, setPlayingIntruksi] = useState(false); // intruction state
     const [loadData, setLoadData] = useState(true);
     const [rank, setRank] = useState([]);
     const [userRank, setUserRank] = useState(null);
@@ -146,7 +147,7 @@ const Peringkat = () => {
                 if (cleanCommand.includes('peringkat')) {
                     if (cleanCommand.includes('saya')) {
                         setSpeechOn(false);
-                        if (!userRank.ranking) {
+                        if (!userRank?.ranking || !userRank) {
                             speechAction({
                                 text: `Anda belum menyelesaikan materi, Silahkan belajar terlebih dahulu!`,
                                 actionOnEnd: () => {
@@ -235,6 +236,43 @@ const Peringkat = () => {
                             setIsTrigger(false);
                         },
                     });
+                } else if (cleanCommand.includes('jelaskan')) {
+                    if (cleanCommand.includes('intruksi') || cleanCommand.includes('instruksi')) {
+                        console.log('dapet nih');
+                        setSpeechOn(false);
+                        setClickButton(false);
+                        setPlayingIntruksi(true);
+                        speechWithBatch({
+                            speechs: [
+                                {
+                                    text: `Hai ${userName}, sekarang Anda mendengarkan intruksi di halaman peringkat.`,
+                                    actionOnStart: () => {
+                                        setSkipTrigger(true);
+                                    },
+                                    actionOnEnd: () => {
+                                        setIsTrigger(false);
+                                    },
+                                },
+                                {
+                                    text: `Perintah untuk mengetahui peringkat Anda dengan mengucapkan peringkat saya`,
+                                },
+                                {
+                                    text: `Jika Anda tersesat, Anda dapat mengucapkan saya dimana`,
+                                },
+                                {
+                                    text: `Untuk navigasi halaman, Anda dapat mengucapkan pergi ke halaman yang Anda tuju, misalnya pergi ke kelas, pada halaman ini Anda dapat pergi ke halaman kelas, raport, dan peringkat`,
+                                },
+
+                                {
+                                    text: `jangan lupa, Anda harus ucapkan terlebih dahulu hi Uli atau hallo uli agar saya dapat mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.`,
+                                    actionOnEnd: () => {
+                                        setSkipTrigger(false);
+                                        setPlayingIntruksi(false);
+                                    },
+                                },
+                            ],
+                        });
+                    }
                 }
             }
 
@@ -246,6 +284,7 @@ const Peringkat = () => {
                             speechAction({
                                 text: `Anda akan load halaman ini!`,
                                 actionOnEnd: () => {
+                                    setClickButton(false);
                                     setIsTrigger(false);
                                     setLoadData(true);
                                 },
@@ -268,38 +307,38 @@ const Peringkat = () => {
                 }
             }
 
-            if (!introPage) {
-                if (cleanCommand.includes('intruksi')) {
-                    setSpeechOn(false);
-                    speechWithBatch({
-                        speechs: [
-                            {
-                                text: `Hai ${userName}, sekarang Anda mendengarkan intruksi di halaman beranda.`,
-                                actionOnEnd: () => {
-                                    setSkipTrigger(true);
-                                    setIsTrigger(false);
-                                },
-                            },
-                            {
-                                text: `Perintah untuk mengetahui peringkat Anda dengan mengucapkan peringkat saya`,
-                            },
-                            {
-                                text: `Jika Anda tersesat, Anda dapat mengucapkan saya dimana`,
-                            },
-                            {
-                                text: `Untuk navigasi halaman, Anda dapat mengucapkan pergi ke halaman yang Anda tuju, misalnya pergi ke kelas, pada halaman ini Anda dapat pergi ke halaman kelas, raport, dan peringkat`,
-                            },
+            // if (!introPage) {
+            //     if (cleanCommand.includes('intruksi')) {
+            //         setSpeechOn(false);
+            //         speechWithBatch({
+            //             speechs: [
+            //                 {
+            //                     text: `Hai ${userName}, sekarang Anda mendengarkan intruksi di halaman beranda.`,
+            //                     actionOnEnd: () => {
+            //                         setSkipTrigger(true);
+            //                         setIsTrigger(false);
+            //                     },
+            //                 },
+            //                 {
+            //                     text: `Perintah untuk mengetahui peringkat Anda dengan mengucapkan peringkat saya`,
+            //                 },
+            //                 {
+            //                     text: `Jika Anda tersesat, Anda dapat mengucapkan saya dimana`,
+            //                 },
+            //                 {
+            //                     text: `Untuk navigasi halaman, Anda dapat mengucapkan pergi ke halaman yang Anda tuju, misalnya pergi ke kelas, pada halaman ini Anda dapat pergi ke halaman kelas, raport, dan peringkat`,
+            //                 },
 
-                            {
-                                text: `jangan lupa, Anda harus ucapkan terlebih dahulu hi Uli atau hallo uli agar saya dapat mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.`,
-                                actionOnEnd: () => {
-                                    setSkipTrigger(false);
-                                },
-                            },
-                        ],
-                    });
-                }
-            }
+            //                 {
+            //                     text: `jangan lupa, Anda harus ucapkan terlebih dahulu hi Uli atau hallo uli agar saya dapat mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.`,
+            //                     actionOnEnd: () => {
+            //                         setSkipTrigger(false);
+            //                     },
+            //                 },
+            //             ],
+            //         });
+            //     }
+            // }
         };
 
         recognition.onend = () => {
@@ -335,6 +374,21 @@ const Peringkat = () => {
                 keyCode: 32,
                 action: () => {
                     if (!isClickButton) {
+                        if (playingIntruksi) {
+                            setSpeechOn(false);
+                            stopSpeech();
+                            speechAction({
+                                text: 'Anda mematikan intruksi',
+                                actionOnEnd: () => {
+                                    setIsTrigger(false);
+                                    setIntroPage(false);
+                                    setSkipTrigger(false);
+                                    setClickButton(true);
+                                    setPlayingIntruksi(false);
+                                },
+                            });
+                            return;
+                        }
                         stopSpeech();
                         speechAction({
                             text: 'Anda melewati Intro Halaman',
@@ -353,7 +407,7 @@ const Peringkat = () => {
         return () => {
             window.removeEventListener('keydown', spaceButtonIntroAction);
         };
-    }, [isClickButton]);
+    }, [isClickButton, playingIntruksi]);
 
     return (
         <section className='h-screen bg-primary-1'>

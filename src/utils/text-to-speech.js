@@ -32,7 +32,6 @@ export const speechAction = ({ text, actionOnStart, actionOnEnd }) => {
 
 export const speechWithBatch = ({ speechs }) => {
     for (let i = 0; i < speechs.length; i++) {
-        // const lastSpeechIdx = speechs.length - 1;
         const text = speechs[i]?.text;
 
         if (

@@ -87,7 +87,7 @@ const CheckPermission = () => {
             setStatusMsg('Hidupkan mikrofon!');
         } else if (micprohoneStatus === 'granted' && !statusBtn) {
             setStatus(false);
-            setStatusMsg('Tekan tombol E!');
+            setStatusMsg('Tekan tombol Spasi!');
         } else if (micprohoneStatus === 'granted' && statusBtn) {
             setStatus(true);
             setStatusMsg('Ayo Belajar!');
@@ -118,10 +118,10 @@ const CheckPermission = () => {
                             <div className='col-span-5 flex flex-col gap-3 '>
                                 <h1 className='text-body-2 font-bold'>2. Kita check mikrofon</h1>
                                 <p>
-                                    Untuk cek mikrofon tekan tombol <span className='font-bold'>E</span>
+                                    Untuk cek mikrofon tekan tombol <span className='text-body-3 font-bold'>Spasi</span>
                                 </p>
 
-                                <Image alt='' src={'/images/e-key.png'} width={400} height={400} />
+                                <Image alt='' src={'/images/space-key.png'} width={400} height={400} />
                                 <p>
                                     <span className='font-bold text-red-600'>NOTE :</span> <br />
                                     Cek mikrofon di browser Anda <br /> sampai terdengar suara!

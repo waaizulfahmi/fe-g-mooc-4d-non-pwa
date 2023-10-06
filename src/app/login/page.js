@@ -33,7 +33,7 @@ const Login = () => {
         const email = data.email;
         const password = data.password;
 
-        const response = await signIn('credentials', {
+        const response = await signIn('test', {
             email,
             password,
             redirect: false,

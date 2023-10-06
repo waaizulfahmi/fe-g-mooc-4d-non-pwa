@@ -41,7 +41,7 @@ import YouTubePlayer from 'youtube-player';
 import { speechAction } from '@/utils/text-to-speech';
 import { buttonAction } from '@/utils/space-button-action';
 
-const VideoFrame = ({ playback, videoId, handleEditMateri }) => {
+const VideoFrame = ({ playback, videoId, handleEditMateri, isInterrop }) => {
     const [pause, setPause] = useState(false);
     const playerRef = useRef(null);
 
@@ -130,12 +130,14 @@ const VideoFrame = ({ playback, videoId, handleEditMateri }) => {
                 key: ' ',
                 keyCode: 32,
                 action: () => {
-                    if (!pause) {
-                        playerRef.current.playVideo();
-                        setPause(true);
-                    } else {
-                        playerRef.current.pauseVideo();
-                        setPause(false);
+                    if (!isInterrop) {
+                        if (!pause) {
+                            playerRef.current.playVideo();
+                            setPause(true);
+                        } else {
+                            playerRef.current.pauseVideo();
+                            setPause(false);
+                        }
                     }
                 },
             });
@@ -146,7 +148,7 @@ const VideoFrame = ({ playback, videoId, handleEditMateri }) => {
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [pause]);
+    }, [pause, isInterrop]);
 
     return (
         <>
@@ -159,6 +161,7 @@ VideoFrame.propTypes = {
     playback: PropTypes.number,
     videoId: PropTypes.string,
     handleEditMateri: PropTypes.func,
+    isInterrop: PropTypes.bool,
 };
 
 export default VideoFrame;

@@ -82,7 +82,7 @@ const userGetRapotApi = async ({ token }) => {
 };
 
 const DisplayClass = ({ listClass }) => {
-    console.log('Classs nilai: ', listClass);
+    // console.log('Classs nilai: ', listClass);
     return (
         <>
             {listClass?.length
@@ -97,18 +97,11 @@ const DisplayClass = ({ listClass }) => {
                                   <p className='text-[18px] font-bold leading-[24px]'>{rClass.name}</p>
                               </div>
                               <div className='flex items-center gap-[16px]'>
-                                  {/* <div className='flex flex-col rounded-rad-3 bg-secondary-1 px-[21px] py-[8px]'>
-                                      <span className='text-[24px] font-bold text-white'>{rClass.max_poin}</span>
-                                      <span className='text-[12px] font-bold text-white '>Nilai</span>
-                                  </div> */}
                                   <div className='flex flex-col rounded-rad-3 bg-secondary-1 px-[21px] py-[8px]'>
                                       <span className='text-[24px] font-bold text-white '>{rClass.progress}</span>
                                       <span className='text-[12px] font-bold text-white'>Kemajuan</span>
                                   </div>
                                   {rClass.progress === '100%' ? (
-                                      //   <FillButton className=px-[58px] py-[18px] text-[24px]'>
-                                      //       Selesai'
-                                      //   </FillButton>
                                       <BorderedButton className='border-primary-1 px-[58px] py-[18px] text-[24px] text-primary-1'>
                                           Selesai
                                       </BorderedButton>
@@ -135,13 +128,11 @@ const Rapor = () => {
     const router = useRouter();
 
     // STATE
+    const [playingIntruksi, setPlayingIntruksi] = useState(false);
     const [classShow, setClassShow] = useState('progress'); // progress || done
     const [loadData, setLoadData] = useState(true);
-    // const [firstLoad, setFirstLoad] = useState(true);
     const [countFinishedClass, setCountFinishedClass] = useState(0);
-    const [rataProgress, setRataProgress] = useState('');
     const [totalPoin, setTotalPoin] = useState(0);
-    const [nilai, setNilai] = useState(0);
     const [runningClass, setRunningClass] = useState([]);
     const [finishedClass, setFinishedClass] = useState([]);
     const [totalPelajaran, setTotalPelajaran] = useState([]);
@@ -151,8 +142,6 @@ const Rapor = () => {
     const [introPage, setIntroPage] = useState(true);
     const [isTrigger, setIsTrigger] = useState(false);
     const [isClickButton, setClickButton] = useState(false); //clicking for skiping introPage
-
-    // FUNC
 
     // EFFECTS
     // init recognition
@@ -184,9 +173,7 @@ const Rapor = () => {
 
                         setTotalPoin(rapot.getTotalPoin());
                         setCountFinishedClass(rapot.getJumlahSelesai());
-                        setRataProgress(rapot.getRataProgress());
                         setRunningClass(rapot.getKelasProgress());
-                        setNilai(rapot.getNilai());
                         setTotalPelajaran(rapot.getKelasProgress());
                         setFinishedClass(rapot.getKelasSelesai());
 
@@ -225,9 +212,9 @@ const Rapor = () => {
                             ],
                         });
 
-                        console.log('semua peljara:', rapot.getSemuaPelajaran());
-                        console.log(response);
-                        console.log(rapot);
+                        // console.log('semua peljara:', rapot.getSemuaPelajaran());
+                        // console.log(response);
+                        // console.log(rapot);
                     } catch (error) {
                         if (error instanceof ApiResponseError) {
                             console.log(`ERR RAPOT API MESSAGE: `, error.message);
@@ -295,8 +282,8 @@ const Rapor = () => {
                     });
                 } else if (command.includes('cari')) {
                     if (cleanCommand.includes('kelas')) {
-                        setSpeechOn(false);
                         if (cleanCommand.includes('selesai')) {
+                            setSpeechOn(false);
                             console.log('Kelaas selese: ', finishedClass);
                             if (finishedClass.length === 0) {
                                 speechAction({
@@ -317,13 +304,13 @@ const Rapor = () => {
                             });
                             for (let i = 0; i < finishedClass.length; i++) {
                                 const namaKelas = finishedClass[i].name;
-                                // const nilaiKelas = runningClass[i].max_poin;
                                 const progress = finishedClass[i].progress;
                                 speechAction({
                                     text: `${namaKelas} dengan kemajuan ${progress}`,
                                 });
                             }
                         } else if (cleanCommand.includes('berjalan')) {
+                            setSpeechOn(false);
                             console.log('Kelaas jalan: ', runningClass);
                             speechAction({
                                 text: `Berikut daftar kelas yang sedang berjalan`,
@@ -335,7 +322,6 @@ const Rapor = () => {
                             });
                             for (let i = 0; i < runningClass.length; i++) {
                                 const namaKelas = runningClass[i].name;
-                                // const nilaiKelas = runningClass[i].max_poin;
                                 const progress = runningClass[i].progress;
                                 speechAction({
                                     text: `${namaKelas} dengan kemajuan ${progress}`,
@@ -343,16 +329,28 @@ const Rapor = () => {
                             }
                             if (runningClass?.length > 0) {
                                 speechAction({
-                                    text: `Untuk melanjutkan kelas, Anda dapat mengucapkan belajar lagi diikuti nama kelas, contohnya belajar lagi kelas ${runningClass[0].name}`,
+                                    text: `Untuk melanjutkan belajar di kelas, Anda dapat mengucapkan belajar lagi diikuti nama kelas, contohnya belajar lagi kelas ${runningClass[0].name}`,
                                 });
                             }
                         } else {
+                            setSpeechOn(false);
                             const kelasCommand = cleanCommand.replace('cari kelas', '').trim();
                             if (classShow === 'progress') {
-                                console.log('kelas: ', kelasCommand);
-                                console.log('ru', runningClass);
                                 const findKelas = runningClass.find((k) => k.name.toLowerCase() === kelasCommand);
 
+                                if (!findKelas) {
+                                    console.log(kelasCommand.length);
+                                    if (kelasCommand.length >= 10) {
+                                        speechAction({
+                                            text: `kelas tidak ditemukan!, sepertinya suara yang Anda ucap kurang jelas, Anda bisa ulangi lagi!`,
+                                        });
+                                    } else {
+                                        speechAction({
+                                            text: `kelas tidak ditemukan!`,
+                                        });
+                                    }
+                                    return;
+                                }
                                 speechWithBatch({
                                     speechs: [
                                         {
@@ -369,19 +367,6 @@ const Rapor = () => {
                                         },
                                     ],
                                 });
-                                // speechAction({
-                                //     text: `Ditemukan nilai dari kelas yang masih berjalan, yaitu ${kelasCommand}`,
-                                // });
-                                // speechAction({
-                                //     text: `Pada kelas ${kelasCommand}, kemajuan pembelajaran Anda adalah ${findKelas.progress}.`,
-                                // });
-                                // speechAction({
-                                //     text: 'Ayo selesaikan kelas Anda, agar dapat menjadi peringkat teratas!',
-                                //     actionOnEnd: () => {
-                                //         setIsTrigger(false);
-                                //     },
-                                // });
-                                console.log(`nilai ${kelasCommand}:`, findKelas);
                             }
                         }
                     }
@@ -400,6 +385,45 @@ const Rapor = () => {
                             });
                         }
                     }
+                } else if (cleanCommand.includes('jelaskan')) {
+                    if (cleanCommand.includes('intruksi') || cleanCommand.includes('instruksi')) {
+                        console.log('dapet nih');
+                        setSpeechOn(false);
+                        setClickButton(false);
+                        setPlayingIntruksi(true);
+                        speechWithBatch({
+                            speechs: [
+                                {
+                                    text: `Hai ${userName}, sekarang Anda mendengarkan intruksi di halaman raport.`,
+                                    actionOnStart: () => {
+                                        setSkipTrigger(true);
+                                    },
+                                    actionOnEnd: () => {
+                                        setIsTrigger(false);
+                                    },
+                                },
+                                {
+                                    text: `Perintah untuk mencari kelas yang sudah Anda pelajari dengan mengucapkan Cari Kelas selesai`,
+                                },
+                                {
+                                    text: `Perintah untuk mencari kelas yang sedang berjalan dengan mengucapkan Cari Kelas berjalan`,
+                                },
+                                {
+                                    text: `Perintah untuk kembali belajar di kelas yang sedang berjalan dengan mengucapkan Belajar Kembali yang diikuti nama kelas, misalnya belajar kembali kelas html`,
+                                },
+                                {
+                                    text: `Untuk navigasi halaman Anda dapat mengucapkan pergi ke halaman yang Anda tuju, misalnya pergi ke beranda, pada halaman ini Anda dapat pergi ke halaman beranda, kelas, dan peringkat`,
+                                },
+                                {
+                                    text: `jangan lupa, Anda harus ucapkan terlebih dahulu hi Uli atau hallo uli agar saya dapat mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.`,
+                                    actionOnEnd: () => {
+                                        setSkipTrigger(false);
+                                        setPlayingIntruksi(false);
+                                    },
+                                },
+                            ],
+                        });
+                    }
                 }
             }
 
@@ -411,9 +435,9 @@ const Rapor = () => {
                             speechAction({
                                 text: `Anda akan load halaman ini!`,
                                 actionOnEnd: () => {
+                                    setClickButton(false);
                                     setIsTrigger(false);
                                     setClassShow('progress');
-                                    // setFirstLoad(true);
                                     setLoadData(true);
                                 },
                             });
@@ -434,42 +458,6 @@ const Rapor = () => {
                     }
                 }
             }
-
-            if (!introPage) {
-                if (cleanCommand.includes('intruksi')) {
-                    speechWithBatch({
-                        speechs: [
-                            {
-                                text: `Hai ${userName}, sekarang Anda mendengarkan intruksi di halaman raport.`,
-                                actionOnEnd: () => {
-                                    if (speechOn) {
-                                        setSpeechOn(false);
-                                    }
-                                    setSkipTrigger(true);
-                                },
-                            },
-                            {
-                                text: `Perintah untuk mencari kelas yang sudah Anda pelajari dengan mengucapkan Cari Kelas selesai`,
-                            },
-                            {
-                                text: `Perintah untuk mencari kelas yang sedang berjalan dengan mengucapkan Cari Kelas berjalan`,
-                            },
-                            {
-                                text: `Perintah untuk kembali belajar di kelas yang sedang berjalan dengan mengucapkan Belajar Kembali yang diikuti nama kelas, misalnya belajar kembali kelas html`,
-                            },
-                            {
-                                text: `Untuk navigasi halaman Anda dapat mengucapkan pergi ke halaman yang Anda tuju, misalnya pergi ke beranda, pada halaman ini Anda dapat pergi ke halaman beranda, kelas, dan peringkat`,
-                            },
-                            {
-                                text: `jangan lupa, Anda harus ucapkan terlebih dahulu hi Uli atau hallo uli agar saya dapat mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.`,
-                                actionOnEnd: () => {
-                                    setSkipTrigger(false);
-                                },
-                            },
-                        ],
-                    });
-                }
-            }
         };
 
         recognition.onend = () => {
@@ -483,7 +471,7 @@ const Rapor = () => {
                 speechAction({
                     text: 'saya diam',
                     actionOnEnd: () => {
-                        console.log('speech diclear');
+                        // console.log('speech diclear');
                         setIsTrigger(false);
                         setSpeechOn(false);
                     },
@@ -505,6 +493,21 @@ const Rapor = () => {
                 keyCode: 32,
                 action: () => {
                     if (!isClickButton) {
+                        if (playingIntruksi) {
+                            setSpeechOn(false);
+                            stopSpeech();
+                            speechAction({
+                                text: 'Anda mematikan intruksi',
+                                actionOnEnd: () => {
+                                    setIsTrigger(false);
+                                    setIntroPage(false);
+                                    setSkipTrigger(false);
+                                    setClickButton(true);
+                                    setPlayingIntruksi(false);
+                                },
+                            });
+                            return;
+                        }
                         stopSpeech();
                         speechAction({
                             text: 'Anda melewati Intro Halaman',
@@ -523,7 +526,7 @@ const Rapor = () => {
         return () => {
             window.removeEventListener('keydown', spaceButtonIntroAction);
         };
-    }, [isClickButton]);
+    }, [isClickButton, playingIntruksi]);
 
     return (
         <div className='h-screen bg-primary-1'>

@@ -53,7 +53,8 @@ export default function Beranda() {
     const isPermit = useSelector(getIsPermit);
 
     //STATE
-    const [transcript, setTrancript] = useState('');
+    const [playingIntruksi, setPlayingIntruksi] = useState(false); // intruction state
+    const [transcript, setTrancript] = useState(''); // transcription
     const [speechOn, setSpeechOn] = useState(false); // hi uli works
     const [skipTrigger, setSkipTrigger] = useState(false); //skiping hi uli
     const [introPage, setIntroPage] = useState(true); // skiping  intruksi
@@ -85,7 +86,7 @@ export default function Beranda() {
                             text: 'Perkenalkan saya Uli, saya akan memandu Anda untuk belajar. ucapkan hai atau hello uli agar saya dapat mendengar Anda',
                         },
                         {
-                            text: `Halaman ini dinamakan halaman beranda, halaman ini merupakan halaman  pertama kali ketika Anda menggunakan aplikasi ini.`,
+                            text: `Halaman ini adalah halaman beranda, pada halaman ini merupakan halaman  pertama kali ketika Anda menggunakan aplikasi.`,
                         },
                         {
                             text: 'Pada halaman ini terdapat berbagai perintah untuk pergi ke halaman lain, contohnya halaman kelas, raport, dan peringkat.',
@@ -166,6 +167,39 @@ export default function Beranda() {
                             setIsTrigger(false);
                         },
                     });
+                } else if (cleanCommand.includes('jelaskan')) {
+                    if (cleanCommand.includes('intruksi') || cleanCommand.includes('instruksi')) {
+                        console.log('dapet nih');
+                        setSpeechOn(false);
+                        setClickButton(false);
+                        setPlayingIntruksi(true);
+                        speechWithBatch({
+                            speechs: [
+                                {
+                                    text: `Hai ${userName}, sekarang Anda mendengarkan intruksi di halaman beranda.`,
+                                    actionOnStart: () => {
+                                        setSkipTrigger(true);
+                                    },
+                                    actionOnEnd: () => {
+                                        setIsTrigger(false);
+                                    },
+                                },
+                                {
+                                    text: `Jika Anda tersesat, Anda dapat mengucapkan saya dimana`,
+                                },
+                                {
+                                    text: `Untuk navigasi halaman, Anda dapat mengucapkan pergi ke halaman yang Anda tuju, misalnya pergi ke kelas, pada halaman ini Anda dapat pergi ke halaman kelas, raport, dan peringkat`,
+                                },
+                                {
+                                    text: `jangan lupa, Anda harus ucapkan terlebih dahulu hi Uli atau hallo uli agar saya dapat mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.`,
+                                    actionOnEnd: () => {
+                                        setSkipTrigger(false);
+                                        setPlayingIntruksi(false);
+                                    },
+                                },
+                            ],
+                        });
+                    }
                 }
             }
 
@@ -177,6 +211,7 @@ export default function Beranda() {
                             speechAction({
                                 text: `Anda akan load ulang halaman!`,
                                 actionOnEnd: () => {
+                                    setClickButton(false);
                                     setIsTrigger(false);
                                 },
                             });
@@ -195,35 +230,6 @@ export default function Beranda() {
                             },
                         });
                     }
-                }
-            }
-
-            if (!introPage) {
-                if (cleanCommand.includes('intruksi')) {
-                    setSpeechOn(false);
-                    speechWithBatch({
-                        speechs: [
-                            {
-                                text: `Hai ${userName}, sekarang Anda mendengarkan intruksi di halaman beranda.`,
-                                actionOnEnd: () => {
-                                    setSkipTrigger(true);
-                                    setIsTrigger(false);
-                                },
-                            },
-                            {
-                                text: `Jika Anda tersesat, Anda dapat mengucapkan saya dimana`,
-                            },
-                            {
-                                text: `Untuk navigasi halaman, Anda dapat mengucapkan pergi ke halaman yang Anda tuju, misalnya pergi ke kelas, pada halaman ini Anda dapat pergi ke halaman kelas, raport, dan peringkat`,
-                            },
-                            {
-                                text: `jangan lupa, Anda harus ucapkan terlebih dahulu hi Uli atau hallo uli agar saya dapat mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.`,
-                                actionOnEnd: () => {
-                                    setSkipTrigger(false);
-                                },
-                            },
-                        ],
-                    });
                 }
             }
         };
@@ -261,6 +267,21 @@ export default function Beranda() {
                 keyCode: 32,
                 action: () => {
                     if (!isClickButton && isPermit) {
+                        if (playingIntruksi) {
+                            setSpeechOn(false);
+                            stopSpeech();
+                            speechAction({
+                                text: 'Anda mematikan intruksi',
+                                actionOnEnd: () => {
+                                    setIsTrigger(false);
+                                    setIntroPage(false);
+                                    setSkipTrigger(false);
+                                    setClickButton(true);
+                                    setPlayingIntruksi(false);
+                                },
+                            });
+                            return;
+                        }
                         stopSpeech();
                         speechAction({
                             text: 'Anda melewati Intro Halaman',
@@ -279,7 +300,7 @@ export default function Beranda() {
         return () => {
             window.removeEventListener('keydown', spaceButtonIntroAction);
         };
-    }, [isClickButton, isPermit]);
+    }, [isClickButton, isPermit, playingIntruksi]);
 
     return (
         <main className='h-screen '>

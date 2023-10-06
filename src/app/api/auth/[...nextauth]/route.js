@@ -1,19 +1,20 @@
-import NextAuth from "next-auth";
-import { authLogin } from "@/axios/auth";
-import { ApiResponseError } from "@/utils/error-handling";
-import CredentialsProvider from "next-auth/providers/credentials";
+import NextAuth from 'next-auth';
+import { authLogin } from '@/axios/auth';
+import { ApiResponseError } from '@/utils/error-handling';
+import CredentialsProvider from 'next-auth/providers/credentials';
 
 const handler = NextAuth({
     providers: [
         CredentialsProvider({
-            name: "Credentials",
+            id: 'test',
+            name: 'Credentials',
             credentials: {
                 email: {
-                    label: "Email",
-                    type: "text",
-                    placeholder: "arief@gmail.com",
+                    label: 'Email',
+                    type: 'text',
+                    placeholder: 'arief@gmail.com',
                 },
-                password: { label: "Password", type: "password" },
+                password: { label: 'Password', type: 'password' },
             },
 
             async authorize(credentials) {
@@ -23,6 +24,7 @@ const handler = NextAuth({
                         password: credentials.password,
                     });
 
+                    console.log('Response login: ', response.data);
                     return response.data;
                 } catch (error) {
                     if (error instanceof ApiResponseError) {
@@ -38,7 +40,7 @@ const handler = NextAuth({
         }),
     ],
     session: {
-        strategy: "jwt",
+        strategy: 'jwt',
     },
     callbacks: {
         async jwt({ token, user }) {
@@ -52,7 +54,7 @@ const handler = NextAuth({
     },
     secret: process.env.NEXTAUTH_SECRET,
     pages: {
-        signIn: "/login",
+        signIn: '/login',
     },
 });
 
