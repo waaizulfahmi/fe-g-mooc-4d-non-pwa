@@ -3,10 +3,13 @@
 // core
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useRef, useCallback, useState } from 'react';
 
 // third parties
 import { signIn } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
+import Webcam from 'react-webcam';
+import Popup from 'reactjs-popup';
 
 // hooks
 import { useNotification } from '@/hooks';
@@ -22,6 +25,8 @@ import Notification from '@/components/Notification';
 const Login = () => {
     const router = useRouter();
     const { notifData, handleNotifAction, handleNotifVisible } = useNotification();
+    const webcamRef = useRef(null);
+    const [isCameraOpen, setIsCameraOpen] = useState(false);
 
     const {
         register,
@@ -29,17 +34,61 @@ const Login = () => {
         formState: { errors },
     } = useForm();
 
+    const openCamera = () => {
+        setIsCameraOpen(true);
+
+        const waitForCamera = setInterval(() => {
+            if (webcamRef.current?.video.readyState === 4) {
+                clearInterval(waitForCamera);
+                capture();
+            }
+        }, 5000);
+    };
+
+    const closeCamera = () => {
+        setIsCameraOpen(false);
+    };
+
+    const capture = useCallback(async () => {
+        const imageSrc = webcamRef.current.getScreenshot();
+
+        console.log(imageSrc);
+
+        const onSubmitImage = async (data) => {
+            closeCamera();
+
+            const response = await signIn('face-login', {
+                image: data,
+                redirect: false,
+            });
+
+            console.log('DATA: ', response);
+
+            if (!response?.error) {
+                router.refresh();
+                router.replace('/', { scroll: false });
+            } else if (response?.error) {
+                handleNotifAction('error', response.error);
+            }
+        };
+
+        if (imageSrc) {
+            await onSubmitImage(imageSrc);
+        }
+    }, [handleNotifAction, router]);
+
     const onSubmit = async (data) => {
         const email = data.email;
         const password = data.password;
 
-        const response = await signIn('test', {
+        const response = await signIn('common-login', {
             email,
             password,
             redirect: false,
         });
 
         if (!response?.error) {
+            router.refresh();
             router.replace('/', { scroll: false });
         } else if (response?.error) {
             handleNotifAction('error', response.error);
@@ -117,6 +166,39 @@ const Login = () => {
                                 }   bg-neutral-6 px-6 py-[17px] text-body-2 font-normal `}
                             />
                         </div>
+                        {isCameraOpen ? (
+                            <Popup
+                                closeBtn={true}
+                                closePopup={closeCamera}
+                                open={isCameraOpen}
+                                modal
+                                nested
+                                className='rounded-lg bg-gray-100 p-4'>
+                                <div className='fixed inset-0 bg-opacity-50 backdrop-blur-md backdrop-filter'></div>
+                                <div className='relative rounded-lg bg-white p-5 shadow-lg'>
+                                    <h1 className='pb-4 text-2xl font-semibold'>Face Recognition Technology</h1>
+                                    <Webcam
+                                        audio={false}
+                                        ref={webcamRef}
+                                        mirrored={true}
+                                        screenshotFormat='image/jpeg'
+                                        className='w-full rounded-lg shadow-lg'
+                                    />
+                                    <div className='mt-4 flex flex-col items-center'>
+                                        <h3 className='text-xl font-semibold'>Memindai Wajah Anda</h3>
+                                        <button
+                                            onClick={closeCamera}
+                                            className='mt-2 rounded-lg bg-red-500 px-4 py-2 font-semibold text-white hover:bg-red-600'>
+                                            Keluar
+                                        </button>
+                                    </div>
+                                </div>
+                            </Popup>
+                        ) : (
+                            <FillButton onClick={openCamera} className='w-max px-[52px] py-[16px]'>
+                                Face Recognition
+                            </FillButton>
+                        )}
                         <FillButton type='submit' className='w-max px-[52px] py-[16px]'>
                             Masuk
                         </FillButton>

@@ -127,8 +127,7 @@ const Rapor = () => {
     const userName = data?.user?.name;
     const router = useRouter();
 
-    // STATE
-    const [playingIntruksi, setPlayingIntruksi] = useState(false);
+    // COMMON STATE
     const [classShow, setClassShow] = useState('progress'); // progress || done
     const [loadData, setLoadData] = useState(true);
     const [countFinishedClass, setCountFinishedClass] = useState(0);
@@ -136,15 +135,17 @@ const Rapor = () => {
     const [runningClass, setRunningClass] = useState([]);
     const [finishedClass, setFinishedClass] = useState([]);
     const [totalPelajaran, setTotalPelajaran] = useState([]);
-    const [transcript, setTrancript] = useState('');
-    const [speechOn, setSpeechOn] = useState(false);
-    const [skipTrigger, setSkipTrigger] = useState(false);
-    const [introPage, setIntroPage] = useState(true);
-    const [isTrigger, setIsTrigger] = useState(false);
-    const [isClickButton, setClickButton] = useState(false); //clicking for skiping introPage
+
+    // ACCESSIBILITY STATE
+    const [speechOn, setSpeechOn] = useState(false); // state untuk  speech recognition
+    const [transcript, setTrancript] = useState(''); // state untuk menyimpan transcript hasil speech recognition
+    const [skipSpeech, setSkipSpeech] = useState(false); // state untuk  mengatasi speech recogniton ter-trigger
+    const [displayTranscript, setDisplayTranscript] = useState(false); // state untuk  menampilkan transcript
+    const [isClickButton, setIsClickButton] = useState(false); // state untuk aksi tombol
+    const [isPlayIntruction, setIsPlayIntruction] = useState(false); // state  ketika intruksi berjalan
 
     // EFFECTS
-    // init recognition
+    // init speech recognition
     useEffect(() => {
         try {
             recognition.start();
@@ -190,7 +191,7 @@ const Rapor = () => {
                                               } kelas`
                                     } `,
                                     actionOnStart: () => {
-                                        setSkipTrigger(true);
+                                        setSkipSpeech(true);
                                     },
                                 },
                                 {
@@ -205,8 +206,8 @@ const Rapor = () => {
                                 {
                                     text: 'Jika Anda masih bingung, Anda bisa ucapkan intruksi agar mendapatkan penjelasan lebih banyak.',
                                     actionOnEnd: () => {
-                                        setIntroPage(false);
-                                        setSkipTrigger(false);
+                                        // setIntroPage(false);
+                                        setSkipSpeech(false);
                                     },
                                 },
                             ],
@@ -237,14 +238,14 @@ const Rapor = () => {
             setTrancript(cleanCommand);
             console.log(cleanCommand);
 
-            if (speechOn && !skipTrigger) {
+            if (speechOn && !skipSpeech) {
                 if (cleanCommand.includes('pergi')) {
                     if (cleanCommand.includes('beranda')) {
                         setSpeechOn(false);
                         speechAction({
                             text: 'Anda akan menuju halaman Beranda',
                             actionOnEnd: () => {
-                                setIsTrigger(false);
+                                setDisplayTranscript(false);
                                 router.push('/');
                             },
                         });
@@ -253,7 +254,7 @@ const Rapor = () => {
                         speechAction({
                             text: 'Anda akan menuju halaman Kelas',
                             actionOnEnd: () => {
-                                setIsTrigger(false);
+                                setDisplayTranscript(false);
                                 router.push('/kelas');
                             },
                         });
@@ -262,7 +263,7 @@ const Rapor = () => {
                         speechAction({
                             text: 'Anda akan menuju halaman Peringkat',
                             actionOnEnd: () => {
-                                setIsTrigger(false);
+                                setDisplayTranscript(false);
                                 router.push('/peringkat');
                             },
                         });
@@ -277,7 +278,7 @@ const Rapor = () => {
                     speechAction({
                         text: `Kita sedang di halaman rapot`,
                         actionOnEnd: () => {
-                            setIsTrigger(false);
+                            setDisplayTranscript(false);
                         },
                     });
                 } else if (command.includes('cari')) {
@@ -289,7 +290,7 @@ const Rapor = () => {
                                 speechAction({
                                     text: `Belum ada nilai!, Anda belum menyelesaikan kelas satu pun!`,
                                     actionOnEnd: () => {
-                                        setIsTrigger(false);
+                                        setDisplayTranscript(false);
                                     },
                                 });
                                 return;
@@ -297,7 +298,7 @@ const Rapor = () => {
                             speechAction({
                                 text: `Berikut daftar kelas yang telah selesai`,
                                 actionOnEnd: () => {
-                                    setIsTrigger(false);
+                                    setDisplayTranscript(false);
                                     setClassShow('done');
                                     setTotalPelajaran(finishedClass);
                                 },
@@ -315,7 +316,7 @@ const Rapor = () => {
                             speechAction({
                                 text: `Berikut daftar kelas yang sedang berjalan`,
                                 actionOnEnd: () => {
-                                    setIsTrigger(false);
+                                    setDisplayTranscript(false);
                                     setClassShow('progress');
                                     setTotalPelajaran(runningClass);
                                 },
@@ -362,7 +363,7 @@ const Rapor = () => {
                                         {
                                             text: 'Ayo selesaikan kelas Anda, agar dapat menjadi peringkat teratas!',
                                             actionOnEnd: () => {
-                                                setIsTrigger(false);
+                                                setDisplayTranscript(false);
                                             },
                                         },
                                     ],
@@ -379,7 +380,7 @@ const Rapor = () => {
                             speechAction({
                                 text: `Anda akan belajar lagi kelas ${enrollClass}`,
                                 actionOnEnd: () => {
-                                    setIsTrigger(false);
+                                    setDisplayTranscript(false);
                                     router.push(`/kelas/${enrollClass}`);
                                 },
                             });
@@ -389,17 +390,17 @@ const Rapor = () => {
                     if (cleanCommand.includes('intruksi') || cleanCommand.includes('instruksi')) {
                         console.log('dapet nih');
                         setSpeechOn(false);
-                        setClickButton(false);
-                        setPlayingIntruksi(true);
+                        setIsClickButton(false);
+                        setIsPlayIntruction(true);
                         speechWithBatch({
                             speechs: [
                                 {
                                     text: `Hai ${userName}, sekarang Anda mendengarkan intruksi di halaman raport.`,
                                     actionOnStart: () => {
-                                        setSkipTrigger(true);
+                                        setSkipSpeech(true);
                                     },
                                     actionOnEnd: () => {
-                                        setIsTrigger(false);
+                                        setDisplayTranscript(false);
                                     },
                                 },
                                 {
@@ -417,39 +418,39 @@ const Rapor = () => {
                                 {
                                     text: `jangan lupa, Anda harus ucapkan terlebih dahulu hi Uli atau hallo uli agar saya dapat mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.`,
                                     actionOnEnd: () => {
-                                        setSkipTrigger(false);
-                                        setPlayingIntruksi(false);
+                                        setSkipSpeech(false);
+                                        setIsPlayIntruction(false);
                                     },
                                 },
                             ],
                         });
                     }
-                }
-            }
-
-            if (!skipTrigger) {
-                if (cleanCommand.includes('muat')) {
+                } else if (cleanCommand.includes('muat')) {
                     if (cleanCommand.includes('ulang')) {
                         if (cleanCommand.includes('halaman')) {
                             setSpeechOn(false);
                             speechAction({
                                 text: `Anda akan load halaman ini!`,
                                 actionOnEnd: () => {
-                                    setClickButton(false);
-                                    setIsTrigger(false);
+                                    setIsClickButton(false);
+                                    setDisplayTranscript(false);
                                     setClassShow('progress');
                                     setLoadData(true);
                                 },
                             });
                         }
                     }
-                } else if (cleanCommand.includes('hallo') || cleanCommand.includes('halo') || cleanCommand.includes('hai')) {
+                }
+            }
+
+            if (!skipSpeech) {
+                if (cleanCommand.includes('hallo') || cleanCommand.includes('halo') || cleanCommand.includes('hai')) {
                     if (cleanCommand.includes('uli')) {
                         stopSpeech();
                         speechAction({
                             text: `Hai ${userName}, saya mendengarkan Anda!`,
                             actionOnStart: () => {
-                                setIsTrigger(true);
+                                setDisplayTranscript(true);
                             },
                             actionOnEnd: () => {
                                 setSpeechOn(true);
@@ -472,7 +473,7 @@ const Rapor = () => {
                     text: 'saya diam',
                     actionOnEnd: () => {
                         // console.log('speech diclear');
-                        setIsTrigger(false);
+                        setDisplayTranscript(false);
                         setSpeechOn(false);
                     },
                 });
@@ -482,7 +483,7 @@ const Rapor = () => {
                 clearTimeout(timer);
             };
         }
-    }, [router, finishedClass, runningClass, classShow, speechOn, skipTrigger, userName, introPage]);
+    }, [router, finishedClass, runningClass, classShow, speechOn, skipSpeech, userName]);
 
     //effects
     useEffect(() => {
@@ -493,30 +494,29 @@ const Rapor = () => {
                 keyCode: 32,
                 action: () => {
                     if (!isClickButton) {
-                        if (playingIntruksi) {
-                            setSpeechOn(false);
-                            stopSpeech();
+                        setSpeechOn(false);
+                        stopSpeech();
+                        if (isPlayIntruction) {
                             speechAction({
                                 text: 'Anda mematikan intruksi',
                                 actionOnEnd: () => {
-                                    setIsTrigger(false);
-                                    setIntroPage(false);
-                                    setSkipTrigger(false);
-                                    setClickButton(true);
-                                    setPlayingIntruksi(false);
+                                    setDisplayTranscript(false);
+                                    // setIntroPage(false);
+                                    setSkipSpeech(false);
+                                    setIsClickButton(true);
+                                    setIsPlayIntruction(false);
                                 },
                             });
-                            return;
+                        } else {
+                            speechAction({
+                                text: 'Anda melewati Intro Halaman',
+                                actionOnEnd: () => {
+                                    // setIntroPage(false);
+                                    setSkipSpeech(false);
+                                    setIsClickButton(true);
+                                },
+                            });
                         }
-                        stopSpeech();
-                        speechAction({
-                            text: 'Anda melewati Intro Halaman',
-                            actionOnEnd: () => {
-                                setIntroPage(false);
-                                setSkipTrigger(false);
-                                setClickButton(true);
-                            },
-                        });
                     }
                 },
             });
@@ -526,7 +526,7 @@ const Rapor = () => {
         return () => {
             window.removeEventListener('keydown', spaceButtonIntroAction);
         };
-    }, [isClickButton, playingIntruksi]);
+    }, [isClickButton, isPlayIntruction]);
 
     return (
         <div className='h-screen bg-primary-1'>
@@ -584,7 +584,7 @@ const Rapor = () => {
                     </div>
                 </section>
             </main>
-            <Transkrip transcript={transcript} isTrigger={isTrigger} />
+            <Transkrip transcript={transcript} isTrigger={displayTranscript} />
         </div>
     );
 };

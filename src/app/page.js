@@ -52,17 +52,19 @@ export default function Beranda() {
     const userName = data?.user?.name;
     const isPermit = useSelector(getIsPermit);
 
-    //STATE
-    const [playingIntruksi, setPlayingIntruksi] = useState(false); // intruction state
-    const [transcript, setTrancript] = useState(''); // transcription
-    const [speechOn, setSpeechOn] = useState(false); // hi uli works
-    const [skipTrigger, setSkipTrigger] = useState(false); //skiping hi uli
-    const [introPage, setIntroPage] = useState(true); // skiping  intruksi
-    const [isTrigger, setIsTrigger] = useState(false);
-    const [isClickButton, setClickButton] = useState(false); //clicking for skiping introPage
+    // COMMON STATE
+    // --
+
+    // ACCESSIBILITY STATE
+    const [speechOn, setSpeechOn] = useState(false); // state untuk  speech recognition
+    const [transcript, setTrancript] = useState(''); // state untuk menyimpan transcript hasil speech recognition
+    const [skipSpeech, setSkipSpeech] = useState(false); // state untuk  mengatasi speech recogniton ter-trigger
+    const [displayTranscript, setDisplayTranscript] = useState(false); // state untuk  menampilkan transcript
+    const [isClickButton, setIsClickButton] = useState(false); // state untuk aksi tombol
+    const [isPlayIntruction, setIsPlayIntruction] = useState(false); // state  ketika intruksi berjalan
 
     // EFFECTS
-    // init recognition
+    // init speech recognition
     useEffect(() => {
         try {
             recognition.start();
@@ -79,7 +81,7 @@ export default function Beranda() {
                         {
                             text: `Selamat datang di ji muk fordi, ${userName}`,
                             actionOnStart: () => {
-                                setSkipTrigger(true);
+                                setSkipSpeech(true);
                             },
                         },
                         {
@@ -106,9 +108,8 @@ export default function Beranda() {
                         {
                             text: 'Jika Anda masih bingung, Anda bisa ucapkan intruksi agar mendapatkan penjelasan lebih banyak.',
                             actionOnEnd: () => {
-                                setClickButton(true);
-                                setIntroPage(false);
-                                setSkipTrigger(false);
+                                setIsClickButton(true); // ketika sampai akhir button seolah sudah terclick
+                                setSkipSpeech(false);
                             },
                         },
                     ],
@@ -124,14 +125,14 @@ export default function Beranda() {
             setTrancript(cleanCommand);
             console.log(cleanCommand);
 
-            if (speechOn && !skipTrigger) {
+            if (speechOn && !skipSpeech) {
                 if (cleanCommand.includes('pergi')) {
                     if (cleanCommand.includes('kelas')) {
                         setSpeechOn(false);
                         speechAction({
                             text: 'Anda akan menuju halaman Daftar Kelas',
                             actionOnEnd: () => {
-                                setIsTrigger(false);
+                                setDisplayTranscript(false);
                                 router.push('/kelas');
                             },
                         });
@@ -140,7 +141,7 @@ export default function Beranda() {
                         speechAction({
                             text: 'Anda akan menuju halaman Rapor',
                             actionOnEnd: () => {
-                                setIsTrigger(false);
+                                setDisplayTranscript(false);
                                 router.push('/rapor');
                             },
                         });
@@ -149,7 +150,7 @@ export default function Beranda() {
                         speechAction({
                             text: 'Anda akan menuju halaman Peringkat',
                             actionOnEnd: () => {
-                                setIsTrigger(false);
+                                setDisplayTranscript(false);
                                 router.push('/peringkat');
                             },
                         });
@@ -164,24 +165,21 @@ export default function Beranda() {
                     speechAction({
                         text: `Kita sedang di halaman utama`,
                         actionOnEnd: () => {
-                            setIsTrigger(false);
+                            setDisplayTranscript(false);
                         },
                     });
                 } else if (cleanCommand.includes('jelaskan')) {
                     if (cleanCommand.includes('intruksi') || cleanCommand.includes('instruksi')) {
-                        console.log('dapet nih');
                         setSpeechOn(false);
-                        setClickButton(false);
-                        setPlayingIntruksi(true);
+                        setDisplayTranscript(false);
+                        setIsClickButton(false);
+                        setIsPlayIntruction(true);
                         speechWithBatch({
                             speechs: [
                                 {
                                     text: `Hai ${userName}, sekarang Anda mendengarkan intruksi di halaman beranda.`,
                                     actionOnStart: () => {
-                                        setSkipTrigger(true);
-                                    },
-                                    actionOnEnd: () => {
-                                        setIsTrigger(false);
+                                        setSkipSpeech(true);
                                     },
                                 },
                                 {
@@ -193,37 +191,37 @@ export default function Beranda() {
                                 {
                                     text: `jangan lupa, Anda harus ucapkan terlebih dahulu hi Uli atau hallo uli agar saya dapat mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.`,
                                     actionOnEnd: () => {
-                                        setSkipTrigger(false);
-                                        setPlayingIntruksi(false);
+                                        setSkipSpeech(false);
+                                        setIsPlayIntruction(false);
                                     },
                                 },
                             ],
                         });
                     }
-                }
-            }
-
-            if (!skipTrigger) {
-                if (cleanCommand.includes('muat')) {
+                } else if (cleanCommand.includes('muat')) {
                     if (cleanCommand.includes('ulang')) {
                         if (cleanCommand.includes('halaman')) {
                             setSpeechOn(false);
                             speechAction({
                                 text: `Anda akan load ulang halaman!`,
                                 actionOnEnd: () => {
-                                    setClickButton(false);
-                                    setIsTrigger(false);
+                                    setIsClickButton(false);
+                                    setDisplayTranscript(false);
                                 },
                             });
                         }
                     }
-                } else if (cleanCommand.includes('hallo') || cleanCommand.includes('halo') || cleanCommand.includes('hai')) {
+                }
+            }
+
+            if (!skipSpeech) {
+                if (cleanCommand.includes('hallo') || cleanCommand.includes('halo') || cleanCommand.includes('hai')) {
                     if (cleanCommand.includes('uli')) {
                         stopSpeech();
                         speechAction({
                             text: `Hai ${userName}, saya mendengarkan Anda!`,
                             actionOnStart: () => {
-                                setIsTrigger(true);
+                                setDisplayTranscript(true);
                             },
                             actionOnEnd: () => {
                                 setSpeechOn(true);
@@ -246,7 +244,7 @@ export default function Beranda() {
                     text: 'saya diam',
                     actionOnEnd: () => {
                         console.log('speech diclear');
-                        setIsTrigger(false);
+                        setDisplayTranscript(false);
                         setSpeechOn(false);
                     },
                 });
@@ -256,7 +254,7 @@ export default function Beranda() {
                 clearTimeout(timer);
             };
         }
-    }, [router, speechOn, userName, skipTrigger, introPage]);
+    }, [router, speechOn, userName, skipSpeech]);
 
     //effects
     useEffect(() => {
@@ -267,30 +265,28 @@ export default function Beranda() {
                 keyCode: 32,
                 action: () => {
                     if (!isClickButton && isPermit) {
-                        if (playingIntruksi) {
-                            setSpeechOn(false);
-                            stopSpeech();
+                        setSpeechOn(false);
+                        stopSpeech();
+                        if (isPlayIntruction) {
                             speechAction({
                                 text: 'Anda mematikan intruksi',
                                 actionOnEnd: () => {
-                                    setIsTrigger(false);
-                                    setIntroPage(false);
-                                    setSkipTrigger(false);
-                                    setClickButton(true);
-                                    setPlayingIntruksi(false);
+                                    setDisplayTranscript(false);
+                                    setSkipSpeech(false);
+                                    setIsClickButton(true);
+                                    setIsPlayIntruction(false); // skipping intruksi
                                 },
                             });
-                            return;
+                        } else {
+                            speechAction({
+                                text: 'Anda melewati Intro Halaman',
+                                actionOnEnd: () => {
+                                    setDisplayTranscript(false);
+                                    setSkipSpeech(false);
+                                    setIsClickButton(true);
+                                },
+                            });
                         }
-                        stopSpeech();
-                        speechAction({
-                            text: 'Anda melewati Intro Halaman',
-                            actionOnEnd: () => {
-                                setIntroPage(false);
-                                setSkipTrigger(false);
-                                setClickButton(true);
-                            },
-                        });
                     }
                 },
             });
@@ -300,13 +296,13 @@ export default function Beranda() {
         return () => {
             window.removeEventListener('keydown', spaceButtonIntroAction);
         };
-    }, [isClickButton, isPermit, playingIntruksi]);
+    }, [isClickButton, isPermit, isPlayIntruction]);
 
     return (
         <main className='h-screen '>
             <Navbar />
             <Hero />
-            <Transkrip transcript={transcript} isTrigger={isTrigger} />
+            <Transkrip transcript={transcript} isTrigger={displayTranscript} />
             <CheckPermission />
         </main>
     );

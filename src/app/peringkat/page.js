@@ -51,18 +51,18 @@ const Peringkat = () => {
     const userName = data?.user?.name;
     const router = useRouter();
 
-    // STATE
-    const [playingIntruksi, setPlayingIntruksi] = useState(false); // intruction state
+    // COMMON STATE
     const [loadData, setLoadData] = useState(true);
     const [rank, setRank] = useState([]);
     const [userRank, setUserRank] = useState(null);
-    const [transcript, setTrancript] = useState('');
 
-    const [speechOn, setSpeechOn] = useState(false);
-    const [skipTrigger, setSkipTrigger] = useState(false);
-    const [isTrigger, setIsTrigger] = useState(false);
-    const [introPage, setIntroPage] = useState(true);
-    const [isClickButton, setClickButton] = useState(false); //clicking for skiping introPage
+    // ACCESSIBILITY STATE
+    const [speechOn, setSpeechOn] = useState(false); // state untuk  speech recognition
+    const [transcript, setTrancript] = useState(''); // state untuk menyimpan transcript hasil speech recognition
+    const [skipSpeech, setSkipSpeech] = useState(false); // state untuk  mengatasi speech recogniton ter-trigger
+    const [displayTranscript, setDisplayTranscript] = useState(false); // state untuk  menampilkan transcript
+    const [isClickButton, setIsClickButton] = useState(false); // state untuk aksi tombol
+    const [isPlayIntruction, setIsPlayIntruction] = useState(false); // state  ketika intruksi berjalan
 
     // FUNC
     const handleColorPeringkat = (urutan) => {
@@ -83,6 +83,15 @@ const Peringkat = () => {
     };
 
     // EFFECT
+    // init speech recognition
+    useEffect(() => {
+        try {
+            recognition.start();
+        } catch (error) {
+            recognition.stop();
+        }
+    }, []);
+
     useEffect(() => {
         if (token) {
             if (loadData) {
@@ -98,7 +107,7 @@ const Peringkat = () => {
                                 {
                                     text: `Selamat datang di halaman Peringkat, ${userName}. Pada halaman ini Anda dapat mengetahui peringkat Anda saat ini, dengan mengucapkan peringkat saya`,
                                     actionOnStart: () => {
-                                        setSkipTrigger(true);
+                                        setSkipSpeech(true);
                                     },
                                 },
                                 {
@@ -107,8 +116,8 @@ const Peringkat = () => {
                                 {
                                     text: 'Jika Anda masih bingung, Anda bisa ucapkan intruksi agar mendapatkan penjelasan lebih banyak.',
                                     actionOnEnd: () => {
-                                        setIntroPage(false);
-                                        setSkipTrigger(false);
+                                        // setIntroPage(false);
+                                        setSkipSpeech(false);
                                     },
                                 },
                             ],
@@ -127,15 +136,6 @@ const Peringkat = () => {
         }
     }, [token, loadData, userName]);
 
-    // init recognition
-    useEffect(() => {
-        try {
-            recognition.start();
-        } catch (error) {
-            recognition.stop();
-        }
-    }, []);
-
     useEffect(() => {
         recognition.onresult = (event) => {
             const command = event?.results[0][0]?.transcript?.toLowerCase();
@@ -143,7 +143,7 @@ const Peringkat = () => {
             setTrancript(cleanCommand);
             console.log(cleanCommand);
 
-            if (speechOn && !skipTrigger) {
+            if (speechOn && !skipSpeech) {
                 if (cleanCommand.includes('peringkat')) {
                     if (cleanCommand.includes('saya')) {
                         setSpeechOn(false);
@@ -151,7 +151,7 @@ const Peringkat = () => {
                             speechAction({
                                 text: `Anda belum menyelesaikan materi, Silahkan belajar terlebih dahulu!`,
                                 actionOnEnd: () => {
-                                    setIsTrigger(false);
+                                    setDisplayTranscript(false);
                                 },
                             });
                             return;
@@ -162,7 +162,7 @@ const Peringkat = () => {
                                 text: `Selamat, Anda sedang diperingkat ke ${userRank.ranking}, dengan ${userRank.poin} poin.`,
                                 actionOnEnd: () => {
                                     console.log(userRank);
-                                    setIsTrigger(false);
+                                    setDisplayTranscript(false);
                                 },
                             });
                         } else if (userRank.ranking === 2) {
@@ -170,7 +170,7 @@ const Peringkat = () => {
                                 text: `Selamat, Anda sedang diperingkat ke ${userRank.ranking} dengan poin ${userRank.poin}. Ayo tingkatkan lagi!`,
                                 actionOnEnd: () => {
                                     console.log(userRank);
-                                    setIsTrigger(false);
+                                    setDisplayTranscript(false);
                                 },
                             });
                         } else if (userRank.ranking === 3) {
@@ -178,7 +178,7 @@ const Peringkat = () => {
                                 text: `Selamat, Anda sedang diperingkat ke ${userRank.ranking} dengan poin ${userRank.poin}. Ayo lebih semangat lagi belajarnya ${userName}!`,
                                 actionOnEnd: () => {
                                     console.log(userRank);
-                                    setIsTrigger(false);
+                                    setDisplayTranscript(false);
                                 },
                             });
                         } else {
@@ -186,7 +186,7 @@ const Peringkat = () => {
                                 text: `Anda sedang diperingkat ke - ${userRank.ranking} dengan poin ${userRank.poin}. Ayo lebih banyak lagi belajarnya ${userName}!`,
                                 actionOnEnd: () => {
                                     console.log(userRank);
-                                    setIsTrigger(false);
+                                    setDisplayTranscript(false);
                                 },
                             });
                         }
@@ -198,7 +198,7 @@ const Peringkat = () => {
                         speechAction({
                             text: `Anda akan menuju halaman Daftar Kelas`,
                             actionOnEnd: () => {
-                                setIsTrigger(false);
+                                setDisplayTranscript(false);
                                 router.push('/kelas');
                             },
                         });
@@ -208,7 +208,7 @@ const Peringkat = () => {
                         speechAction({
                             text: `Anda akan menuju halaman beranda`,
                             actionOnEnd: () => {
-                                setIsTrigger(false);
+                                setDisplayTranscript(false);
                                 router.push('/');
                             },
                         });
@@ -218,7 +218,7 @@ const Peringkat = () => {
                         speechAction({
                             text: `Anda akan menuju halaman Rapor`,
                             actionOnEnd: () => {
-                                setIsTrigger(false);
+                                setDisplayTranscript(false);
                                 router.push('/rapor');
                             },
                         });
@@ -233,24 +233,24 @@ const Peringkat = () => {
                     speechAction({
                         text: `Kita sedang di halaman Peringkat`,
                         actionOnEnd: () => {
-                            setIsTrigger(false);
+                            setDisplayTranscript(false);
                         },
                     });
                 } else if (cleanCommand.includes('jelaskan')) {
                     if (cleanCommand.includes('intruksi') || cleanCommand.includes('instruksi')) {
                         console.log('dapet nih');
                         setSpeechOn(false);
-                        setClickButton(false);
-                        setPlayingIntruksi(true);
+                        setIsClickButton(false);
+                        setIsPlayIntruction(true);
                         speechWithBatch({
                             speechs: [
                                 {
                                     text: `Hai ${userName}, sekarang Anda mendengarkan intruksi di halaman peringkat.`,
                                     actionOnStart: () => {
-                                        setSkipTrigger(true);
+                                        setSkipSpeech(true);
                                     },
                                     actionOnEnd: () => {
-                                        setIsTrigger(false);
+                                        setDisplayTranscript(false);
                                     },
                                 },
                                 {
@@ -266,38 +266,38 @@ const Peringkat = () => {
                                 {
                                     text: `jangan lupa, Anda harus ucapkan terlebih dahulu hi Uli atau hallo uli agar saya dapat mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.`,
                                     actionOnEnd: () => {
-                                        setSkipTrigger(false);
-                                        setPlayingIntruksi(false);
+                                        setSkipSpeech(false);
+                                        setIsPlayIntruction(false);
                                     },
                                 },
                             ],
                         });
                     }
-                }
-            }
-
-            if (!skipTrigger) {
-                if (cleanCommand.includes('muat')) {
+                } else if (cleanCommand.includes('muat')) {
                     if (cleanCommand.includes('ulang')) {
                         if (cleanCommand.includes('halaman')) {
                             setSpeechOn(false);
                             speechAction({
                                 text: `Anda akan load halaman ini!`,
                                 actionOnEnd: () => {
-                                    setClickButton(false);
-                                    setIsTrigger(false);
+                                    setIsClickButton(false);
+                                    setDisplayTranscript(false);
                                     setLoadData(true);
                                 },
                             });
                         }
                     }
-                } else if (cleanCommand.includes('hallo') || cleanCommand.includes('halo') || cleanCommand.includes('hai')) {
+                }
+            }
+
+            if (!skipSpeech) {
+                if (cleanCommand.includes('hallo') || cleanCommand.includes('halo') || cleanCommand.includes('hai')) {
                     if (cleanCommand.includes('uli')) {
                         stopSpeech();
                         speechAction({
                             text: `Hai ${userName}, saya mendengarkan Anda!`,
                             actionOnStart: () => {
-                                setIsTrigger(true);
+                                setDisplayTranscript(true);
                             },
                             actionOnEnd: () => {
                                 setSpeechOn(true);
@@ -306,39 +306,6 @@ const Peringkat = () => {
                     }
                 }
             }
-
-            // if (!introPage) {
-            //     if (cleanCommand.includes('intruksi')) {
-            //         setSpeechOn(false);
-            //         speechWithBatch({
-            //             speechs: [
-            //                 {
-            //                     text: `Hai ${userName}, sekarang Anda mendengarkan intruksi di halaman beranda.`,
-            //                     actionOnEnd: () => {
-            //                         setSkipTrigger(true);
-            //                         setIsTrigger(false);
-            //                     },
-            //                 },
-            //                 {
-            //                     text: `Perintah untuk mengetahui peringkat Anda dengan mengucapkan peringkat saya`,
-            //                 },
-            //                 {
-            //                     text: `Jika Anda tersesat, Anda dapat mengucapkan saya dimana`,
-            //                 },
-            //                 {
-            //                     text: `Untuk navigasi halaman, Anda dapat mengucapkan pergi ke halaman yang Anda tuju, misalnya pergi ke kelas, pada halaman ini Anda dapat pergi ke halaman kelas, raport, dan peringkat`,
-            //                 },
-
-            //                 {
-            //                     text: `jangan lupa, Anda harus ucapkan terlebih dahulu hi Uli atau hallo uli agar saya dapat mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.`,
-            //                     actionOnEnd: () => {
-            //                         setSkipTrigger(false);
-            //                     },
-            //                 },
-            //             ],
-            //         });
-            //     }
-            // }
         };
 
         recognition.onend = () => {
@@ -353,7 +320,7 @@ const Peringkat = () => {
                     text: 'saya diam',
                     actionOnEnd: () => {
                         console.log('speech diclear');
-                        setIsTrigger(false);
+                        setDisplayTranscript(false);
                         setSpeechOn(false);
                     },
                 });
@@ -363,7 +330,7 @@ const Peringkat = () => {
                 clearTimeout(timer);
             };
         }
-    }, [router, userName, userRank, speechOn, skipTrigger, introPage]);
+    }, [router, userName, userRank, speechOn, skipSpeech]);
 
     //effects
     useEffect(() => {
@@ -374,30 +341,29 @@ const Peringkat = () => {
                 keyCode: 32,
                 action: () => {
                     if (!isClickButton) {
-                        if (playingIntruksi) {
-                            setSpeechOn(false);
-                            stopSpeech();
+                        setSpeechOn(false);
+                        stopSpeech();
+                        if (isPlayIntruction) {
                             speechAction({
                                 text: 'Anda mematikan intruksi',
                                 actionOnEnd: () => {
-                                    setIsTrigger(false);
-                                    setIntroPage(false);
-                                    setSkipTrigger(false);
-                                    setClickButton(true);
-                                    setPlayingIntruksi(false);
+                                    setDisplayTranscript(false);
+                                    // setIntroPage(false);
+                                    setSkipSpeech(false);
+                                    setIsClickButton(true);
+                                    setIsPlayIntruction(false);
                                 },
                             });
-                            return;
+                        } else {
+                            speechAction({
+                                text: 'Anda melewati Intro Halaman',
+                                actionOnEnd: () => {
+                                    // setIntroPage(false);
+                                    setSkipSpeech(false);
+                                    setIsClickButton(true);
+                                },
+                            });
                         }
-                        stopSpeech();
-                        speechAction({
-                            text: 'Anda melewati Intro Halaman',
-                            actionOnEnd: () => {
-                                setIntroPage(false);
-                                setSkipTrigger(false);
-                                setClickButton(true);
-                            },
-                        });
                     }
                 },
             });
@@ -407,7 +373,7 @@ const Peringkat = () => {
         return () => {
             window.removeEventListener('keydown', spaceButtonIntroAction);
         };
-    }, [isClickButton, playingIntruksi]);
+    }, [isClickButton, isPlayIntruction]);
 
     return (
         <section className='h-screen bg-primary-1'>
@@ -445,7 +411,7 @@ const Peringkat = () => {
                         : null}
                 </div>
             </main>
-            <Transkrip transcript={transcript} isTrigger={isTrigger} />
+            <Transkrip transcript={transcript} isTrigger={displayTranscript} />
         </section>
     );
 };

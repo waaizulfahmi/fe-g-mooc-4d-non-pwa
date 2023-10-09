@@ -1,21 +1,19 @@
-import axios from "axios";
+import axios from 'axios';
 
-// export const apiInstance = axios.create({
-//     baseURL: process.env.API_BASE_URL,
-//     withCredentials: true,
-// });
-
-// export const sanctumApiInstance = axios.create({
-//     baseURL: process.env.API_BASE_URL_SANCTUM_LARAVEL,
-//     withCredentials: true,
-// });
+const BASE_URl = 'https://nurz.site/api';
+const BASE_ML_URl = 'https://face.nurz.site';
+const BASE_URl_SANCTUM = 'https://nurz.site/sanctum/csrf-cookie';
 
 export const apiInstance = axios.create({
-    baseURL: "https://nurz.site/api",
+    baseURL: BASE_URl,
     withCredentials: true,
 });
 
+export const apiMlInstance = axios.create({
+    baseURL: BASE_ML_URl,
+});
+
 export const sanctumApiInstance = axios.create({
-    baseURL: "https://nurz.site/sanctum/csrf-cookie",
+    baseURL: BASE_URl_SANCTUM,
     withCredentials: true,
 });

@@ -1,12 +1,12 @@
 import NextAuth from 'next-auth';
-import { authLogin } from '@/axios/auth';
+import { authLogin, authLoginWithFace } from '@/axios/auth';
 import { ApiResponseError } from '@/utils/error-handling';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
 const handler = NextAuth({
     providers: [
         CredentialsProvider({
-            id: 'test',
+            id: 'common-login',
             name: 'Credentials',
             credentials: {
                 email: {
@@ -29,6 +29,36 @@ const handler = NextAuth({
                 } catch (error) {
                     if (error instanceof ApiResponseError) {
                         console.log(`ERR USER AUTH: `, error.message);
+                        console.log(error.data);
+                        throw new Error(error.message);
+                    }
+                    throw new Error(error.response.data.message);
+                    // console.log("ERROR USER AUTH", error.response.data.message);
+                    // console.log(`MESSAGE: `, error.message);
+                }
+            },
+        }),
+        CredentialsProvider({
+            id: 'face-login',
+            name: 'Credentials',
+            credentials: {
+                image: {
+                    label: 'image',
+                    type: 'text',
+                },
+            },
+
+            async authorize(credentials) {
+                try {
+                    const response = await authLoginWithFace({
+                        image: credentials.image,
+                    });
+
+                    console.log('response data muka: ', response.data);
+                    return response.data;
+                } catch (error) {
+                    if (error instanceof ApiResponseError) {
+                        console.log(`ERR USER FACE AUTH: `, error.message);
                         console.log(error.data);
                         throw new Error(error.message);
                     }

@@ -1,44 +1,36 @@
-import axios, { AxiosError } from "axios";
-import { apiInstance, sanctumApiInstance } from "./instance";
-import { ApiResponseError } from "@/utils/error-handling";
+import axios, { AxiosError } from 'axios';
+import { apiInstance, apiMlInstance, sanctumApiInstance } from './instance';
+import { ApiResponseError } from '@/utils/error-handling';
 
 /* 
 @ROUTE : /register 
 */
-export const authRegister = async ({
-    name,
-    email,
-    password,
-    konfirmasi_password,
-    host,
-}) => {
+export const authRegister = async ({ name, email, password, konfirmasi_password, images, host }) => {
     try {
-        if ((!name && !email && !password && !konfirmasi_password) || !host)
-            throw new Error("Please insert all input form!");
-        if (!password) throw new Error("Password must be submitted!");
-        if (!konfirmasi_password)
-            throw new Error("Konfirmasi Password must be submitted!");
-        if (!password !== !konfirmasi_password)
-            throw new Error("Password & Konfirmasi Password must same!");
-        if (!name) throw new Error("Name must be submitted!");
-        if (!email) throw new Error("Email must be submitted!");
-        if (!host) throw new Error("Host must be submitted!");
+        if (!name && !email && !password && !konfirmasi_password && !host) throw new Error('Please insert all input form!');
+        if (!password) throw new Error('Password must be submitted!');
+        if (!konfirmasi_password) throw new Error('Konfirmasi Password must be submitted!');
+        if (!password !== !konfirmasi_password) throw new Error('Password & Konfirmasi Password must same!');
+        if (!name) throw new Error('Name must be submitted!');
+        if (!email) throw new Error('Email must be submitted!');
+        if (!host) throw new Error('Host must be submitted!');
 
         await sanctumApiInstance.get();
-        const response = await apiInstance.post(
-            "/register",
+        const response = await apiMlInstance.post(
+            '/register',
             {
                 name,
                 email,
                 password,
                 konfirmasi_password,
+                images,
                 host,
             },
             {
                 headers: {
-                    "Content-Type": "multipart/form-data",
+                    'Content-Type': 'multipart/form-data',
                 },
-            }
+            },
         );
         return response.data;
     } catch (error) {
@@ -60,22 +52,21 @@ export const authRegister = async ({
 */
 export const authLogin = async ({ email, password }) => {
     try {
-        if (!email && !password)
-            throw new Error("Email & Password must be submitted!");
-        if (!email) throw new Error("Email must be submitted!");
-        if (!password) throw new Error("Password must be submitted!");
+        if (!email && !password) throw new Error('Email & Password must be submitted!');
+        if (!email) throw new Error('Email must be submitted!');
+        if (!password) throw new Error('Password must be submitted!');
 
         const response = await apiInstance.post(
-            "/login",
+            '/login',
             {
                 email,
                 password,
             },
             {
                 headers: {
-                    "Content-Type": "application/json",
+                    'Content-Type': 'application/json',
                 },
-            }
+            },
         );
         return response.data;
     } catch (error) {
@@ -93,14 +84,47 @@ export const authLogin = async ({ email, password }) => {
 };
 
 /* 
+@ROUTE : /login-face 
+*/
+
+export const authLoginWithFace = async ({ image }) => {
+    try {
+        if (!image) throw Error('Image must submitted!');
+
+        const response = await apiMlInstance.post(
+            '/login-face',
+            {
+                image,
+            },
+            {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            },
+        );
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError) {
+            const errorMsg = error?.response?.data?.metadata?.message;
+            const errorData = error?.response;
+
+            throw new ApiResponseError({
+                data: errorData,
+                message: errorMsg,
+            });
+        }
+    }
+};
+
+/* 
 @ROUTE : /logout 
 */
 export const authLogout = async ({ token }) => {
     try {
-        if (!token) throw new Error("Token must be submitted!");
-        const response = await apiInstance.get("/logout", {
+        if (!token) throw new Error('Token must be submitted!');
+        const response = await apiInstance.get('/logout', {
             headers: {
-                "Content-Type": "application/json",
+                'Content-Type': 'application/json',
                 Authorization: `Bearer ${token}`,
             },
         });
@@ -124,10 +148,10 @@ export const authLogout = async ({ token }) => {
 */
 export const authVerify = async ({ url }) => {
     try {
-        if (!url) throw new Error("url must be submitted!");
+        if (!url) throw new Error('url must be submitted!');
         const response = await axios.get(url, {
             headers: {
-                "Content-Type": "application/json",
+                'Content-Type': 'application/json',
             },
         });
         return response.data;
@@ -150,20 +174,20 @@ export const authVerify = async ({ url }) => {
 */
 export const authResendVerify = async ({ token, host }) => {
     try {
-        if (!token) throw new Error("Token must be submitted!");
-        if (!host) throw new Error("Host must be submitted!");
+        if (!token) throw new Error('Token must be submitted!');
+        if (!host) throw new Error('Host must be submitted!');
 
         const response = await apiInstance.post(
-            "/email/verification-notification",
+            '/email/verification-notification',
             {
                 host,
             },
             {
                 headers: {
-                    "Content-Type": "application/json",
+                    'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`,
                 },
-            }
+            },
         );
         return response.data;
     } catch (error) {
@@ -185,20 +209,20 @@ export const authResendVerify = async ({ token, host }) => {
 */
 export const authForgotPassword = async ({ email, host }) => {
     try {
-        if (!email) throw new Error("Email must be submitted!");
-        if (!host) throw new Error("Host must be submitted!");
+        if (!email) throw new Error('Email must be submitted!');
+        if (!host) throw new Error('Host must be submitted!');
 
         const response = await apiInstance.post(
-            "/forgot-password",
+            '/forgot-password',
             {
                 email,
                 host: `${host}/reset-password`,
             },
             {
                 headers: {
-                    "Content-Type": "application/json",
+                    'Content-Type': 'application/json',
                 },
-            }
+            },
         );
         return response.data;
     } catch (error) {
@@ -218,25 +242,17 @@ export const authForgotPassword = async ({ email, host }) => {
 /* 
 @ROUTE : '/reset-password'
 */
-export const authResetPassword = async ({
-    email,
-    password,
-    password_confirmation,
-    token,
-}) => {
+export const authResetPassword = async ({ email, password, password_confirmation, token }) => {
     try {
-        if (!password) throw new Error("Password must be submitted!");
-        if (!password_confirmation)
-            throw new Error("Password Confirmation must be submitted!");
-        if (!password !== !password_confirmation)
-            throw new Error("Password & Password Confirmation must same!");
-        if (!email) throw new Error("Email must be submitted!");
-        if (!token) throw new Error("token must be submitted!");
-        if (!email && !password && !password_confirmation && !token)
-            throw new Error("Please insert all input form!");
+        if (!password) throw new Error('Password must be submitted!');
+        if (!password_confirmation) throw new Error('Password Confirmation must be submitted!');
+        if (!password !== !password_confirmation) throw new Error('Password & Password Confirmation must same!');
+        if (!email) throw new Error('Email must be submitted!');
+        if (!token) throw new Error('token must be submitted!');
+        if (!email && !password && !password_confirmation && !token) throw new Error('Please insert all input form!');
 
         const response = await apiInstance.post(
-            "/reset-password",
+            '/reset-password',
             {
                 email,
                 password,
@@ -245,9 +261,9 @@ export const authResetPassword = async ({
             },
             {
                 headers: {
-                    "Content-Type": "application/json",
+                    'Content-Type': 'application/json',
                 },
-            }
+            },
         );
         return response.data;
     } catch (error) {

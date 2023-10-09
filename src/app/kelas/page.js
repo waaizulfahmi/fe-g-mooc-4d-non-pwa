@@ -54,7 +54,8 @@ const Kelas = () => {
     const token = data?.user?.token;
     const userName = data?.user?.name;
 
-    //STATE
+    // COMMON STATE
+    const [loadData, setLoadData] = useState(true);
     const [kelas, setKelas] = useState([]);
     const [isChecked, setIsChecked] = useState({
         mudah: false,
@@ -62,16 +63,15 @@ const Kelas = () => {
         sulit: false,
         semua: true,
     });
-    const [loadData, setLoadData] = useState(true);
-
-    // STATE FOR ACCESSBILITY
-    const [transcript, setTrancript] = useState('');
-    const [skipTrigger, setSkipTrigger] = useState(false);
     const [introPage, setIntroPage] = useState(true);
-    const [isClickButton, setClickButton] = useState(false);
-    const [speechOn, setSpeechOn] = useState(false);
-    const [isTrigger, setIsTrigger] = useState(false);
-    const [playingIntruksi, setPlayingIntruksi] = useState(false); // intruction state
+
+    // ACCESSIBILITY STATE
+    const [speechOn, setSpeechOn] = useState(false); // state untuk  speech recognition
+    const [transcript, setTrancript] = useState(''); // state untuk menyimpan transcript hasil speech recognition
+    const [skipSpeech, setSkipSpeech] = useState(false); // state untuk  mengatasi speech recogniton ter-trigger
+    const [displayTranscript, setDisplayTranscript] = useState(false); // state untuk  menampilkan transcript
+    const [isClickButton, setIsClickButton] = useState(false); // state untuk aksi tombol
+    const [isPlayIntruction, setIsPlayIntruction] = useState(false); // state  ketika intruksi berjalan
 
     //FUNC
     const handlePilihKelas = (namaKelas) => {
@@ -88,6 +88,7 @@ const Kelas = () => {
             };
 
             let response;
+
             if (kelasLevel[idLevel] === 'semua') {
                 setSpeechOn(false);
                 response = await userGetAllClassApi({ token });
@@ -96,7 +97,7 @@ const Kelas = () => {
                     speechAction({
                         text: `Tidak ada kelas.`,
                         actionOnEnd: () => {
-                            setIsTrigger(false);
+                            setDisplayTranscript(false);
                         },
                     });
                     return [];
@@ -105,7 +106,7 @@ const Kelas = () => {
                 speechAction({
                     text: `Ditemukan ${response?.data?.length} kelas tersedia dari semua kelas.`,
                     actionOnEnd: () => {
-                        setIsTrigger(false);
+                        setDisplayTranscript(false);
                     },
                 });
 
@@ -118,7 +119,7 @@ const Kelas = () => {
                     speechAction({
                         text: `Kelas dengan level ${kelasLevel[idLevel]} tidak ditemukan`,
                         actionOnEnd: () => {
-                            setIsTrigger(false);
+                            setDisplayTranscript(false);
                         },
                     });
                     return [];
@@ -127,7 +128,7 @@ const Kelas = () => {
                 speechAction({
                     text: `Ditemukan ${response?.data?.kelas?.length} kelas tersedia dengan level ${kelasLevel[idLevel]}.`,
                     actionOnEnd: () => {
-                        setIsTrigger(false);
+                        setDisplayTranscript(false);
                     },
                 });
 
@@ -237,7 +238,7 @@ const Kelas = () => {
     );
 
     // EFFECTS
-    //  INIT SPEECT RECOGNITION
+    // init speech recognition
     useEffect(() => {
         try {
             recognition.start();
@@ -260,7 +261,7 @@ const Kelas = () => {
                                 {
                                     text: `Selamat datang di Daftar Kelas, ${userName}. Pada halaman ini terdapat kumpulan dari berbagai kelas yang dapat Anda pelajari.`,
                                     actionOnStart: () => {
-                                        setSkipTrigger(true);
+                                        setSkipSpeech(true);
                                     },
                                 },
                                 {
@@ -284,9 +285,9 @@ const Kelas = () => {
                                 {
                                     text: 'Jika Anda masih bingung, Anda bisa ucapkan intruksi agar dapat mengulangi penjelasan ini.',
                                     actionOnEnd: () => {
-                                        setClickButton(true);
+                                        setIsClickButton(true);
                                         setIntroPage(false);
-                                        setSkipTrigger(false);
+                                        setSkipSpeech(false);
                                     },
                                 },
                             ],
@@ -371,7 +372,7 @@ const Kelas = () => {
             // }
 
             /* Dengan trigger */
-            if (speechOn && !skipTrigger) {
+            if (speechOn && !skipSpeech) {
                 if (cleanCommand.includes('cari')) {
                     //search class by level
                     const level = cleanCommand.replace('cari', '').trim().toLowerCase();
@@ -395,11 +396,11 @@ const Kelas = () => {
                     const findKelas = kelas.find((k) => k.name.toLowerCase() === kelasCommand);
                     if (!findKelas) {
                         // kelas not found
-                        console.log(cleanCommand);
+                        console.log('belajar:   ', kelasCommand);
                         speechAction({
                             text: 'Kelas tidak ditemukan',
                             actionOnEnd: () => {
-                                setIsTrigger(false);
+                                setDisplayTranscript(false);
                             },
                         });
                         return;
@@ -407,7 +408,7 @@ const Kelas = () => {
                     speechAction({
                         text: `Anda akan belajar dikelas ${findKelas.name}`,
                         actionOnEnd: () => {
-                            setIsTrigger(false);
+                            setDisplayTranscript(false);
                             router.push(`/kelas/${findKelas.name.toLowerCase()}`);
                         },
                     });
@@ -419,7 +420,7 @@ const Kelas = () => {
                         speechAction({
                             text: 'Anda akan menuju halaman Beranda',
                             actionOnEnd: () => {
-                                setIsTrigger(false);
+                                setDisplayTranscript(false);
                                 router.push('/');
                             },
                         });
@@ -429,7 +430,7 @@ const Kelas = () => {
                         speechAction({
                             text: 'Anda akan menuju halaman Rapor',
                             actionOnEnd: () => {
-                                setIsTrigger(false);
+                                setDisplayTranscript(false);
                                 router.push('/rapor');
                             },
                         });
@@ -439,7 +440,7 @@ const Kelas = () => {
                         speechAction({
                             text: 'Anda akan menuju halaman Peringkat',
                             actionOnEnd: () => {
-                                setIsTrigger(false);
+                                setDisplayTranscript(false);
                                 router.push('/peringkat');
                             },
                         });
@@ -472,7 +473,7 @@ const Kelas = () => {
                                     speechAction({
                                         text: 'silahkan pilih kelas Anda',
                                         actionOnEnd: () => {
-                                            setIsTrigger(false);
+                                            setDisplayTranscript(false);
                                             console.log('speech diclear');
                                         },
                                     });
@@ -486,7 +487,7 @@ const Kelas = () => {
                         speechAction({
                             text: `Terdapat ${kelas.length} kelas.`,
                             actionOnEnd: () => {
-                                setIsTrigger(false);
+                                setDisplayTranscript(false);
                             },
                         });
                     }
@@ -500,24 +501,22 @@ const Kelas = () => {
                     speechAction({
                         text: `Kita sedang di halaman kelas`,
                         actionOnEnd: () => {
-                            setIsTrigger(false);
+                            setDisplayTranscript(false);
                         },
                     });
                 } else if (cleanCommand.includes('jelaskan')) {
                     if (cleanCommand.includes('intruksi') || cleanCommand.includes('instruksi')) {
-                        console.log('dapet nih');
+                        // console.log('dapet nih');
                         setSpeechOn(false);
-                        setClickButton(false);
-                        setPlayingIntruksi(true);
+                        setDisplayTranscript(false);
+                        setIsClickButton(false);
+                        setIsPlayIntruction(true);
                         speechWithBatch({
                             speechs: [
                                 {
                                     text: `Hai ${userName}, sekarang Anda mendengarkan intruksi di halaman daftar kelas.`,
                                     actionOnStart: () => {
-                                        setSkipTrigger(true);
-                                    },
-                                    actionOnEnd: () => {
-                                        setIsTrigger(false);
+                                        setSkipSpeech(true);
                                     },
                                 },
                                 {
@@ -548,12 +547,26 @@ const Kelas = () => {
                                 {
                                     text: `jangan lupa, Anda harus ucapkan terlebih dahulu hi Uli atau hallo uli agar saya dapat mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.`,
                                     actionOnEnd: () => {
-                                        setSkipTrigger(false);
-                                        setPlayingIntruksi(false);
+                                        setSkipSpeech(false);
+                                        setIsPlayIntruction(false);
                                     },
                                 },
                             ],
                         });
+                    }
+                } else if (cleanCommand.includes('muat')) {
+                    if (cleanCommand.includes('ulang')) {
+                        if (cleanCommand.includes('halaman')) {
+                            setSpeechOn(false);
+                            speechAction({
+                                text: `Anda akan load ulang halaman!`,
+                                actionOnEnd: () => {
+                                    setIsClickButton(false);
+                                    setDisplayTranscript(false);
+                                    setLoadData(true);
+                                },
+                            });
+                        }
                     }
                 }
                 // else if (cleanCommand.includes('mode')) {
@@ -569,28 +582,14 @@ const Kelas = () => {
                 // }
             }
 
-            if (!skipTrigger) {
-                if (cleanCommand.includes('muat')) {
-                    if (cleanCommand.includes('ulang')) {
-                        if (cleanCommand.includes('halaman')) {
-                            setSpeechOn(false);
-                            speechAction({
-                                text: `Anda akan load ulang halaman!`,
-                                actionOnEnd: () => {
-                                    setClickButton(false);
-                                    setIsTrigger(false);
-                                    setLoadData(true);
-                                },
-                            });
-                        }
-                    }
-                } else if (cleanCommand.includes('hallo') || cleanCommand.includes('halo') || cleanCommand.includes('hai')) {
+            if (!skipSpeech) {
+                if (cleanCommand.includes('hallo') || cleanCommand.includes('halo') || cleanCommand.includes('hai')) {
                     if (cleanCommand.includes('uli')) {
                         stopSpeech();
                         speechAction({
                             text: `Hai ${userName}, saya mendengarkan Anda!`,
                             actionOnStart: () => {
-                                setIsTrigger(true);
+                                setDisplayTranscript(true);
                             },
                             actionOnEnd: () => {
                                 setSpeechOn(true);
@@ -599,54 +598,6 @@ const Kelas = () => {
                     }
                 }
             }
-
-            // if (!introPage) {
-            //     if (cleanCommand.includes('intruksi')) {
-            //         setSpeechOn(false);
-            //         speechWithBatch({
-            //             speechs: [
-            //                 {
-            //                     text: `Hai ${userName}, sekarang Anda mendengarkan intruksi di halaman daftar kelas.`,
-            //                     actionOnEnd: () => {
-            //                         setSkipTrigger(true);
-            //                         setIsTrigger(false);
-            //                     },
-            //                 },
-            //                 {
-            //                     text: `Halaman ini dinamakan halaman daftar kelas. Pada halaman ini terdapat kumpulan dari berbagai kelas yang dapat Anda pelajari.`,
-            //                 },
-            //                 {
-            //                     text: ' Anda dapat mencari jumlah kelas yang tersedia dengan berdasarkan level, yaitu, Level Mudah, Normal, dan Sulit.',
-            //                 },
-            //                 {
-            //                     text: `Untuk perintahnya, Anda bisa mengucapkan cari kelas dengan level yang Anda inginkan, misalnya, cari kelas mudah`,
-            //                 },
-            //                 {
-            //                     text: 'Jika bingung,  Anda juga dapat mencari semua kelas dengan mengucapkan cari semua kelas.',
-            //                 },
-            //                 {
-            //                     text: 'Selanjutnya, Anda bisa ucapkan sebutkan kelas agar mengetahui apa saja kelas di level tersebut.',
-            //                 },
-            //                 {
-            //                     text: 'Jika sudah menemukan kelas yang cocok, Anda bisa ucapkan belajar dengan kelas yang Anda inginkan, misalnya Belajar bahasa.',
-            //                 },
-            //                 {
-            //                     text: `Jika Anda tersesat, Anda dapat mengucapkan saya dimana`,
-            //                 },
-            //                 {
-            //                     text: `Untuk navigasi halaman, Anda dapat mengucapkan pergi ke halaman yang Anda tuju, misalnya pergi ke beranda, pada halaman ini Anda dapat pergi ke halaman beranda, raport, dan peringkat`,
-            //                 },
-
-            //                 {
-            //                     text: `jangan lupa, Anda harus ucapkan terlebih dahulu hi Uli atau hallo uli agar saya dapat mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.`,
-            //                     actionOnEnd: () => {
-            //                         setSkipTrigger(false);
-            //                     },
-            //                 },
-            //             ],
-            //         });
-            //     }
-            // }
         };
 
         // HANDLING SPEECH RECOGNITION FROM DEATH
@@ -662,7 +613,7 @@ const Kelas = () => {
                     text: 'saya diam',
                     actionOnEnd: () => {
                         console.log('speech diclear');
-                        setIsTrigger(false);
+                        setDisplayTranscript(false);
                         setSpeechOn(false);
                     },
                 });
@@ -672,7 +623,7 @@ const Kelas = () => {
                 clearTimeout(timer);
             };
         }
-    }, [router, kelas, token, isChecked, handleFetchKelasByLevelName, speechOn, userName, introPage, skipTrigger]);
+    }, [router, kelas, token, isChecked, handleFetchKelasByLevelName, speechOn, userName, introPage, skipSpeech]);
 
     // SINGLE BUTTON
     useEffect(() => {
@@ -683,30 +634,29 @@ const Kelas = () => {
                 keyCode: 32,
                 action: () => {
                     if (!isClickButton) {
-                        if (playingIntruksi) {
-                            setSpeechOn(false);
-                            stopSpeech();
+                        setSpeechOn(false);
+                        stopSpeech();
+                        if (isPlayIntruction) {
                             speechAction({
                                 text: 'Anda mematikan intruksi',
                                 actionOnEnd: () => {
-                                    setIsTrigger(false);
+                                    setDisplayTranscript(false);
                                     setIntroPage(false);
-                                    setSkipTrigger(false);
-                                    setClickButton(true);
-                                    setPlayingIntruksi(false);
+                                    setSkipSpeech(false);
+                                    setIsClickButton(true);
+                                    setIsPlayIntruction(false);
                                 },
                             });
-                            return;
+                        } else {
+                            speechAction({
+                                text: 'Anda melewati Intro Halaman',
+                                actionOnEnd: () => {
+                                    setIntroPage(false);
+                                    setSkipSpeech(false);
+                                    setIsClickButton(true);
+                                },
+                            });
                         }
-                        stopSpeech();
-                        speechAction({
-                            text: 'Anda melewati Intro Halaman',
-                            actionOnEnd: () => {
-                                setIntroPage(false);
-                                setSkipTrigger(false);
-                                setClickButton(true);
-                            },
-                        });
                     }
                 },
             });
@@ -716,15 +666,15 @@ const Kelas = () => {
         return () => {
             window.removeEventListener('keydown', spaceButtonIntroAction);
         };
-    }, [isClickButton, playingIntruksi]);
+    }, [isClickButton, isPlayIntruction]);
 
     return (
         <div className='h-screen bg-[#EDF3F3]'>
             <Navbar />
             <main style={{ height: 'calc(100vh - 90px)' }} className='w-screen bg-[#EDF3F3] pt-[90px] '>
-                <div className='mx-auto grid max-w-screen-xl grid-cols-12'>
+                <div className='grid max-w-screen-xl grid-cols-12 mx-auto'>
                     <div className='col-span-2'>
-                        <h1 className='text-title-2 font-bold '>Level</h1>
+                        <h1 className='font-bold text-title-2 '>Level</h1>
                         <div className='mt-[30px] flex flex-col gap-[18px] '>
                             <div className='flex items-center gap-2'>
                                 <input
@@ -736,7 +686,7 @@ const Kelas = () => {
                                     }}
                                     className='h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600'
                                 />
-                                <label htmlFor='check' className='text-body-4 font-medium'>
+                                <label htmlFor='check' className='font-medium text-body-4'>
                                     Mudah
                                 </label>
                             </div>
@@ -750,7 +700,7 @@ const Kelas = () => {
                                     checked={isChecked.normal}
                                     className='h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600'
                                 />
-                                <label htmlFor='check' className='text-body-4 font-medium'>
+                                <label htmlFor='check' className='font-medium text-body-4'>
                                     Normal
                                 </label>
                             </div>
@@ -764,7 +714,7 @@ const Kelas = () => {
                                     checked={isChecked.sulit}
                                     className='h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600'
                                 />
-                                <label htmlFor='check' className='text-body-4 font-medium'>
+                                <label htmlFor='check' className='font-medium text-body-4'>
                                     Sulit
                                 </label>
                             </div>
@@ -778,7 +728,7 @@ const Kelas = () => {
                                     checked={isChecked.semua}
                                     className='h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600'
                                 />
-                                <label htmlFor='check' className='text-body-4 font-medium'>
+                                <label htmlFor='check' className='font-medium text-body-4'>
                                     Semua
                                 </label>
                             </div>
@@ -835,7 +785,7 @@ const Kelas = () => {
                     </div>
                 </div>
             </main>
-            <Transkrip transcript={transcript} isTrigger={isTrigger} />
+            <Transkrip transcript={transcript} isTrigger={displayTranscript} />
         </div>
     );
 };

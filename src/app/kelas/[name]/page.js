@@ -62,7 +62,6 @@ const EnrollKelas = () => {
 
     // STATE
     // load data
-    const [playingIntruksi, setPlayingIntruksi] = useState(false);
     const [loadData, setLoadData] = useState(true);
     // poin etc
     const [progress, setProgress] = useState(0);
@@ -90,21 +89,18 @@ const EnrollKelas = () => {
     //sertifikat
     const userName = data?.user?.name;
     const [isCetakSertifikat, setCetakSertifikat] = useState(false);
-    const [transcript, setTrancript] = useState('');
+    // const [transcript, setTrancript] = useState('');
     const [enrollClassName, setEnrollClassName] = useState('');
-
-    const [speechOn, setSpeechOn] = useState(false);
-    const [skipTrigger, setSkipTrigger] = useState(false);
-    const [introPage, setIntroPage] = useState(true);
-    const [isTrigger, setIsTrigger] = useState(false);
+    // const [introPage, setIntroPage] = useState(true);
     const [statusKelas, setStatusKelas] = useState('');
-    const [isClickButton, setClickButton] = useState(false);
 
-    // BOOLEAN STATE
-    // const [isVideoEnded, setVideoEnded] = useState(false);
-    // const [transkripMode, setModeTranskrip] = useState(false);
-    // const [isVideoPlaying, setVideoPlaying] = useState(false);
-    // const [ulangiQuiz, setUlangiQuiz] = useState(false);
+    // ACCESSIBILITY STATE
+    const [speechOn, setSpeechOn] = useState(false); // state untuk  speech recognition
+    const [transcript, setTrancript] = useState(''); // state untuk menyimpan transcript hasil speech recognition
+    const [skipSpeech, setSkipSpeech] = useState(false); // state untuk  mengatasi speech recogniton ter-trigger
+    const [displayTranscript, setDisplayTranscript] = useState(false); // state untuk  menampilkan transcript
+    const [isClickButton, setIsClickButton] = useState(false); // state untuk aksi tombol
+    const [isPlayIntruction, setIsPlayIntruction] = useState(false); // state  ketika intruksi berjalan
 
     // FUNC
     const saveBlobToDevice = (blob, fileName) => {
@@ -164,7 +160,6 @@ const EnrollKelas = () => {
                         token,
                     });
                     console.log('success update progres materi', response.data);
-                    // console.log('current materi: ', currentMateri);
                 } catch (error) {
                     console.log('ERROR', error);
                 }
@@ -175,7 +170,7 @@ const EnrollKelas = () => {
     };
 
     // EFFECTS
-    // init recognition
+    // init speech recognition
     useEffect(() => {
         try {
             recognition.start();
@@ -258,7 +253,7 @@ const EnrollKelas = () => {
                                     {
                                         text: `Selamat datang di Kelas ${name}. Pada kelas ini Anda akan belajar sebanyak ${kelas.getMateriLength()} materi dan mengerjakan ${kelas.getQuizLength()} quiz.`,
                                         actionOnStart: () => {
-                                            setSkipTrigger(true);
+                                            setSkipSpeech(true);
                                         },
                                     },
                                     {
@@ -282,16 +277,16 @@ const EnrollKelas = () => {
                                     {
                                         text: 'Jika Anda masih bingung, Anda bisa ucapkan intruksi agar mendapatkan penjelasan lebih banyak.',
                                         actionOnEnd: () => {
-                                            setClickButton(true);
+                                            setIsClickButton(true);
                                             setIntro(false);
-                                            setIntroPage(false);
-                                            setSkipTrigger(false);
+                                            // setIntroPage(false);
+                                            setSkipSpeech(false);
                                         },
                                     },
                                 ],
                             });
                         } else {
-                            setClickButton(true);
+                            setIsClickButton(true);
                             // Kondisi sudah ada materi berjalan dengan adanya playback
                             if (kelas.lastMateri('status') === 'belum' || kelas.lastMateri('status') === 'jalan') {
                                 // Kondisi materi terakhir 'belum' atau 'jalan'
@@ -308,10 +303,6 @@ const EnrollKelas = () => {
                                         // kondisi  mode jawab
                                         if (userAnswer) {
                                             // kondisi ada input option user
-
-                                            // speechAction({
-                                            //     text: `Anda menjawab ${userAnswer}`,
-                                            // });
 
                                             // mencari option id yg dijawab dari user
                                             const answerData = currentQuiz.options.find(
@@ -333,6 +324,7 @@ const EnrollKelas = () => {
                                                             id_option: userAnswerData.id_option,
                                                             token,
                                                         });
+
                                                         if (!response?.data?.data?.answer) {
                                                             // kondisi jawaban salah
                                                             speechAction({
@@ -419,16 +411,6 @@ const EnrollKelas = () => {
                                                                     },
                                                                 ],
                                                             });
-                                                            // speechAction({
-                                                            //     text: `Anda menjawab ${userAnswer}`,
-                                                            // });
-
-                                                            // speechAction({
-                                                            //     text: 'Karena ini adalah quiz terkahir, Saya akan menyampaikan hasil quiz Anda!',
-                                                            // });
-                                                            // speechAction({
-                                                            //     text: 'Berikut ini adalah history jawaban Anda',
-                                                            // });
 
                                                             for (let i = 0; i < dts?.jawaban?.length; i++) {
                                                                 speechAction({
@@ -443,7 +425,7 @@ const EnrollKelas = () => {
                                                                     dts.nilai
                                                                 } sehingga Anda lulus kelas ${kelas.getName()}.`,
                                                                 actionOnEnd: () => {
-                                                                    setIsTrigger(false);
+                                                                    setDisplayTranscript(false);
                                                                     console.log('Response last materi', responseLast);
                                                                     setIdxQuiz(idxQuiz + 1);
                                                                     setCurrentQuiz({
@@ -473,17 +455,6 @@ const EnrollKelas = () => {
                                                                 ],
                                                             });
 
-                                                            // speechAction({
-                                                            //     text: `Anda menjawab ${userAnswer}`,
-                                                            // });
-
-                                                            // speechAction({
-                                                            //     text: 'Karena ini adalah quiz terkahir, Saya akan menyampaikan hasil quiz Anda!',
-                                                            // });
-                                                            // speechAction({
-                                                            //     text: 'Berikut ini adalah history jawaban Anda',
-                                                            // });
-
                                                             for (let i = 0; i < dts?.jawaban?.length; i++) {
                                                                 speechAction({
                                                                     text: `Pada soal ke ${i + 1} Anda menjawab ${
@@ -495,7 +466,7 @@ const EnrollKelas = () => {
                                                             speechAction({
                                                                 text: `Sayang sekali, nilai akhir Anda ${dts.nilai} sehingga Anda wajib mengulang mengerjakan quiz. Tetap semangat yaa`,
                                                                 actionOnEnd: () => {
-                                                                    setIsTrigger(false);
+                                                                    setDisplayTranscript(false);
                                                                     console.log('Response last materi', responseLast);
                                                                     setIdxQuiz(0);
                                                                     setCurrentQuiz({
@@ -509,36 +480,6 @@ const EnrollKelas = () => {
                                                                 },
                                                             });
                                                         }
-
-                                                        // if (!response?.data?.data?.answer) {
-                                                        //     // kondisi jawaban salah
-                                                        //     speechAction({
-                                                        //         text: `Maaf, Jawaban Anda Salah!`,
-                                                        //         actionOnEnd: () => {
-                                                        //             setIdxQuiz(idxQuiz + 1);
-                                                        //             setCurrentQuiz({
-                                                        //                 options: [],
-                                                        //                 question: '',
-                                                        //             });
-                                                        //             setAnswerMode(false);
-                                                        //             setLoadData(true);
-                                                        //             setUserAnswer('');
-                                                        //         },
-                                                        //     });
-                                                        //     return;
-                                                        // }
-
-                                                        // // kondisi jawaban benar
-                                                        // speechAction({
-                                                        //     text: `Selamat, Jawaban Anda benar!`,
-                                                        //     actionOnEnd: () => {
-                                                        //         setIdxQuiz(idxQuiz + 1);
-                                                        //         setCurrentQuiz({});
-                                                        //         setAnswerMode(false);
-                                                        //         setLoadData(true);
-                                                        //         setUserAnswer('');
-                                                        //     },
-                                                        // });
                                                     } catch (error) {
                                                         if (error instanceof ApiResponseError) {
                                                             console.log(`ERR SEND ANSWER API MESSAGE: `, error.message);
@@ -599,50 +540,44 @@ const EnrollKelas = () => {
                                     //kondisi tidak  mode kerjakan quiz
                                     if (kelas.isQuizEnded()) {
                                         //kondisi semua quiz selesai
-                                        speechAction({
-                                            text: `Selamat ${userName}, materi dan quiz sudah selesai. Anda saat ini bisa memilih semua materi dan mendapatkan sertifikat dari kelas Anda. `,
+                                        // speechAction({
+                                        //     text: `Selamat ${userName}, materi dan quiz sudah selesai. Anda saat ini bisa memilih semua materi dan mendapatkan sertifikat dari kelas Anda. `,
+                                        // });
+                                        speechWithBatch({
+                                            speechs: [
+                                                {
+                                                    text: `Selamat ${userName}, materi dan quiz sudah selesai. Anda saat ini bisa memilih semua materi dan mendapatkan sertifikat dari kelas Anda. `,
+                                                    actionOnStart: () => {
+                                                        setSkipSpeech(true);
+                                                    },
+                                                },
+                                                {
+                                                    text: `Untuk mencetak sertifikat Anda dapat ucapkan cetak sertifikat`,
+                                                    actionOnEnd: () => {
+                                                        setSkipSpeech(false);
+                                                    },
+                                                },
+                                            ],
                                         });
                                     } else {
-                                        //
-                                        // if (kelas.getQuizCount() >= 1) {
-                                        //     speechAction({
-                                        //         text: `Sayang sekali, Anda harus mengulang quiz karena nilai Anda kurang memenuhi persyaratan kelulusan`,
-                                        //     });
-                                        //     return;
-                                        // }
-
                                         if (kelas.getQuizCount() === 0) {
                                             //kondisi semua materi selesai dengan tidak  mode kerjakan quiz
-
                                             speechWithBatch({
                                                 speechs: [
                                                     {
                                                         text: `Selamat, materi sudah selesai. Anda saat ini bisa mengerjakan quiz, ucapkan perintah kerjakan quiz, Agar bisa mengerjakan quiz `,
-                                                        actionOnEnd: () => {
-                                                            setSkipTrigger(true);
+                                                        actionOnStart: () => {
+                                                            setSkipSpeech(true);
                                                         },
                                                     },
                                                     {
                                                         text: 'Jangan lupa untuk panggil saya terlebih dahulu dengan hai atau halo uli.agar saya bisa mendengar Anda',
                                                         actionOnEnd: () => {
-                                                            setSkipTrigger(false);
+                                                            setSkipSpeech(false);
                                                         },
                                                     },
                                                 ],
                                             });
-
-                                            // speechAction({
-                                            //     text: `Selamat, materi sudah selesai. Anda saat ini bisa mengerjakan quiz, ucapkan perintah kerjakan quiz, Agar bisa mengerjakan quiz `,
-                                            //     actionOnEnd: () => {
-                                            //         setSkipTrigger(true);
-                                            //     },
-                                            // });
-                                            // speechAction({
-                                            //     text: 'Jangan lupa untuk panggil saya terlebih dahulu dengan hai atau halo uli.agar saya bisa mendengar Anda',
-                                            //     actionOnEnd: () => {
-                                            //         setSkipTrigger(false);
-                                            //     },
-                                            // });
                                         }
                                     }
                                 }
@@ -673,7 +608,7 @@ const EnrollKelas = () => {
             if (isQuizMode) {
                 console.log(`quiz berjalan: `, cleanCommand);
                 console.log(`is answer mode: `, isAnswerMode);
-                setIsTrigger(true);
+                setDisplayTranscript(true);
                 if (isAnswerMode) {
                     if (cleanCommand.includes('ulangi')) {
                         if (cleanCommand.includes('soal')) {
@@ -717,7 +652,7 @@ const EnrollKelas = () => {
                             speechAction({
                                 text: `Anda berhenti untuk menjawab quiz di soal ke ${idxQuiz + 1}`,
                                 actionOnEnd: () => {
-                                    setIsTrigger(false);
+                                    setDisplayTranscript(false);
                                     // setSpeechOn(false);
                                     if (listQuiz.getIdxQuizBerjalan() === -1) {
                                         setIdxQuiz(0);
@@ -735,7 +670,7 @@ const EnrollKelas = () => {
                 }
             }
 
-            if (speechOn && !skipTrigger) {
+            if (speechOn && !skipSpeech) {
                 if (cleanCommand.includes('kerjakan')) {
                     if (
                         cleanCommand.includes('quiz') ||
@@ -759,7 +694,7 @@ const EnrollKelas = () => {
                                 } materi yang belum diselesaikan.`,
                                 actionOnEnd: () => {
                                     // setSpeechOn(false);
-                                    setIsTrigger(false);
+                                    setDisplayTranscript(false);
                                 },
                             });
                             return;
@@ -770,7 +705,7 @@ const EnrollKelas = () => {
                                 text: `Quiz Anda sudah selesai!`,
                                 actionOnEnd: () => {
                                     // setSpeechOn(false);
-                                    setIsTrigger(false);
+                                    setDisplayTranscript(false);
                                 },
                             });
                             return;
@@ -781,7 +716,7 @@ const EnrollKelas = () => {
                                 text: `Anda melanjutkan mengerjakan quiz ke- ${listQuiz.getIdxQuizBerjalan() + 1}`,
                                 actionOnEnd: () => {
                                     // setSpeechOn(false);
-                                    setIsTrigger(false);
+                                    setDisplayTranscript(false);
                                     setIdxQuiz(listQuiz.getIdxQuizBerjalan());
                                     setQuizMode(true);
                                     setLoadData(true);
@@ -794,7 +729,7 @@ const EnrollKelas = () => {
                             text: `Anda akan mengerjakan quiz pertama`,
                             actionOnEnd: () => {
                                 // setSpeechOn(false);
-                                setIsTrigger(false);
+                                setDisplayTranscript(false);
                                 setQuizMode(true);
                                 setLoadData(true);
                             },
@@ -811,8 +746,6 @@ const EnrollKelas = () => {
                         console.log('MATERI COMMAND: ', materiCommand);
                         const findMateri = listMateri.getMateriByIdx(materiIdx);
                         const findIndexMateriBerjalan = listMateri.getIdxMateriBerjalan();
-                        // const findMateri = materi.find((_, index) => index === materiIdx);
-                        // const findIndexMateriBerjalan = materi.findIndex((m) => m.status === 'jalan');
 
                         if (materiCommand === 'sekarang') {
                             speechAction({
@@ -836,7 +769,7 @@ const EnrollKelas = () => {
                                                 speechAction({
                                                     text: `Materi telah selesai semua, Anda akan diarahkan ke materi terkakhir dari kelas ini!`,
                                                     actionOnEnd: () => {
-                                                        setIsTrigger(false);
+                                                        setDisplayTranscript(false);
                                                         setCurrentMateri(lastMateri);
                                                         setPlayback(0);
                                                         setVideoId(getYoutubeVideoId(lastMateri.url));
@@ -853,7 +786,7 @@ const EnrollKelas = () => {
                                             speechAction({
                                                 text: `Anda sedang belajar materi sekarang atau materi yang sedang berjalan.  Jangan lupa klik tombol spasi untuk menjalankan materi, dan klik kembali tombol spasi  untuk pause materi.`,
                                                 actionOnStart: () => {
-                                                    setIsTrigger(false);
+                                                    setDisplayTranscript(false);
                                                     //  setSpeechOn(false);
                                                     setCurrentMateri(materiBerjalan);
                                                     setPlayback(materiBerjalan.playback);
@@ -883,14 +816,14 @@ const EnrollKelas = () => {
                                 speechAction({
                                     text: `Materi tidak ditemukan, perlu diperhatikan ketika Anda mencari materi. ucapkan pilih materi sesuai angka yang Anda pilih, misalnya pilih materi 1`,
                                     actionOnEnd: () => {
-                                        setIsTrigger(false);
+                                        setDisplayTranscript(false);
                                     },
                                 });
 
                                 speechAction({
                                     text: `Jika ada kelas yang masih berjalan, Anda juga bisa mencari materi tersebut dengan pilih materi sekarang`,
                                     actionOnEnd: () => {
-                                        setIsTrigger(false);
+                                        setDisplayTranscript(false);
                                     },
                                 });
                                 return;
@@ -900,7 +833,7 @@ const EnrollKelas = () => {
                                     materi.length
                                 }!`,
                                 actionOnEnd: () => {
-                                    setIsTrigger(false);
+                                    setDisplayTranscript(false);
                                 },
                             });
                             return;
@@ -912,7 +845,7 @@ const EnrollKelas = () => {
                                     materi.length
                                 } dan sekarang Anda sedang di materi ke ${findIndexMateriBerjalan + 1}`,
                                 actionOnEnd: () => {
-                                    setIsTrigger(false);
+                                    setDisplayTranscript(false);
                                 },
                             });
                             return;
@@ -921,7 +854,7 @@ const EnrollKelas = () => {
                         speechAction({
                             text: `Anda akan memilih materi ke ${materiIdx + 1}`,
                             actionOnEnd: () => {
-                                setIsTrigger(false);
+                                setDisplayTranscript(false);
                                 setCurrentMateri(findMateri);
                                 setPlayback(0);
                                 setVideoId(getYoutubeVideoId(findMateri.url));
@@ -939,7 +872,7 @@ const EnrollKelas = () => {
                         speechAction({
                             text: `Anda akan menuju halaman Daftar Kelas`,
                             actionOnEnd: () => {
-                                setIsTrigger(false);
+                                setDisplayTranscript(false);
                                 router.push('/kelas');
                             },
                         });
@@ -948,7 +881,7 @@ const EnrollKelas = () => {
                         speechAction({
                             text: `Anda akan menuju halaman beranda`,
                             actionOnEnd: () => {
-                                setIsTrigger(false);
+                                setDisplayTranscript(false);
                                 router.push('/');
                             },
                         });
@@ -957,7 +890,7 @@ const EnrollKelas = () => {
                         speechAction({
                             text: `Anda akan menuju halaman Rapor`,
                             actionOnEnd: () => {
-                                setIsTrigger(false);
+                                setDisplayTranscript(false);
                                 router.push('/rapor');
                             },
                         });
@@ -967,7 +900,7 @@ const EnrollKelas = () => {
                         speechAction({
                             text: 'Anda akan menuju halaman Peringkat',
                             actionOnEnd: () => {
-                                setIsTrigger(false);
+                                setDisplayTranscript(false);
                                 router.push('/peringkat');
                             },
                         });
@@ -987,7 +920,7 @@ const EnrollKelas = () => {
                             speechAction({
                                 text: `Anda akan mendapatkan sertifikat ${enrollClassName}`,
                                 actionOnEnd: () => {
-                                    setIsTrigger(false);
+                                    setDisplayTranscript(false);
                                     setCetakSertifikat(true);
                                     setLoadData(true);
                                 },
@@ -997,7 +930,7 @@ const EnrollKelas = () => {
                                 text: `Maaf, Anda harus menyelesaikan semua materi dan quiz terlebih dahulu.`,
                                 actionOnEnd: () => {
                                     // setCetakSertifikat(false);
-                                    setIsTrigger(false);
+                                    setDisplayTranscript(false);
                                 },
                             });
                         }
@@ -1012,24 +945,24 @@ const EnrollKelas = () => {
                     speechAction({
                         text: `Kita sedang di halaman pembelajaran`,
                         actionOnEnd: () => {
-                            setIsTrigger(false);
+                            setDisplayTranscript(false);
                         },
                     });
                 } else if (cleanCommand.includes('jelaskan')) {
                     if (cleanCommand.includes('intruksi') || cleanCommand.includes('instruksi')) {
                         console.log('dapet nih');
                         setSpeechOn(false);
-                        setClickButton(false);
-                        setPlayingIntruksi(true);
+                        setIsClickButton(false);
+                        setIsPlayIntruction(true);
                         speechWithBatch({
                             speechs: [
                                 {
                                     text: `Hai ${userName}, sekarang Anda mendengarkan intruksi di halaman kelas.`,
                                     actionOnStart: () => {
-                                        setSkipTrigger(true);
+                                        setSkipSpeech(true);
                                     },
                                     actionOnEnd: () => {
-                                        setIsTrigger(false);
+                                        setDisplayTranscript(false);
                                     },
                                 },
                                 {
@@ -1057,8 +990,8 @@ const EnrollKelas = () => {
                                 {
                                     text: `jangan lupa, Anda harus ucapkan terlebih dahulu hi Uli atau hallo uli agar saya dapat mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.`,
                                     actionOnEnd: () => {
-                                        setSkipTrigger(false);
-                                        setPlayingIntruksi(false);
+                                        setSkipSpeech(false);
+                                        setIsPlayIntruction(false);
                                     },
                                 },
                             ],
@@ -1067,7 +1000,7 @@ const EnrollKelas = () => {
                 }
             }
 
-            if (!skipTrigger) {
+            if (!skipSpeech) {
                 if (cleanCommand.includes('muat')) {
                     if (cleanCommand.includes('ulang')) {
                         if (cleanCommand.includes('halaman')) {
@@ -1080,8 +1013,8 @@ const EnrollKelas = () => {
                             speechAction({
                                 text: `Anda akan load halaman ini!`,
                                 actionOnEnd: () => {
-                                    setClickButton(false);
-                                    setIsTrigger(false);
+                                    setIsClickButton(false);
+                                    setDisplayTranscript(false);
                                     if (listQuiz.getIdxQuizBerjalan() === -1) {
                                         setIdxQuiz(0);
                                     } else {
@@ -1100,7 +1033,7 @@ const EnrollKelas = () => {
                         speechAction({
                             text: `Hai ${userName}, saya mendengarkan Anda!`,
                             actionOnStart: () => {
-                                setIsTrigger(true);
+                                setDisplayTranscript(true);
                             },
                             actionOnEnd: () => {
                                 setSpeechOn(true);
@@ -1123,7 +1056,7 @@ const EnrollKelas = () => {
                     text: 'saya diam',
                     actionOnEnd: () => {
                         console.log('speech diclear');
-                        setIsTrigger(false);
+                        setDisplayTranscript(false);
                         setSpeechOn(false);
                     },
                 });
@@ -1144,9 +1077,9 @@ const EnrollKelas = () => {
         idxQuiz,
         enrollClassName,
         speechOn,
-        skipTrigger,
+        skipSpeech,
         userName,
-        introPage,
+        // introPage,
         statusKelas,
     ]);
 
@@ -1159,30 +1092,38 @@ const EnrollKelas = () => {
                 keyCode: 32,
                 action: () => {
                     if (!isClickButton) {
-                        if (playingIntruksi) {
-                            setSpeechOn(false);
-                            stopSpeech();
+                        setSpeechOn(false);
+                        stopSpeech();
+                        if (isPlayIntruction) {
                             speechAction({
                                 text: 'Anda mematikan intruksi',
                                 actionOnEnd: () => {
-                                    setIsTrigger(false);
-                                    setIntroPage(false);
-                                    setSkipTrigger(false);
-                                    setClickButton(true);
-                                    setPlayingIntruksi(false);
+                                    setDisplayTranscript(false);
+                                    setSkipSpeech(false);
+                                    setIsClickButton(true);
+                                    setIsPlayIntruction(false);
                                 },
                             });
                             return;
                         }
-                        stopSpeech();
-                        speechAction({
-                            text: 'Anda melewati Intro Halaman',
-                            actionOnEnd: () => {
-                                setIntroPage(false);
-                                setSkipTrigger(false);
-                                setClickButton(true);
-                            },
-                        });
+                        if (isIntro) {
+                            speechAction({
+                                text: 'Anda melewati Intro Halaman Belajar',
+                                actionOnEnd: () => {
+                                    setIntro(false);
+                                    setSkipSpeech(false);
+                                    setIsClickButton(true);
+                                },
+                            });
+                        } else {
+                            speechAction({
+                                text: 'Anda melewati Intro Halaman',
+                                actionOnEnd: () => {
+                                    setSkipSpeech(false);
+                                    setIsClickButton(true);
+                                },
+                            });
+                        }
                     }
                 },
             });
@@ -1192,7 +1133,7 @@ const EnrollKelas = () => {
         return () => {
             window.removeEventListener('keydown', spaceButtonIntroAction);
         };
-    }, [isClickButton, playingIntruksi]);
+    }, [isClickButton, isPlayIntruction, isIntro]);
 
     return (
         <div className='h-screen bg-[#EDF3F3]'>
@@ -1307,7 +1248,7 @@ const EnrollKelas = () => {
                                     handleEditMateri={handleEditMateri}
                                     playback={playback}
                                     videoId={videoId}
-                                    isInterrop={playingIntruksi}
+                                    isInterrop={isPlayIntruction}
                                 />
                             </div>
                         )}
@@ -1381,7 +1322,7 @@ const EnrollKelas = () => {
                     </>
                 </div>
             </div>
-            <Transkrip transcript={transcript} isTrigger={isTrigger} />
+            <Transkrip transcript={transcript} isTrigger={displayTranscript} />
         </div>
     );
 };

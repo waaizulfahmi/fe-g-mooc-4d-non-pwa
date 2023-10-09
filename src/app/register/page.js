@@ -1,11 +1,14 @@
 'use client';
 
 // core
+import { useRef, useCallback, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 // third parties
 import { useForm } from 'react-hook-form';
+import Webcam from 'react-webcam';
+import Popup from 'reactjs-popup';
 
 // axios
 import { authRegister } from '@/axios/auth';
@@ -25,6 +28,48 @@ import Notification from '@/components/Notification';
 import { ApiResponseError } from '@/utils/error-handling';
 
 const Register = () => {
+    const webcamRef = useRef(null);
+    const [isCameraOpen, setIsCameraOpen] = useState(false);
+    const [capturedImages, setCapturedImages] = useState([]);
+    const maxImages = 10;
+    const interval = 500; // Ubah sesuai kebutuhan
+
+    const capture = useCallback(() => {
+        const imageSrc = webcamRef.current.getScreenshot();
+        console.log(imageSrc);
+        setCapturedImages((prevImages) => [...prevImages, imageSrc]);
+    }, []);
+
+    const openCamera = () => {
+        setIsCameraOpen(true);
+        // setTimeout(captureImages, 3000);
+        const waitForCamera = setInterval(() => {
+            if (webcamRef.current?.video.readyState === 4) {
+                clearInterval(waitForCamera);
+                captureImages();
+            }
+        }, 2000);
+    };
+
+    const captureImages = () => {
+        let imageCount = 0;
+
+        const captureImageInterval = setInterval(() => {
+            if (imageCount < maxImages) {
+                capture();
+                imageCount++;
+            } else {
+                clearInterval(captureImageInterval); // Hentikan interval setelah 10 gambar diambil
+                closeCamera();
+                console.log(capturedImages); // Tampilkan hasil pengambilan gambar
+            }
+        }, interval);
+    };
+
+    const closeCamera = () => {
+        setIsCameraOpen(false);
+    };
+
     const router = useRouter();
 
     const { notifData, handleNotifAction, handleNotifVisible } = useNotification();
@@ -44,10 +89,12 @@ const Register = () => {
                     host: window?.location?.origin,
                     password: data.password,
                     konfirmasi_password: data.password_confirmation,
+                    images: capturedImages,
                 });
                 handleNotifAction('success', 'Yeay ! Registrasi Berhasil.\nCheck Email Anda untuk verifikasi Akun!');
                 if (!notifData?.isVisible) {
                     setTimeout(() => {
+                        router.refresh();
                         router.replace('/login', { scroll: false });
                     }, 1000);
                 }
@@ -63,6 +110,35 @@ const Register = () => {
             }
         }
     };
+
+    // const onSubmit = async (data) => {
+    //     if (typeof window !== 'undefined') {
+    //         try {
+    //             await authRegister({
+    //                 name: data.name,
+    //                 email: data.email,
+    //                 host: window?.location?.origin,
+    //                 password: data.password,
+    //                 konfirmasi_password: data.password_confirmation,
+    //             });
+    //             handleNotifAction('success', 'Yeay ! Registrasi Berhasil.\nCheck Email Anda untuk verifikasi Akun!');
+    //             if (!notifData?.isVisible) {
+    //                 setTimeout(() => {
+    //                     router.replace('/login', { scroll: false });
+    //                 }, 1000);
+    //             }
+    //         } catch (error) {
+    //             if (error instanceof ApiResponseError) {
+    //                 console.log(`ERR REGISTER MESSAGE: `, error.message);
+    //                 console.log(error.data);
+    //                 handleNotifAction('error', error?.message);
+    //                 return;
+    //             }
+    //             console.log(`MESSAGE: `, error.message);
+    //             handleNotifAction('error', error?.message);
+    //         }
+    //     }
+    // };
 
     return (
         <section className='grid h-screen grid-cols-12'>
@@ -155,6 +231,39 @@ const Register = () => {
                                 })}
                             />
                         </div>
+                        {isCameraOpen ? (
+                            <Popup
+                                closeBtn={true}
+                                closePopup={closeCamera}
+                                open={isCameraOpen}
+                                modal
+                                nested
+                                className='rounded-lg bg-gray-100 p-4'>
+                                <div className='fixed inset-0 bg-opacity-50 backdrop-blur-md backdrop-filter'></div>
+                                <div className='relative rounded-lg bg-white p-5 shadow-lg'>
+                                    <h1 className='pb-4 text-2xl font-semibold'>Face Recognition Technology</h1>
+                                    <Webcam
+                                        audio={false}
+                                        ref={webcamRef}
+                                        mirrored={true}
+                                        screenshotFormat='image/jpeg'
+                                        className='w-full rounded-lg shadow-lg'
+                                    />
+                                    <div className='mt-4 flex flex-col items-center'>
+                                        <h3 className='text-xl font-semibold'>Memindai Wajah Anda</h3>
+                                        <button
+                                            onClick={closeCamera}
+                                            className='mt-2 rounded-lg bg-red-500 px-4 py-2 font-semibold text-white hover:bg-red-600'>
+                                            Keluar
+                                        </button>
+                                    </div>
+                                </div>
+                            </Popup>
+                        ) : (
+                            <FillButton onClick={openCamera} className='w-max px-[52px] py-[16px]'>
+                                Face Recognition
+                            </FillButton>
+                        )}
                         <FillButton type='submit' className='w-max px-[52px] py-[16px]'>
                             Daftar
                         </FillButton>
