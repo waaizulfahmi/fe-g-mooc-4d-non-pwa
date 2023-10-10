@@ -220,6 +220,17 @@ const Rapor = () => {
                         if (error instanceof ApiResponseError) {
                             console.log(`ERR RAPOT API MESSAGE: `, error.message);
                             console.log(error.data);
+                            if (
+                                error?.data?.data?.metadata?.code === 401 ||
+                                error?.message?.toLowerCase() === 'Email belum diverifikasi'.toLocaleLowerCase()
+                            ) {
+                                speechAction({
+                                    text: 'Anda harus verifikasi akun Anda terlebih dahulu. Silahkan check email Anda!',
+                                    actionOnEnd: () => {
+                                        router.replace('/must-verify');
+                                    },
+                                });
+                            }
                             return;
                         }
                         console.log(`MESSAGE: `, error.message);
@@ -229,7 +240,7 @@ const Rapor = () => {
             }
             setLoadData(false);
         }
-    }, [token, loadData, userName]);
+    }, [token, loadData, userName, router]);
 
     useEffect(() => {
         recognition.onresult = (event) => {

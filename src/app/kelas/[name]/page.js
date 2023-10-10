@@ -587,6 +587,17 @@ const EnrollKelas = () => {
                         if (error instanceof ApiResponseError) {
                             console.log(`ERR CLASS ENROLLMENT API MESSAGE: `, error.message);
                             console.log(error.data);
+                            if (
+                                error?.data?.data?.metadata?.code === 401 ||
+                                error?.message?.toLowerCase() === 'Email belum diverifikasi'.toLocaleLowerCase()
+                            ) {
+                                speechAction({
+                                    text: 'Anda harus verifikasi akun Anda terlebih dahulu. Silahkan check email Anda!',
+                                    actionOnEnd: () => {
+                                        router.replace('/must-verify');
+                                    },
+                                });
+                            }
                             return;
                         }
                         console.log(`MESSAGE: `, error.message);
@@ -596,7 +607,7 @@ const EnrollKelas = () => {
             }
         }
         setLoadData(false);
-    }, [name, loadData, token, isQuizMode, userAnswer, isAnswerMode, idxQuiz, currentQuiz, isCetakSertifikat, userName]);
+    }, [name, loadData, token, isQuizMode, userAnswer, isAnswerMode, idxQuiz, currentQuiz, isCetakSertifikat, userName, router]);
 
     useEffect(() => {
         recognition.onresult = (event) => {
@@ -1138,7 +1149,7 @@ const EnrollKelas = () => {
     return (
         <div className='h-screen bg-[#EDF3F3]'>
             <nav className={` fixed top-0 z-20 w-screen  bg-[#EDF3F3] py-[20px]`}>
-                <div className='mx-auto flex max-w-screen-xl items-center justify-between '>
+                <div className='flex items-center justify-between max-w-screen-xl mx-auto '>
                     <HeroIcon alt='icons' imgUrl={'/images/voice-icon.svg'} height={100} width={100} />
                     <div className=' flex items-center gap-[200px]'>
                         <div className='flex items-center gap-[20px] '>
@@ -1243,7 +1254,7 @@ const EnrollKelas = () => {
                             </div>
                         )}
                         {videoId && !isIntro && !isQuizMode && (
-                            <div className='h-full w-full'>
+                            <div className='w-full h-full'>
                                 <VideoFrame
                                     handleEditMateri={handleEditMateri}
                                     playback={playback}
