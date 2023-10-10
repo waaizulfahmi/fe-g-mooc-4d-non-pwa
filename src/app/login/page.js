@@ -21,12 +21,16 @@ import InputRef from '@/components/InputRef';
 import PasswordInputRef from '@/components/PasswordInputRef';
 import Label from '@/components/Label';
 import Notification from '@/components/Notification';
+import { authLoginWithFace } from '@/axios/auth';
+import { ApiResponseError } from '@/utils/error-handling';
 
 const Login = () => {
     const router = useRouter();
     const { notifData, handleNotifAction, handleNotifVisible } = useNotification();
     const webcamRef = useRef(null);
-    const [isCameraOpen, setIsCameraOpen] = useState(false);
+    const [isCameraOpen, setIsCameraOpen] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isFormOpen, setIsFormOpen] = useState(false);
 
     const {
         register,
@@ -34,19 +38,22 @@ const Login = () => {
         formState: { errors },
     } = useForm();
 
-    const openCamera = () => {
-        setIsCameraOpen(true);
-
-        const waitForCamera = setInterval(() => {
-            if (webcamRef.current?.video.readyState === 4) {
-                clearInterval(waitForCamera);
-                capture();
-            }
-        }, 5000);
-    };
-
     const closeCamera = () => {
         setIsCameraOpen(false);
+    };
+    const toggleMode = () => {
+        if (isCameraOpen) {
+            // Toggle ke mode login
+            setIsCameraOpen(false);
+        } else {
+            setIsCameraOpen(true);
+            const waitForCamera = setInterval(() => {
+                if (webcamRef.current?.video.readyState === 4) {
+                    clearInterval(waitForCamera);
+                    capture();
+                }
+            }, 5000);
+        }
     };
 
     const capture = useCallback(async () => {
@@ -55,13 +62,14 @@ const Login = () => {
         console.log(imageSrc);
 
         const onSubmitImage = async (data) => {
-            closeCamera();
+            setIsLoading(true);
 
             const response = await signIn('face-login', {
                 image: data,
                 redirect: false,
             });
 
+            setIsLoading(false);
             console.log('DATA: ', response);
 
             if (!response?.error) {
@@ -121,88 +129,80 @@ const Login = () => {
                         <h1 className='text-title-2 font-bold'>Masuk G-MOOC 4D</h1>
                         <p className='text-body-2'>Buktikan Sekarang Semua Bisa Belajar</p>
                     </div>
-                    <form className='flex flex-col items-center gap-[24px]' onSubmit={handleSubmit(onSubmit)}>
-                        <div className='w-full'>
-                            <Label htmlFor='email' className={`${errors.email?.message ? 'text-alert-1' : 'text-black'}`}>
-                                {errors.email?.message || <span className='invisible'>.</span>}
-                            </Label>
-                            <InputRef
-                                id='email'
-                                placeholder='Email'
-                                type='text'
-                                {...register('email', {
-                                    required: 'Email tidak boleh kosong!',
-                                    pattern: {
-                                        value: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-                                        message: 'Format email tidak sesuai!',
-                                    },
-                                })}
-                                className={`${
-                                    errors.email?.message
-                                        ? 'border-alert-1 focus:border-alert-1'
-                                        : 'border-neutral-6 focus:border-primary-1'
-                                }   bg-neutral-6 px-6 py-[17px] text-body-2 font-normal `}
-                            />
+                    {isCameraOpen ? (
+                        <div closeBtn={true} closePopup={closeCamera} open={isCameraOpen} className='rounded-lg bg-gray-100 p-4'>
+                            {/* <div className='fixed inset-0 bg-opacity-50 backdrop-blur-md backdrop-filter'></div> */}
+                            <div className='relative '>
+                                <h1 className='pb-4 text-base font-semibold'>Face Recognition Technology</h1>
+                                <Webcam
+                                    audio={false}
+                                    ref={webcamRef}
+                                    mirrored={true}
+                                    screenshotFormat='image/jpeg'
+                                    className='w-full rounded-lg shadow-lg'
+                                />
+                            </div>
                         </div>
-                        <div className='w-full'>
-                            <Label htmlFor='password' className={`${errors.password?.message ? 'text-alert-1' : 'text-black'}`}>
-                                {errors.password?.message || <span className='invisible'>.</span>}
-                            </Label>
-                            <PasswordInputRef
-                                id='password'
-                                placeholder='Kata Sandi'
-                                isError={errors.password?.message ? true : false}
-                                {...register('password', {
-                                    required: 'Password tidak boleh kosong!',
-                                    minLength: {
-                                        value: 8,
-                                        message: 'Jumlah Karaktek tidak boleh kurang dari 8!',
-                                    },
-                                })}
-                                className={`${
-                                    errors.password?.message
-                                        ? 'border-alert-1 focus:border-alert-1'
-                                        : 'border-neutral-6 focus:border-primary-1'
-                                }   bg-neutral-6 px-6 py-[17px] text-body-2 font-normal `}
-                            />
-                        </div>
-                        {isCameraOpen ? (
-                            <Popup
-                                closeBtn={true}
-                                closePopup={closeCamera}
-                                open={isCameraOpen}
-                                modal
-                                nested
-                                className='rounded-lg bg-gray-100 p-4'>
-                                <div className='fixed inset-0 bg-opacity-50 backdrop-blur-md backdrop-filter'></div>
-                                <div className='relative rounded-lg bg-white p-5 shadow-lg'>
-                                    <h1 className='pb-4 text-2xl font-semibold'>Face Recognition Technology</h1>
-                                    <Webcam
-                                        audio={false}
-                                        ref={webcamRef}
-                                        mirrored={true}
-                                        screenshotFormat='image/jpeg'
-                                        className='w-full rounded-lg shadow-lg'
-                                    />
-                                    <div className='mt-4 flex flex-col items-center'>
-                                        <h3 className='text-xl font-semibold'>Memindai Wajah Anda</h3>
-                                        <button
-                                            onClick={closeCamera}
-                                            className='mt-2 rounded-lg bg-red-500 px-4 py-2 font-semibold text-white hover:bg-red-600'>
-                                            Keluar
-                                        </button>
-                                    </div>
-                                </div>
-                            </Popup>
-                        ) : (
-                            <FillButton onClick={openCamera} className='w-max px-[52px] py-[16px]'>
-                                Face Recognition
+                    ) : (
+                        // {isLoading ? (<div> Loading...</div>) : ( <h1>heheh</h1>) }
+                        <form className='flex flex-col items-center gap-[24px]' onSubmit={handleSubmit(onSubmit)}>
+                            <div className='w-full'>
+                                <Label htmlFor='email' className={`${errors.email?.message ? 'text-alert-1' : 'text-black'}`}>
+                                    {errors.email?.message || <span className='invisible'>.</span>}
+                                </Label>
+                                <InputRef
+                                    id='email'
+                                    placeholder='Email'
+                                    type='text'
+                                    {...register('email', {
+                                        required: 'Email tidak boleh kosong!',
+                                        pattern: {
+                                            value: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+                                            message: 'Format email tidak sesuai!',
+                                        },
+                                    })}
+                                    className={`${
+                                        errors.email?.message
+                                            ? 'border-alert-1 focus:border-alert-1'
+                                            : 'border-neutral-6 focus:border-primary-1'
+                                    }   bg-neutral-6 px-6 py-[17px] text-body-2 font-normal `}
+                                />
+                            </div>
+                            <div className='w-full'>
+                                <Label
+                                    htmlFor='password'
+                                    className={`${errors.password?.message ? 'text-alert-1' : 'text-black'}`}>
+                                    {errors.password?.message || <span className='invisible'>.</span>}
+                                </Label>
+                                <PasswordInputRef
+                                    id='password'
+                                    placeholder='Kata Sandi'
+                                    isError={errors.password?.message ? true : false}
+                                    {...register('password', {
+                                        required: 'Password tidak boleh kosong!',
+                                        minLength: {
+                                            value: 8,
+                                            message: 'Jumlah Karaktek tidak boleh kurang dari 8!',
+                                        },
+                                    })}
+                                    className={`${
+                                        errors.password?.message
+                                            ? 'border-alert-1 focus:border-alert-1'
+                                            : 'border-neutral-6 focus:border-primary-1'
+                                    }   bg-neutral-6 px-6 py-[17px] text-body-2 font-normal `}
+                                />
+                            </div>
+                            <FillButton type='submit' className='w-max px-[52px] py-[16px]'>
+                                Masuk
                             </FillButton>
-                        )}
-                        <FillButton type='submit' className='w-max px-[52px] py-[16px]'>
-                            Masuk
-                        </FillButton>
-                    </form>
+                        </form>
+                        // <div onClick={openCamera} className='text-base font-semibold'>
+                        //     Masuk dengan wajah
+                        // </div>
+                    )}
+                    <div className='text-center text-base font-semibold' onClick={toggleMode}>
+                        {isCameraOpen ? 'Masuk dengan Username' : 'Masuk dengan Wajah'}
+                    </div>
                 </div>
             </div>
             <Notification
