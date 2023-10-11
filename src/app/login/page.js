@@ -27,6 +27,7 @@ const Login = () => {
     const { notifData, handleNotifAction, handleNotifVisible } = useNotification();
     const webcamRef = useRef(null);
     const [isCameraOpen, setIsCameraOpen] = useState(false);
+    const [isDaftar, setIsDaftar] = useState(false);
 
     const {
         register,
@@ -56,7 +57,7 @@ const Login = () => {
 
         const onSubmitImage = async (data) => {
             closeCamera();
-
+            setIsDaftar(true);
             const response = await signIn('face-login', {
                 image: data,
                 redirect: false,
@@ -65,9 +66,11 @@ const Login = () => {
             console.log('DATA: ', response);
 
             if (!response?.error) {
+                setIsDaftar(false);
                 router.refresh();
                 router.replace('/', { scroll: false });
             } else if (response?.error) {
+                setIsDaftar(false);
                 handleNotifAction('error', response.error);
             }
         };
@@ -81,6 +84,7 @@ const Login = () => {
         const email = data.email;
         const password = data.password;
 
+        setIsDaftar(true);
         const response = await signIn('common-login', {
             email,
             password,
@@ -88,9 +92,11 @@ const Login = () => {
         });
 
         if (!response?.error) {
+            setIsDaftar(false);
             router.refresh();
             router.replace('/', { scroll: false });
         } else if (response?.error) {
+            setIsDaftar(false);
             handleNotifAction('error', response.error);
         }
     };
@@ -199,7 +205,11 @@ const Login = () => {
                                 Face Recognition
                             </FillButton>
                         )}
-                        <FillButton type='submit' className='w-max px-[52px] py-[16px]'>
+                        <FillButton
+                            style={{ backgroundColor: isDaftar ? '#00ff00' : '' }}
+                            disabled={isDaftar}
+                            type='submit'
+                            className='w-max px-[52px] py-[16px]'>
                             Masuk
                         </FillButton>
                     </form>

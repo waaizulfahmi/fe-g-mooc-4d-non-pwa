@@ -31,13 +31,16 @@ const Register = () => {
     const webcamRef = useRef(null);
     const [isCameraOpen, setIsCameraOpen] = useState(false);
     const [capturedImages, setCapturedImages] = useState([]);
-    const maxImages = 10;
+    const [isDaftar, setIsDaftar] = useState(false);
+    const maxImages = 20;
     const interval = 500; // Ubah sesuai kebutuhan
 
     const capture = useCallback(() => {
         const imageSrc = webcamRef.current.getScreenshot();
-        console.log(imageSrc);
-        setCapturedImages((prevImages) => [...prevImages, imageSrc]);
+        if (imageSrc) {
+            console.log(imageSrc);
+            setCapturedImages((prevImages) => [...prevImages, imageSrc]);
+        }
     }, []);
 
     const openCamera = () => {
@@ -83,6 +86,7 @@ const Register = () => {
     const onSubmit = async (data) => {
         if (typeof window !== 'undefined') {
             try {
+                setIsDaftar(true);
                 await authRegister({
                     name: data.name,
                     email: data.email,
@@ -94,11 +98,13 @@ const Register = () => {
                 handleNotifAction('success', 'Yeay ! Registrasi Berhasil.\nCheck Email Anda untuk verifikasi Akun!');
                 if (!notifData?.isVisible) {
                     setTimeout(() => {
+                        setIsDaftar(false);
                         router.refresh();
                         router.replace('/login', { scroll: false });
                     }, 1000);
                 }
             } catch (error) {
+                setIsDaftar(false);
                 if (error instanceof ApiResponseError) {
                     console.log(`ERR REGISTER MESSAGE: `, error.message);
                     console.log(error.data);
@@ -264,7 +270,11 @@ const Register = () => {
                                 Face Recognition
                             </FillButton>
                         )}
-                        <FillButton type='submit' className='w-max px-[52px] py-[16px]'>
+                        <FillButton
+                            style={{ backgroundColor: isDaftar ? '#00ff00' : '' }}
+                            disabled={isDaftar}
+                            type='submit'
+                            className={`w-max px-[52px] py-[16px]`}>
                             Daftar
                         </FillButton>
                     </form>
