@@ -33,6 +33,7 @@ const Login = () => {
     const [isCameraOpen, setIsCameraOpen] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const [isCapturing, setIsCapturing] = useState(true);
+    const [isFaceSuccess, setIsFaceSuccess] = useState(false);
     const [capturedImage, setCapturedImage] = useState(null);
 
     const isCameraOpenRef = useRef(isCameraOpen);
@@ -41,7 +42,9 @@ const Login = () => {
     const waitForCamera = () => {
         const cameraCheckInterval = setInterval(() => {
             if (webcamRef.current?.video.readyState === 4) {
-                clearInterval(cameraCheckInterval); // Menggunakan cameraCheckInterval
+                clearInterval(cameraCheckInterval);
+                // Menggunakan cameraCheckInterval
+
                 capture();
             }
         }, 5000);
@@ -66,20 +69,16 @@ const Login = () => {
         speechWithBatch({
             speechs: [
                 {
-                    text: `Selamat datang di Aplikasi G-MOOC 4D`,
-                    actionOnStart: () => {
-                        // setSkipSpeech(true);
-                    },
+                    text: `Selamat datang di halaman login Aplikasi Jimuk fordi, Pastikan Perizinan Kamera sudah diaktifkan, agar kami dapat mengenali anda`,
                 },
                 {
-                    text: `Saya juga akan diam, jika perintah sudah dilakukan. Tapi Anda jangan khawatir, panggil saja saya lagi dengan hi Uli atau hallo uli agar saya dapat mendengar Anda.`,
+                    text: 'Posisikan wajah anda tepat didepan kamera atau webkem yang anda gunakan',
                 },
                 {
-                    text: 'Jika Anda masih bingung, Anda bisa ucapkan intruksi agar mendapatkan penjelasan lebih banyak.',
-                    actionOnEnd: () => {
-                        // setIntroPage(false);
-                        // setSkipSpeech(false);
-                    },
+                    text: 'Wajah anda akan kami rekam dan jika kami berhasil mengenali anda, maka Anda dapat masuk ke aplikasi',
+                },
+                {
+                    text: 'Pastikan anda sudah melakukan registrasi, agar anda dapat menggunakan aplikasi ini',
                 },
             ],
         });
@@ -161,6 +160,8 @@ const Login = () => {
         }
     };
 
+    let captureCount = 0;
+
     const submitCapturedImage = async (imageSrc) => {
         setIsLoading(true);
 
@@ -173,11 +174,32 @@ const Login = () => {
         console.log('DATA: ', response);
 
         if (!response || !response.token || response === 'Tidak Terdaftar' || response === 'Tidak Terdeteksi') {
-            if (isCapturing) {
+            if (isCapturing && captureCount < 10) {
                 capture();
-            } else {
+                captureCount++;
+            } else if (captureCount == 10) {
+                speechWithBatch({
+                    speechs: [
+                        {
+                            text: `Maaf, Kami sudah berusaha mengenali anda, namun anda belum berhasil kami kenali.`,
+                        },
+                        {
+                            text: `Namun, anda masih tetap bisa login dengan menginputkan email dan password anda`,
+                        },
+                    ],
+                });
+                setIsCameraOpen(false);
                 setIsCapturing(false);
             }
+        } else {
+            setIsCapturing(false);
+            speechWithBatch({
+                speechs: [
+                    {
+                        text: `Kami Berhasil Mengenali Anda, Selamat datang ${response.name} `,
+                    },
+                ],
+            });
         }
 
         if (!response?.error) {
@@ -187,8 +209,6 @@ const Login = () => {
             handleNotifAction('error', response.error);
         }
     };
-
-
 
     const onSubmit = async (data) => {
         const email = data.email;
@@ -268,7 +288,7 @@ const Login = () => {
                                         <div className='text-center'>Sedang Mengenali Anda...</div>
                                     </>
                                 ) : (
-                                    <h1 className='text-center'>Silakan Tunggu Hingga Kamera Tampil</h1>
+                                    <h1 className='pt-5 text-center'>Silakan Tunggu Hingga Kamera Tampil</h1>
                                 )}
                                 {/* <p className='mt-2 text-center text-base font-semibold'>{timer} seconds</p> */}
                             </div>
