@@ -35,6 +35,7 @@ const Login = () => {
     const [isCapturing, setIsCapturing] = useState(true);
     const [isFaceSuccess, setIsFaceSuccess] = useState(false);
     const [capturedImage, setCapturedImage] = useState(null);
+    const [captureCount, setCaptureCount] = useState(0);
 
     const isCameraOpenRef = useRef(isCameraOpen);
     isCameraOpenRef.current = isCameraOpen;
@@ -63,8 +64,9 @@ const Login = () => {
     }, []);
 
     useEffect(() => {
-        // Memanggil waitForCamera ketika isCameraOpen berubah menjadi true
-        waitForCamera();
+        if (isCameraOpen) {
+            waitForCamera();
+        }
 
         speechWithBatch({
             speechs: [
@@ -94,12 +96,31 @@ const Login = () => {
         setIsCameraOpen(false);
     };
 
-    const toggleMode = () => {
+    // const waitForCameraAsync = async () => {
+    //     await waitForCamera();
+    // };
+
+    const toggleMode = async () => {
         if (isCameraOpen) {
             setIsCameraOpen(false);
+            capture();
         } else {
             setIsCameraOpen(true);
+            setIsCapturing(true);
+            setCaptureCount(0);
+            const waitForCameraForToggle = setInterval(() => {
+                if (webcamRef.current?.video.readyState === 4) {
+                    clearInterval(waitForCameraForToggle);
+                    capture();
+                }
+            }, 5000);
+
+            // await waitForCameraAsync();
         }
+    };
+
+    const captureCountFunc = () => {
+        setCaptureCount(captureCount + 1);
     };
 
     // const capture = async () => {
@@ -145,6 +166,8 @@ const Login = () => {
     // };
     // version 2
     const capture = async () => {
+        captureCountFunc();
+        // setCaptureCount(captureCount + 1);
         if (isCapturing) {
             if (webcamRef.current && webcamRef.current.video.readyState === 4) {
                 const imageSrc = webcamRef.current.getScreenshot();
@@ -160,7 +183,7 @@ const Login = () => {
         }
     };
 
-    let captureCount = 0;
+    // let captureCount = 0;
 
     const submitCapturedImage = async (imageSrc) => {
         setIsLoading(true);
@@ -172,11 +195,11 @@ const Login = () => {
 
         setIsLoading(false);
         console.log('DATA: ', response);
+        console.log(captureCount);
 
         if (!response || !response.token || response === 'Tidak Terdaftar' || response === 'Tidak Terdeteksi') {
             if (isCapturing && captureCount < 10) {
                 capture();
-                captureCount++;
             } else if (captureCount == 10) {
                 speechWithBatch({
                     speechs: [
@@ -192,6 +215,7 @@ const Login = () => {
                 setIsCapturing(false);
             }
         } else {
+            setIsFaceSuccess(true);
             setIsCapturing(false);
             speechWithBatch({
                 speechs: [
@@ -285,7 +309,13 @@ const Login = () => {
                                                 />
                                             </svg>
                                         </div>
-                                        <div className='text-center'>Sedang Mengenali Anda...</div>
+                                        {isFaceSuccess ? (
+                                            <div className='text-center'>
+                                                Berhasil Mengenali Anda, mengarahkan ke Halaman beranda...
+                                            </div>
+                                        ) : (
+                                            <div className='text-center'>Sedang Mengenali Anda...</div>
+                                        )}
                                     </>
                                 ) : (
                                     <h1 className='pt-5 text-center'>Silakan Tunggu Hingga Kamera Tampil</h1>
