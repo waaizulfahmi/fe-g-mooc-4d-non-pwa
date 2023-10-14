@@ -34,24 +34,6 @@ const Login = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isCapturing, setIsCapturing] = useState(true);
     const [isFaceSuccess, setIsFaceSuccess] = useState(false);
-    const [captureCount, setCaptureCount] = useState(0);
-    // const [capturedImage, setCapturedImage] = useState(null);
-
-    // const session = useSession();
-    // const canvasRef = useRef();
-    // const webcamRef = useRef(null);
-    // USE CALLBACK
-    // const startCapturingFalse = useCallback(() => {
-    //     setIsCapturing(false);
-    // }, []);
-
-    // const incrementCaptureCount = useCallback(() => {
-    //     setCaptureCount((prev) => prev + 1);
-    // }, []);
-
-    const resetStateCount = () => {
-        setCaptureCount(0);
-    };
 
     const waitForCamera = () => {
         const cameraCheckInterval = setInterval(() => {
@@ -67,83 +49,9 @@ const Login = () => {
         }, 5000);
     };
 
-    // const startVideo = () => {
-    //     navigator.mediaDevices
-    //         .getUserMedia({ video: true })
-    //         .then((currentStream) => {
-    //             webcamRef.current.srcObject = currentStream;
-    //         })
-    //         .catch((err) => {
-    //             console.log(err);
-    //         });
-    // };
-
     useEffect(() => {
         waitForCamera();
     }, []);
-
-    // useEffect(() => {
-    //     const loadModels = () => {
-    //         // eslint-disable-next-line no-undef
-    //         Promise.all([faceapi.nets.ssdMobilenetv1.loadFromUri('/models')]).then(() => {
-    //             faceMyDetect();
-    //         });
-    //     };
-    //     // startVideo();
-
-    //     if (webcamRef) {
-    //         loadModels();
-    //     }
-    // }, []);
-    // useEffect(() => {
-    //     const handleUserMedia = () => {
-    //         console.log('Kamera siap.');
-    //         capture();
-    //         setCameraReady(true);
-    //     };
-
-    //     // Panggil capture() ketika kamera sudah siap
-    //     const onUserMedia = async () => {
-    //         await handleUserMedia();
-    //         // Lakukan sesuatu dengan stream jika perlu
-    //     };
-
-    //     const mediaConstraints = {
-    //         video: true,
-    //         audio: false,
-    //     };
-
-    //     navigator.mediaDevices
-    //         .getUserMedia(mediaConstraints)
-    //         .then(onUserMedia)
-    //         .catch((error) => {
-    //             console.error('Gagal mendapatkan akses kamera:', error);
-    //         });
-    // }, []);
-
-    // waitForCamera();
-
-    // useEffect(() => {
-    //     // waitForCamera();
-
-    //     startCapturingFalse();
-    //     // speechWithBatch({
-    //     //     speechs: [
-    //     //         {
-    //     //             text: `Selamat datang di halaman login Aplikasi Jimuk fordi, Pastikan Perizinan Kamera sudah diaktifkan, agar kami dapat mengenali anda`,
-    //     //         },
-    //     //         {
-    //     //             text: 'Posisikan wajah anda tepat didepan kamera atau webkem yang anda gunakan',
-    //     //         },
-    //     //         {
-    //     //             text: 'Wajah anda akan kami rekam dan jika kami berhasil mengenali anda, maka Anda dapat masuk ke aplikasi',
-    //     //         },
-    //     //         {
-    //     //             text: 'Pastikan anda sudah melakukan registrasi, agar anda dapat menggunakan aplikasi ini',
-    //     //         },
-    //     //     ],
-    //     // });
-    // }, [startCapturingFalse]);
 
     const {
         register,
@@ -151,11 +59,6 @@ const Login = () => {
         formState: { errors },
     } = useForm();
 
-    // const waitForCameraAsync = async () => {
-    //     await waitForCamera();
-    // };
-
-    // let captureCount = 0;
     const toggleMode = async () => {
         if (isCameraOpen) {
             setIsCameraOpen(false);
@@ -163,7 +66,7 @@ const Login = () => {
         } else {
             setIsCameraOpen(true);
             setIsCapturing(true);
-            resetStateCount();
+            // resetStateCount();
             console.log(captureCount);
             // setTokenFalse();
             const waitForCameraForToggle = setInterval(() => {
@@ -233,6 +136,8 @@ const Login = () => {
         }
     };
 
+    let captureCount = 0;
+
     const submitCapturedImage = async (imageSrc) => {
         setIsLoading(true);
 
@@ -246,9 +151,12 @@ const Login = () => {
         const session = await getSession();
         console.log(captureCount);
 
-        if (!session) {
+        if (!session && captureCount < 10) {
+            captureCount++;
             capture();
-            // setCaptureCount((prevCount) => prevCount + 1);
+        } else if (!session && captureCount === 10) {
+            setIsCameraOpen(false);
+            captureCount = 0;
         } else if (!response?.error) {
             isFaceSuccessFunct();
             router.replace('/', { scroll: false });
