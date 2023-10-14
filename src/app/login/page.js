@@ -3,13 +3,13 @@
 // core
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useRef, useCallback, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 
 // third parties
-import { signIn } from 'next-auth/react';
+import { getSession, signIn } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import Webcam from 'react-webcam';
-import Popup from 'reactjs-popup';
+// import Popup from 'reactjs-popup';
 
 // hooks
 import { useNotification } from '@/hooks';
@@ -21,30 +21,42 @@ import InputRef from '@/components/InputRef';
 import PasswordInputRef from '@/components/PasswordInputRef';
 import Label from '@/components/Label';
 import Notification from '@/components/Notification';
-import { authLoginWithFace } from '@/axios/auth';
-import { ApiResponseError } from '@/utils/error-handling';
-import { speechAction, speechWithBatch, stopSpeech } from '@/utils/text-to-speech';
-import { recognition } from '@/utils/speech-recognition';
+// import { speechWithBatch } from '@/utils/text-to-speech';
+// import { useSession } from 'next-auth/react';
+// import * as faceapi from 'face-api.js';
+// import { recognition } from '@/utils/speech-recognition';
 
 const Login = () => {
     const router = useRouter();
     const { notifData, handleNotifAction, handleNotifVisible } = useNotification();
-    const webcamRef = useRef(null);
+    const webcamRef = useRef();
     const [isCameraOpen, setIsCameraOpen] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const [isCapturing, setIsCapturing] = useState(true);
     const [isFaceSuccess, setIsFaceSuccess] = useState(false);
-    const [capturedImage, setCapturedImage] = useState(null);
     const [captureCount, setCaptureCount] = useState(0);
+    // const [capturedImage, setCapturedImage] = useState(null);
 
-    const isCameraOpenRef = useRef(isCameraOpen);
-    isCameraOpenRef.current = isCameraOpen;
+    // const session = useSession();
+    // const canvasRef = useRef();
+    // const webcamRef = useRef(null);
+    // USE CALLBACK
+    // const startCapturingFalse = useCallback(() => {
+    //     setIsCapturing(false);
+    // }, []);
+
+    // const incrementCaptureCount = useCallback(() => {
+    //     setCaptureCount((prev) => prev + 1);
+    // }, []);
+
+    const resetStateCount = () => {
+        setCaptureCount(0);
+    };
 
     const waitForCamera = () => {
         const cameraCheckInterval = setInterval(() => {
             if (webcamRef.current?.video.readyState === 4) {
                 clearInterval(cameraCheckInterval);
-                // Menggunakan cameraCheckInterval
 
                 capture();
             }
@@ -55,36 +67,83 @@ const Login = () => {
         }, 5000);
     };
 
-    useEffect(() => {
-        try {
-            recognition.start();
-        } catch (error) {
-            recognition.stop();
-        }
-    }, []);
+    // const startVideo = () => {
+    //     navigator.mediaDevices
+    //         .getUserMedia({ video: true })
+    //         .then((currentStream) => {
+    //             webcamRef.current.srcObject = currentStream;
+    //         })
+    //         .catch((err) => {
+    //             console.log(err);
+    //         });
+    // };
 
     useEffect(() => {
-        if (isCameraOpen) {
-            waitForCamera();
-        }
-
-        speechWithBatch({
-            speechs: [
-                {
-                    text: `Selamat datang di halaman login Aplikasi Jimuk fordi, Pastikan Perizinan Kamera sudah diaktifkan, agar kami dapat mengenali anda`,
-                },
-                {
-                    text: 'Posisikan wajah anda tepat didepan kamera atau webkem yang anda gunakan',
-                },
-                {
-                    text: 'Wajah anda akan kami rekam dan jika kami berhasil mengenali anda, maka Anda dapat masuk ke aplikasi',
-                },
-                {
-                    text: 'Pastikan anda sudah melakukan registrasi, agar anda dapat menggunakan aplikasi ini',
-                },
-            ],
-        });
+        waitForCamera();
     }, []);
+
+    // useEffect(() => {
+    //     const loadModels = () => {
+    //         // eslint-disable-next-line no-undef
+    //         Promise.all([faceapi.nets.ssdMobilenetv1.loadFromUri('/models')]).then(() => {
+    //             faceMyDetect();
+    //         });
+    //     };
+    //     // startVideo();
+
+    //     if (webcamRef) {
+    //         loadModels();
+    //     }
+    // }, []);
+    // useEffect(() => {
+    //     const handleUserMedia = () => {
+    //         console.log('Kamera siap.');
+    //         capture();
+    //         setCameraReady(true);
+    //     };
+
+    //     // Panggil capture() ketika kamera sudah siap
+    //     const onUserMedia = async () => {
+    //         await handleUserMedia();
+    //         // Lakukan sesuatu dengan stream jika perlu
+    //     };
+
+    //     const mediaConstraints = {
+    //         video: true,
+    //         audio: false,
+    //     };
+
+    //     navigator.mediaDevices
+    //         .getUserMedia(mediaConstraints)
+    //         .then(onUserMedia)
+    //         .catch((error) => {
+    //             console.error('Gagal mendapatkan akses kamera:', error);
+    //         });
+    // }, []);
+
+    // waitForCamera();
+
+    // useEffect(() => {
+    //     // waitForCamera();
+
+    //     startCapturingFalse();
+    //     // speechWithBatch({
+    //     //     speechs: [
+    //     //         {
+    //     //             text: `Selamat datang di halaman login Aplikasi Jimuk fordi, Pastikan Perizinan Kamera sudah diaktifkan, agar kami dapat mengenali anda`,
+    //     //         },
+    //     //         {
+    //     //             text: 'Posisikan wajah anda tepat didepan kamera atau webkem yang anda gunakan',
+    //     //         },
+    //     //         {
+    //     //             text: 'Wajah anda akan kami rekam dan jika kami berhasil mengenali anda, maka Anda dapat masuk ke aplikasi',
+    //     //         },
+    //     //         {
+    //     //             text: 'Pastikan anda sudah melakukan registrasi, agar anda dapat menggunakan aplikasi ini',
+    //     //         },
+    //     //     ],
+    //     // });
+    // }, [startCapturingFalse]);
 
     const {
         register,
@@ -92,98 +151,87 @@ const Login = () => {
         formState: { errors },
     } = useForm();
 
-    const closeCamera = () => {
-        setIsCameraOpen(false);
-    };
-
     // const waitForCameraAsync = async () => {
     //     await waitForCamera();
     // };
 
+    // let captureCount = 0;
     const toggleMode = async () => {
         if (isCameraOpen) {
             setIsCameraOpen(false);
-            capture();
+            await capture();
         } else {
             setIsCameraOpen(true);
             setIsCapturing(true);
-            setCaptureCount(0);
+            resetStateCount();
+            console.log(captureCount);
+            // setTokenFalse();
             const waitForCameraForToggle = setInterval(() => {
                 if (webcamRef.current?.video.readyState === 4) {
                     clearInterval(waitForCameraForToggle);
+                    // faceMyDetect();
                     capture();
                 }
             }, 5000);
-
-            // await waitForCameraAsync();
         }
     };
 
-    const captureCountFunc = () => {
-        setCaptureCount(captureCount + 1);
+    // version 2
+    // const faceMyDetect = () => {
+    //     if (isCameraOpen) {
+    //         setInterval(async () => {
+    //             const webcamVideo = webcamRef.current?.video;
+    //             if (webcamVideo) {
+    //                 const detections = await faceapi.detectSingleFace(webcamVideo, new faceapi.SsdMobilenetv1Options());
+    //                 if (!detections) {
+    //                     console.log('tidak terdeteksi wajah, tidak mengirim');
+    //                 } else {
+    //                     if (detections?.classScore) {
+    //                         console.log('terdeteksi wajah');
+    //                         // DRAW YOU FACE IN WEBCAM
+    //                         if (canvasRef.current) {
+    //                             canvasRef.current.innerHtml = faceapi?.createCanvasFromMedia(webcamVideo);
+    //                             faceapi.matchDimensions(canvasRef.current, {
+    //                                 width: webcamVideo.videoWidth,
+    //                                 height: webcamVideo.videoHeight,
+    //                             });
+
+    //                             const resized = faceapi.resizeResults(detections, {
+    //                                 width: webcamVideo.videoWidth,
+    //                                 height: webcamVideo.videoHeight,
+    //                             });
+
+    //                             faceapi.draw.drawDetections(canvasRef.current, resized);
+    //                             if (!isTokenReady) {
+    //                                 try {
+    //                                     await capture();
+    //                                 } catch (error) {
+    //                                     console.error('Error during capture:', error);
+    //                                 }
+    //                             }
+    //                         }
+    //                         //Running Logic
+    //                     }
+    //                 }
+    //             }
+    //         }, 10000);
+    //     }
+    // };
+
+    const isFaceSuccessFunct = async () => {
+        setIsFaceSuccess(true);
     };
 
-    // const capture = async () => {
-    //     if (isCapturing) {
-    //         if (webcamRef.current && webcamRef.current.video.readyState === 4) {
-    //             const imageSrc = webcamRef.current.getScreenshot();
-    //             console.log(imageSrc);
-    //             setCapturedImage(imageSrc);
-    //         }
-    //     }
-    // };
-
-    // const onSubmitImage = async (data) => {
-    //     setIsLoading(true);
-
-    //     const response = await signIn('face-login', {
-    //         image: data,
-    //         redirect: false,
-    //     });
-
-    //     setIsLoading(false);
-    //     console.log('DATA: ', response);
-
-    //     if (!response || !response.token || response === 'Tidak Terdaftar' || response === 'Tidak Terdeteksi') {
-    //         if (isCapturing) {
-    //             // Capture again
-    //             capture();
-    //         }
-    //     } else {
-    //         // Jika token ditemukan, set isCapturing menjadi false
-    //         setIsCapturing(false);
-    //     }
-
-    //     if (imageSrc) {
-    //         await onSubmitImage(imageSrc);
-    //     }
-    //     if (!response?.error) {
-    //         router.refresh();
-    //         router.replace('/', { scroll: false });
-    //     } else if (response?.error) {
-    //         handleNotifAction('error', response.error);
-    //     }
-    // };
-    // version 2
     const capture = async () => {
-        captureCountFunc();
-        // setCaptureCount(captureCount + 1);
+        // incrementCaptureCount();
         if (isCapturing) {
-            if (webcamRef.current && webcamRef.current.video.readyState === 4) {
-                const imageSrc = webcamRef.current.getScreenshot();
-
-                console.log(imageSrc);
-
-                setCapturedImage(imageSrc);
-
-                if (imageSrc) {
-                    submitCapturedImage(imageSrc);
-                }
+            const imageSrc = webcamRef.current?.getScreenshot();
+            console.log(imageSrc);
+            if (imageSrc) {
+                await submitCapturedImage(imageSrc);
             }
         }
     };
-
-    // let captureCount = 0;
 
     const submitCapturedImage = async (imageSrc) => {
         setIsLoading(true);
@@ -193,41 +241,16 @@ const Login = () => {
             redirect: false,
         });
 
-        setIsLoading(false);
+        // setIsLoading();
         console.log('DATA: ', response);
+        const session = await getSession();
         console.log(captureCount);
 
-        if (!response || !response.token || response === 'Tidak Terdaftar' || response === 'Tidak Terdeteksi') {
-            if (isCapturing && captureCount < 10) {
-                capture();
-            } else if (captureCount == 10) {
-                speechWithBatch({
-                    speechs: [
-                        {
-                            text: `Maaf, Kami sudah berusaha mengenali anda, namun anda belum berhasil kami kenali.`,
-                        },
-                        {
-                            text: `Namun, anda masih tetap bisa login dengan menginputkan email dan password anda`,
-                        },
-                    ],
-                });
-                setIsCameraOpen(false);
-                setIsCapturing(false);
-            }
-        } else {
-            setIsFaceSuccess(true);
-            setIsCapturing(false);
-            speechWithBatch({
-                speechs: [
-                    {
-                        text: `Kami Berhasil Mengenali Anda, Selamat datang ${response.name} `,
-                    },
-                ],
-            });
-        }
-
-        if (!response?.error) {
-            router.refresh();
+        if (!session) {
+            capture();
+            // setCaptureCount((prevCount) => prevCount + 1);
+        } else if (!response?.error) {
+            isFaceSuccessFunct();
             router.replace('/', { scroll: false });
         } else if (response?.error) {
             handleNotifAction('error', response.error);
@@ -254,14 +277,14 @@ const Login = () => {
 
     return (
         <section className='grid h-screen grid-cols-12'>
-            <div className={`relative  col-span-4 h-full`}>
+            <div className='relative  col-span-4 hidden h-full md:block'>
                 <Image priority src={'/images/left-auth.png'} alt='' fill sizes='100vh' />
                 <Image
                     alt=''
                     src={'/images/icon-white.svg'}
                     width={166}
                     height={60}
-                    className='absolute left-[24px] top-[24px]'
+                    className='absolute left-[24px] top-[24px] '
                 />
                 <div
                     className={`absolute bottom-[30%] left-1/2 flex translate-x-[-50%] flex-col items-center justify-center gap-5 text-white`}>
@@ -272,30 +295,34 @@ const Login = () => {
                     </BorderedButton>
                 </div>
             </div>
-            <div className='col-span-8 flex items-center justify-center bg-neutral-7'>
+            <div className='col-span-12 flex items-center justify-center bg-neutral-7 md:col-span-8'>
                 <div className='flex w-[646px] flex-col gap-[42px]'>
                     <div className='text-center'>
-                        <h1 className='text-title-2 font-bold'>Masuk G-MOOC 4D</h1>
+                        <h1 className='text-xl font-bold md:text-title-2'>Masuk G-MOOC 4D</h1>
                         <p className='text-body-2'>Buktikan Sekarang Semua Bisa Belajar</p>
                     </div>
                     {isCameraOpen ? (
-                        <div closeBtn={true} closePopup={closeCamera} open={isCameraOpen} className='rounded-lg bg-gray-100 p-4'>
+                        <div open={isCameraOpen} className='flex flex-col items-center justify-center rounded-lg  p-4'>
                             {/* <div className='fixed inset-0 bg-opacity-50 backdrop-blur-md backdrop-filter'></div> */}
-                            <div className='relative '>
-                                <h1 className='pb-4 text-base font-semibold'>Face Recognition Technology</h1>
+                            <div className='relative'>
+                                <h1 className='pb-4 text-center text-base font-semibold'>Face Recognition Technology</h1>
                                 <Webcam
                                     audio={false}
                                     ref={webcamRef}
                                     mirrored={true}
+                                    width={500}
+                                    height={500}
                                     screenshotFormat='image/jpeg'
-                                    className='w-full rounded-lg shadow-lg'
+                                    className='mx-auto flex w-3/4 rounded-lg text-center shadow-lg'
+                                    // onUserMedia={handleUserMedia}
                                 />
+
                                 {isLoading ? (
                                     <>
                                         <div className='pt-3 text-center'>
                                             <svg
                                                 aria-hidden='true'
-                                                class='mr-2 inline h-10 w-10 animate-spin fill-green-500 text-gray-200 dark:text-gray-600'
+                                                className='mr-2 inline h-10 w-10 animate-spin fill-green-500 text-gray-200 dark:text-gray-600'
                                                 viewBox='0 0 100 101'
                                                 fill='none'
                                                 xmlns='http://www.w3.org/2000/svg'>
@@ -318,13 +345,14 @@ const Login = () => {
                                         )}
                                     </>
                                 ) : (
-                                    <h1 className='pt-5 text-center'>Silakan Tunggu Hingga Kamera Tampil</h1>
+                                    <div>
+                                        <h1 className='pt-5 text-center'>Silakan Tunggu Hingga Kamera Tampil</h1>
+                                    </div>
                                 )}
-                                {/* <p className='mt-2 text-center text-base font-semibold'>{timer} seconds</p> */}
                             </div>
                         </div>
                     ) : (
-                        <form className='flex flex-col items-center gap-[24px]' onSubmit={handleSubmit(onSubmit)}>
+                        <form className='mx-4 flex flex-col items-center gap-[24px] md:mx-0' onSubmit={handleSubmit(onSubmit)}>
                             <div className='w-full'>
                                 <Label htmlFor='email' className={`${errors.email?.message ? 'text-alert-1' : 'text-black'}`}>
                                     {errors.email?.message || <span className='invisible'>.</span>}
@@ -344,7 +372,7 @@ const Login = () => {
                                         errors.email?.message
                                             ? 'border-alert-1 focus:border-alert-1'
                                             : 'border-neutral-6 focus:border-primary-1'
-                                    }   bg-neutral-6 px-6 py-[17px] text-body-2 font-normal `}
+                                    }     bg-neutral-6 px-6 py-[17px] text-body-2 font-normal`}
                                 />
                             </div>
                             <div className='w-full'>
@@ -375,14 +403,15 @@ const Login = () => {
                                 Masuk
                             </FillButton>
                         </form>
-                        // <div onClick={openCamera} className='text-base font-semibold'>
-                        //     Masuk dengan wajah
-                        // </div>
                     )}
                     <button className='text-center text-base font-semibold' onClick={toggleMode}>
                         {isCameraOpen ? 'Masuk dengan Username' : 'Masuk dengan Wajah'}
                     </button>
-                    {/* {checkCameraStatus()} */}
+                    <button
+                        className='relative text-center text-base font-semibold md:hidden'
+                        onClick={() => router.replace('/register', { scroll: false })}>
+                        Daftar Akun
+                    </button>
                 </div>
             </div>
             <Notification

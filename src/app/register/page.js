@@ -142,7 +142,7 @@ const Register = () => {
 
     return (
         <section className='grid h-screen grid-cols-12'>
-            <div className={`relative  col-span-4 h-full`}>
+            <div className={`relative  col-span-4 hidden h-full md:block`}>
                 <Image priority src={'/images/left-auth.png'} alt='' fill />
                 <Image
                     alt=''
@@ -160,13 +160,13 @@ const Register = () => {
                     </BorderedButton>
                 </div>
             </div>
-            <div className='col-span-8 flex items-center justify-center bg-neutral-7'>
+            <div className='col-span-12 flex items-center justify-center bg-neutral-7 md:col-span-8'>
                 <div className='flex w-[646px] flex-col gap-[42px]'>
                     <div className='text-center'>
-                        <h1 className='text-title-2 font-bold'>Buat Akun Baru</h1>
+                        <h1 className='text-xl font-bold md:text-title-2'>Buat Akun Baru</h1>
                         <p className='text-body-2'>Buktikan Sekarang Semua Bisa Belajar</p>
                     </div>
-                    <form className='flex flex-col items-center gap-[24px]' onSubmit={handleSubmit(onSubmit)}>
+                    <form className='mx-4 flex flex-col items-center gap-[24px] md:mx-0' onSubmit={handleSubmit(onSubmit)}>
                         <div className='w-full'>
                             <Label htmlFor='name' className={`${errors.name?.message ? 'text-alert-1' : 'text-black'}`}>
                                 {errors.name?.message || <span className='invisible'>.</span>}
@@ -267,6 +267,11 @@ const Register = () => {
                         <FillButton type='submit' className='w-max px-[52px] py-[16px]'>
                             Daftar
                         </FillButton>
+                        <div
+                            className='block text-center text-base font-semibold md:hidden'
+                            onClick={() => router.replace('/login', { scroll: false })}>
+                            Login
+                        </div>
                     </form>
                 </div>
             </div>

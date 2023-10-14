@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const BASE_URl = 'https://nurz.site/api';
-const BASE_ML_URl = 'https://face.nurz.site';
-// const BASE_ML_URl = 'http://127.0.0.1:5000';
+// const BASE_ML_URl = 'https://face.nurz.site';
+const BASE_ML_URl = 'https://hello-world-1-qpytiur55a-uc.a.run.app';
 
 const BASE_URl_SANCTUM = 'https://nurz.site/sanctum/csrf-cookie';
 

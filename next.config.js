@@ -28,6 +28,11 @@ const nextConfig = withPWA({
     experimental: {
         newNextLinkBehavior: true,
     },
+    webpack: (config) => {
+        config.resolve.fallback = { fs: false };
+
+        return config;
+    },
 });
 
 // module.exports = process.env.NODE_ENV === 'development' ? nextConfig : nextConfigWithPWA;
