@@ -19,6 +19,14 @@ export const punctuationRemoval = (text) => {
 };
 // Definisikan kata-kata yang perlu di-handle secara spesifik
 const specialStemmingRules = {
+    a: 'aaa',
+    b: 'bbb',
+    c: 'ccc',
+    // 'halaman beranda': '',
+    'pergi beranda': 'beranda',
+    'pergi kelas': 'kelas',
+    'pergi rapor': 'rapor',
+    'pergi peringkat': 'peringkat',
     'di mana': 'dimana',
     dimana: 'mana',
     home: 'beranda',
@@ -34,6 +42,13 @@ const specialStemmingRules = {
     'muat ulang': 'refresh',
     reload: 'refresh',
     segarkan: 'refresh',
+    hentikan: 'henti',
+    berjalan: 'jalan',
+    ulangi: 'ulang',
+    pertanyaan: 'tanya',
+    merefresh: 'refresh',
+    sebutkan: 'sebut',
+    jelaskan: 'jelas',
     // tambahkan aturan khusus lainnya di sini jika diperlukan
 };
 
@@ -42,7 +57,8 @@ export const stemming = (text) => {
 
     // Handle special cases
     Object.keys(specialStemmingRules).forEach((rule) => {
-        text = text.replace(new RegExp(rule, 'gi'), specialStemmingRules[rule]);
+        const regex = new RegExp(`\\b${rule}\\b`, 'gi');
+        text = text.replace(regex, specialStemmingRules[rule]);
     });
 
     // Gunakan Sastrawi untuk stemming sisa kata-kata

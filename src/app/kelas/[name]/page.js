@@ -619,6 +619,27 @@ const EnrollKelas = () => {
                                                     },
                                                 ],
                                             });
+                                        } else if (kelas.getQuizCount() >= 1) {
+                                            //kondisi semua materi selesai dengan tidak  mode kerjakan quiz
+                                            speechWithBatch({
+                                                speechs: [
+                                                    {
+                                                        text: `Selamat datang kembali, semua materi sudah selesai. Anda saat ini bisa melanjutkan pengerjaan quiz.`,
+                                                        actionOnStart: () => {
+                                                            setSkipSpeech(true);
+                                                        },
+                                                    },
+                                                    {
+                                                        text: 'Untuk mengerjakan quiz, ucapkan perintah kerjakan quiz, Agar bisa mengerjakan quiz kembali',
+                                                    },
+                                                    {
+                                                        text: 'Jangan lupa untuk panggil saya terlebih dahulu dengan hai atau halo uli.agar saya bisa mendengar Anda',
+                                                        actionOnEnd: () => {
+                                                            setSkipSpeech(false);
+                                                        },
+                                                    },
+                                                ],
+                                            });
                                         }
                                     }
                                 }
@@ -654,19 +675,19 @@ const EnrollKelas = () => {
         recognition.onresult = (event) => {
             const command = event.results[0][0].transcript.toLowerCase();
             const cleanCommand = command?.replace('.', '');
-            const removePunctuationWords = punctuationRemoval(cleanCommand);
-            const stemmingWords = stemming(removePunctuationWords);
-            const removedStopWords = removeStopwords(stemmingWords);
-            console.log({
-                removePunc: removePunctuationWords,
-                stem: stemmingWords,
-                removeStop: removedStopWords,
-            });
 
             // Memastikan model dan vocab dimuat sebelum melakukan prediksi
             if (!model || !vocab || !labelEncoder) {
                 console.error('Model, vocab, label encoder  belum dimuat.');
             } else {
+                const removePunctuationWords = punctuationRemoval(cleanCommand);
+                const stemmingWords = stemming(removePunctuationWords);
+                const removedStopWords = removeStopwords(stemmingWords);
+                console.log({
+                    removePunc: removePunctuationWords,
+                    stem: stemmingWords,
+                    removeStop: removedStopWords,
+                });
                 // Hitung TF-IDF untuk setiap kata dalam inputText dengan bobot dari vocab
                 const tfidfResults = Object.keys(vocab).map((word) => {
                     return {
@@ -687,28 +708,18 @@ const EnrollKelas = () => {
                 const predictedClassIndex = result.indexOf(Math.max(...result));
                 const checkValueOfResult = orderedResults.reduce((curr, prev) => curr + prev, 0);
 
-                const predictedCommand = labelEncoder[predictedClassIndex];
-                console.log('Check value result');
-                console.log('Predicted command : ', predictedCommand);
-
-                if (isQuizMode) {
-                    if (checkValueOfResult === 0) {
-                        setTrancript('Perintah tidak ditemukan!');
-                    } else {
-                        setTrancript(predictedCommand);
-                    }
-                } else {
-                    setTrancript(cleanCommand);
-                }
-
                 if (isQuizMode) {
                     if (checkValueOfResult !== 0) {
+                        const predictedCommand = labelEncoder[predictedClassIndex];
+                        console.log('Check value result: ', checkValueOfResult);
+                        console.log('Predicted command : ', predictedCommand);
                         console.log(`quiz berjalan: `, cleanCommand);
                         console.log(`is answer mode: `, isAnswerMode);
                         setDisplayTranscript(true);
                         if (isAnswerMode) {
-                            if (cleanCommand.includes('ulangi')) {
-                                if (cleanCommand.includes('soal')) {
+                            if (predictedCommand.includes('ulangi')) {
+                                if (predictedCommand.includes('soal')) {
+                                    setTrancript(predictedCommand);
                                     speechAction({
                                         text: `Soal nomor ${idxQuiz + 1} akan dibaca ulang`,
                                         actionOnEnd: () => {
@@ -718,8 +729,9 @@ const EnrollKelas = () => {
                                         },
                                     });
                                 }
-                            } else if (cleanCommand.includes('pilih')) {
-                                const quizCommand = cleanCommand.replace('pilih', '').trim().toLowerCase();
+                            } else if (predictedCommand.includes('pilih')) {
+                                const quizCommand = predictedCommand.replace('pilih', '').trim().toLowerCase();
+                                setTrancript(predictedCommand);
                                 if (quizCommand === 'a') {
                                     // setSpeechOn(false);
                                     console.log('Anda memilih A');
@@ -736,13 +748,14 @@ const EnrollKelas = () => {
                                     setUserAnswer('C');
                                     setLoadData(true);
                                 }
-                            } else if (cleanCommand.includes('hentikan')) {
+                            } else if (predictedCommand.includes('hentikan')) {
                                 if (
-                                    cleanCommand.includes('quiz') ||
-                                    cleanCommand.includes('quis') ||
-                                    cleanCommand.includes('kuis') ||
-                                    cleanCommand.includes('kuiz')
+                                    predictedCommand.includes('quiz') ||
+                                    predictedCommand.includes('quis') ||
+                                    predictedCommand.includes('kuis') ||
+                                    predictedCommand.includes('kuiz')
                                 ) {
+                                    setTrancript(predictedCommand);
                                     const listQuiz = new ListQuiz({
                                         listQuiz: quiz,
                                     });
@@ -765,36 +778,32 @@ const EnrollKelas = () => {
                                 }
                             }
                         }
-                    } else {
-                        setSpeechOn(false);
-                        speechAction({
-                            text: 'Perintah tidak ditemukan!',
-                            actionOnEnd: () => {
-                                setDisplayTranscript(false);
-                            },
-                        });
                     }
-                }
-
-                if (speechOn && !skipSpeech) {
-                    if (checkValueOfResult === 0) {
-                        setTrancript('Perintah tidak ditemukan!');
-                    } else {
-                        setTrancript(predictedCommand);
-                    }
-                } else {
-                    setTrancript(cleanCommand);
+                    // else {
+                    //     setTrancript('Perintah tidak ditemukan');
+                    //     setSpeechOn(false);
+                    //     speechAction({
+                    //         text: 'Perintah tidak ditemukan!',
+                    //         actionOnEnd: () => {
+                    //             setDisplayTranscript(false);
+                    //         },
+                    //     });
+                    // }
                 }
 
                 if (speechOn && !skipSpeech) {
                     if (checkValueOfResult !== 0) {
-                        if (cleanCommand.includes('kerjakan')) {
+                        const predictedCommand = labelEncoder[predictedClassIndex];
+                        console.log('Check value result: ', checkValueOfResult);
+                        console.log('Predicted command : ', predictedCommand);
+                        if (predictedCommand.includes('kerjakan')) {
                             if (
-                                cleanCommand.includes('quiz') ||
-                                cleanCommand.includes('quis') ||
-                                cleanCommand.includes('kuis') ||
-                                cleanCommand.includes('kuiz')
+                                predictedCommand.includes('quiz') ||
+                                predictedCommand.includes('quis') ||
+                                predictedCommand.includes('kuis') ||
+                                predictedCommand.includes('kuiz')
                             ) {
+                                setTrancript(predictedCommand);
                                 setSpeechOn(false);
                                 const listMateri = new ListMateri({
                                     listMateri: materi,
@@ -854,6 +863,7 @@ const EnrollKelas = () => {
                             }
                         } else if (cleanCommand.includes('pilih')) {
                             if (cleanCommand.includes('materi')) {
+                                setTrancript(cleanCommand);
                                 setSpeechOn(false);
                                 const materiCommand = cleanCommand.replace('pilih materi', '').trim().toLowerCase();
                                 const materiIdx = convertStringToNum(materiCommand) - 1;
@@ -987,8 +997,9 @@ const EnrollKelas = () => {
                                     },
                                 });
                             }
-                        } else if (cleanCommand.includes('pergi')) {
-                            if (cleanCommand.includes('kelas')) {
+                        } else if (predictedCommand.includes('pergi')) {
+                            if (predictedCommand.includes('kelas')) {
+                                setTrancript(predictedCommand);
                                 setSpeechOn(false);
                                 speechAction({
                                     text: `Anda akan menuju halaman Daftar Kelas`,
@@ -997,7 +1008,8 @@ const EnrollKelas = () => {
                                         router.push('/kelas');
                                     },
                                 });
-                            } else if (cleanCommand.includes('beranda')) {
+                            } else if (predictedCommand.includes('beranda')) {
+                                setTrancript(predictedCommand);
                                 setSpeechOn(false);
                                 speechAction({
                                     text: `Anda akan menuju halaman beranda`,
@@ -1006,7 +1018,8 @@ const EnrollKelas = () => {
                                         router.push('/');
                                     },
                                 });
-                            } else if (cleanCommand.includes('rapor')) {
+                            } else if (predictedCommand.includes('rapor')) {
+                                setTrancript(predictedCommand);
                                 setSpeechOn(false);
                                 speechAction({
                                     text: `Anda akan menuju halaman Rapor`,
@@ -1015,7 +1028,8 @@ const EnrollKelas = () => {
                                         router.push('/rapor');
                                     },
                                 });
-                            } else if (cleanCommand.includes('peringkat')) {
+                            } else if (predictedCommand.includes('peringkat')) {
+                                setTrancript(predictedCommand);
                                 // moving to /peringkat
                                 setSpeechOn(false);
                                 speechAction({
@@ -1025,9 +1039,19 @@ const EnrollKelas = () => {
                                         router.push('/peringkat');
                                     },
                                 });
+                            } else {
+                                setTrancript('Perintah tidak ditemukan!');
+                                setSpeechOn(false);
+                                speechAction({
+                                    text: 'Perintah tidak ditemukan!',
+                                    actionOnEnd: () => {
+                                        setDisplayTranscript(false);
+                                    },
+                                });
                             }
-                        } else if (cleanCommand.includes('cetak')) {
-                            if (cleanCommand.includes('sertifikat')) {
+                        } else if (predictedCommand.includes('cetak')) {
+                            if (predictedCommand.includes('sertifikat')) {
+                                setTrancript(predictedCommand);
                                 setSpeechOn(false);
 
                                 if (statusKelas === 'selesai') {
@@ -1057,11 +1081,12 @@ const EnrollKelas = () => {
                                 }
                             }
                         } else if (
-                            cleanCommand.includes('saya sekarang dimana') ||
-                            cleanCommand.includes('saya sekarang di mana') ||
-                            cleanCommand.includes('saya di mana') ||
-                            cleanCommand.includes('saya dimana')
+                            predictedCommand.includes('saya sekarang dimana') ||
+                            predictedCommand.includes('saya sekarang di mana') ||
+                            predictedCommand.includes('saya di mana') ||
+                            predictedCommand.includes('saya dimana')
                         ) {
+                            setTrancript(predictedCommand);
                             setSpeechOn(false);
                             speechAction({
                                 text: `Kita sedang di halaman pembelajaran`,
@@ -1069,9 +1094,10 @@ const EnrollKelas = () => {
                                     setDisplayTranscript(false);
                                 },
                             });
-                        } else if (cleanCommand.includes('jelaskan')) {
-                            if (cleanCommand.includes('intruksi') || cleanCommand.includes('instruksi')) {
+                        } else if (predictedCommand.includes('jelaskan')) {
+                            if (predictedCommand.includes('intruksi') || predictedCommand.includes('instruksi')) {
                                 console.log('dapet nih');
+                                setTrancript(predictedCommand);
                                 setSpeechOn(false);
                                 setIsClickButton(false);
                                 setIsPlayIntruction(true);
@@ -1118,6 +1144,33 @@ const EnrollKelas = () => {
                                     ],
                                 });
                             }
+                        } else if (predictedCommand.includes('muat')) {
+                            if (predictedCommand.includes('ulang')) {
+                                if (predictedCommand.includes('halaman')) {
+                                    setTrancript(predictedCommand);
+                                    setSpeechOn(false);
+
+                                    const listQuiz = new ListQuiz({
+                                        listQuiz: quiz,
+                                    });
+
+                                    speechAction({
+                                        text: `Anda akan load halaman ini!`,
+                                        actionOnEnd: () => {
+                                            setIsClickButton(false);
+                                            setDisplayTranscript(false);
+                                            if (listQuiz.getIdxQuizBerjalan() === -1) {
+                                                setIdxQuiz(0);
+                                            } else {
+                                                setIdxQuiz(listQuiz.getIdxQuizBerjalan());
+                                            }
+                                            setUserAnswer('');
+                                            setLoadData(true);
+                                            setQuizMode(false);
+                                        },
+                                    });
+                                }
+                            }
                         }
                     } else {
                         setSpeechOn(false);
@@ -1132,34 +1185,9 @@ const EnrollKelas = () => {
             }
 
             if (!skipSpeech) {
-                if (cleanCommand.includes('muat')) {
-                    if (cleanCommand.includes('ulang')) {
-                        if (cleanCommand.includes('halaman')) {
-                            setSpeechOn(false);
-
-                            const listQuiz = new ListQuiz({
-                                listQuiz: quiz,
-                            });
-
-                            speechAction({
-                                text: `Anda akan load halaman ini!`,
-                                actionOnEnd: () => {
-                                    setIsClickButton(false);
-                                    setDisplayTranscript(false);
-                                    if (listQuiz.getIdxQuizBerjalan() === -1) {
-                                        setIdxQuiz(0);
-                                    } else {
-                                        setIdxQuiz(listQuiz.getIdxQuizBerjalan());
-                                    }
-                                    setUserAnswer('');
-                                    setLoadData(true);
-                                    setQuizMode(false);
-                                },
-                            });
-                        }
-                    }
-                } else if (cleanCommand.includes('hallo') || cleanCommand.includes('halo') || cleanCommand.includes('hai')) {
+                if (cleanCommand.includes('hallo') || cleanCommand.includes('halo') || cleanCommand.includes('hai')) {
                     if (cleanCommand.includes('uli')) {
+                        setTrancript(cleanCommand);
                         stopSpeech();
                         speechAction({
                             text: `Hai ${userName}, saya mendengarkan Anda!`,

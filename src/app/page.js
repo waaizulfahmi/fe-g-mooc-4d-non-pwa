@@ -166,57 +166,98 @@ export default function Beranda() {
         recognition.onresult = (event) => {
             const command = event.results[0][0].transcript.toLowerCase();
             const cleanCommand = command?.replace('.', '');
-            const removePunctuationWords = punctuationRemoval(cleanCommand);
-            const stemmingWords = stemming(removePunctuationWords);
-            const removedStopWords = removeStopwords(stemmingWords);
-            console.log({
-                removePunc: removePunctuationWords,
-                stem: stemmingWords,
-                removeStop: removedStopWords,
-            });
+            console.log(cleanCommand);
 
-            // Memastikan model dan vocab dimuat sebelum melakukan prediksi
-            if (!model || !vocab || !labelEncoder) {
-                console.error('Model, vocab, label encoder  belum dimuat.');
-            } else {
-                // Hitung TF-IDF untuk setiap kata dalam inputText dengan bobot dari vocab
-                const tfidfResults = Object.keys(vocab).map((word) => {
-                    return {
-                        word: word,
-                        tfidf: calculateTFIDFWithWeights(word, removedStopWords, [removedStopWords], vocab),
-                    };
+            if (speechOn && !skipSpeech) {
+                const removePunctuationWords = punctuationRemoval(cleanCommand);
+                const stemmingWords = stemming(removePunctuationWords);
+                const removedStopWords = removeStopwords(stemmingWords);
+                console.log({
+                    removePunc: removePunctuationWords,
+                    stem: stemmingWords,
+                    removeStop: removedStopWords,
                 });
 
-                // Menyusun ulang hasil untuk menyimpan nilai TF-IDF dalam bentuk array
-                const orderedResults = tfidfResults.map((result) => result.tfidf);
-
-                const inputArray = [orderedResults]; // Sesuaikan dengan bentuk input model
-                const inputTensor = tf.tensor2d(inputArray);
-                const prediction = model.predict(inputTensor);
-                const result = prediction.dataSync();
-
-                // Temukan indeks kelas dengan nilai tertinggi
-                const predictedClassIndex = result.indexOf(Math.max(...result));
-                const checkValueOfResult = orderedResults.reduce((curr, prev) => curr + prev, 0);
-
-                const predictedCommand = labelEncoder[predictedClassIndex];
-                console.log('Check value result');
-                console.log('Predicted command : ', predictedCommand);
-
-                if (speechOn && !skipSpeech) {
-                    if (checkValueOfResult === 0) {
-                        setTrancript('Perintah tidak ditemukan!');
-                    } else {
-                        setTrancript(predictedCommand);
-                    }
+                // Memastikan model dan vocab dimuat sebelum melakukan prediksi
+                if (!model || !vocab || !labelEncoder) {
+                    console.error('Model, vocab, label encoder  belum dimuat.');
                 } else {
-                    setTrancript(cleanCommand);
-                }
+                    // Hitung TF-IDF untuk setiap kata dalam inputText dengan bobot dari vocab
+                    const tfidfResults = Object.keys(vocab).map((word) => {
+                        return {
+                            word: word,
+                            tfidf: calculateTFIDFWithWeights(word, removedStopWords, [removedStopWords], vocab),
+                        };
+                    });
 
-                if (speechOn && !skipSpeech) {
+                    // Menyusun ulang hasil untuk menyimpan nilai TF-IDF dalam bentuk array
+                    const orderedResults = tfidfResults.map((result) => result.tfidf);
+
+                    const inputArray = [orderedResults]; // Sesuaikan dengan bentuk input model
+                    const inputTensor = tf.tensor2d(inputArray);
+                    const prediction = model.predict(inputTensor);
+                    const result = prediction.dataSync();
+
+                    // Temukan indeks kelas dengan nilai tertinggi
+                    const predictedClassIndex = result.indexOf(Math.max(...result));
+                    const checkValueOfResult = orderedResults.reduce((curr, prev) => curr + prev, 0);
+
+                    // skipping prediction
+                    if (cleanCommand.includes('pergi')) {
+                        if (cleanCommand.includes('peringkat')) {
+                            setTrancript('pergi peringkat');
+                            setSpeechOn(false);
+                            speechAction({
+                                text: 'Anda akan menuju halaman Peringkat',
+                                actionOnEnd: () => {
+                                    setDisplayTranscript(false);
+                                    router.push('/peringkat');
+                                },
+                            });
+                        }
+                    } else if (cleanCommand.includes('jelaskan')) {
+                        if (cleanCommand.includes('intruksi') || cleanCommand.includes('instruksi')) {
+                            setTrancript('jelaskan instruksi');
+                            setSpeechOn(false);
+                            setIsClickButton(false);
+                            setIsPlayIntruction(true);
+                            speechWithBatch({
+                                speechs: [
+                                    {
+                                        text: `Hai ${userName}, sekarang Anda mendengarkan intruksi di halaman beranda.`,
+                                        actionOnStart: () => {
+                                            setSkipSpeech(true);
+                                        },
+                                        actionOnEnd: () => {
+                                            setDisplayTranscript(false);
+                                        },
+                                    },
+                                    {
+                                        text: `Jika Anda tersesat, Anda dapat mengucapkan saya dimana`,
+                                    },
+                                    {
+                                        text: `Untuk navigasi halaman, Anda dapat mengucapkan pergi ke halaman yang Anda tuju, misalnya pergi ke kelas, pada halaman ini Anda dapat pergi ke halaman kelas, raport, dan peringkat`,
+                                    },
+                                    {
+                                        text: `jangan lupa, Anda harus ucapkan terlebih dahulu hi Uli atau hallo uli agar saya dapat mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.`,
+                                        actionOnEnd: () => {
+                                            setSkipSpeech(false);
+                                            setIsPlayIntruction(false);
+                                        },
+                                    },
+                                ],
+                            });
+                        }
+                    }
+
+                    // prediction
                     if (checkValueOfResult !== 0) {
+                        const predictedCommand = labelEncoder[predictedClassIndex];
+                        console.log('Check value result: ', checkValueOfResult);
+                        console.log('Predicted command : ', predictedCommand);
                         if (predictedCommand.includes('pergi')) {
                             if (predictedCommand.includes('kelas')) {
+                                setTrancript(predictedCommand);
                                 setSpeechOn(false);
                                 speechAction({
                                     text: 'Anda akan menuju halaman Daftar Kelas',
@@ -226,21 +267,13 @@ export default function Beranda() {
                                     },
                                 });
                             } else if (predictedCommand.includes('rapor')) {
+                                setTrancript(predictedCommand);
                                 setSpeechOn(false);
                                 speechAction({
                                     text: 'Anda akan menuju halaman Rapor',
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
                                         router.push('/rapor');
-                                    },
-                                });
-                            } else if (predictedCommand.includes('peringkat')) {
-                                setSpeechOn(false);
-                                speechAction({
-                                    text: 'Anda akan menuju halaman Peringkat',
-                                    actionOnEnd: () => {
-                                        setDisplayTranscript(false);
-                                        router.push('/peringkat');
                                     },
                                 });
                             }
@@ -250,6 +283,7 @@ export default function Beranda() {
                             predictedCommand.includes('saya di mana') ||
                             predictedCommand.includes('saya dimana')
                         ) {
+                            setTrancript(predictedCommand);
                             setSpeechOn(false);
                             speechAction({
                                 text: `Kita sedang di halaman utama`,
@@ -257,39 +291,10 @@ export default function Beranda() {
                                     setDisplayTranscript(false);
                                 },
                             });
-                        } else if (predictedCommand.includes('jelaskan')) {
-                            if (predictedCommand.includes('intruksi') || predictedCommand.includes('instruksi')) {
-                                setSpeechOn(false);
-                                setDisplayTranscript(false);
-                                setIsClickButton(false);
-                                setIsPlayIntruction(true);
-                                speechWithBatch({
-                                    speechs: [
-                                        {
-                                            text: `Hai ${userName}, sekarang Anda mendengarkan intruksi di halaman beranda.`,
-                                            actionOnStart: () => {
-                                                setSkipSpeech(true);
-                                            },
-                                        },
-                                        {
-                                            text: `Jika Anda tersesat, Anda dapat mengucapkan saya dimana`,
-                                        },
-                                        {
-                                            text: `Untuk navigasi halaman, Anda dapat mengucapkan pergi ke halaman yang Anda tuju, misalnya pergi ke kelas, pada halaman ini Anda dapat pergi ke halaman kelas, raport, dan peringkat`,
-                                        },
-                                        {
-                                            text: `jangan lupa, Anda harus ucapkan terlebih dahulu hi Uli atau hallo uli agar saya dapat mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.`,
-                                            actionOnEnd: () => {
-                                                setSkipSpeech(false);
-                                                setIsPlayIntruction(false);
-                                            },
-                                        },
-                                    ],
-                                });
-                            }
                         } else if (predictedCommand.includes('muat')) {
                             if (predictedCommand.includes('ulang')) {
                                 if (predictedCommand.includes('halaman')) {
+                                    setTrancript(predictedCommand);
                                     setSpeechOn(false);
                                     speechAction({
                                         text: `Anda akan load ulang halaman!`,
@@ -302,35 +307,44 @@ export default function Beranda() {
                             }
                         }
                     } else {
+                        // USE CASE IF DYNAMIC SPEECH
+                        if (
+                            cleanCommand.includes('pergi peringkat') ||
+                            cleanCommand.includes('pergi ke peringkat') ||
+                            cleanCommand.includes('jelaskan intruksi') ||
+                            cleanCommand.includes('jelaskan instruksi')
+                        ) {
+                            return;
+                        }
+                        setTrancript('Perintah tidak ditemukan di halaman ini!');
                         setSpeechOn(false);
                         speechAction({
-                            text: 'Perintah tidak ditemukan!',
+                            text: 'Perintah tidak ditemukan di halaman ini!',
                             actionOnEnd: () => {
                                 setDisplayTranscript(false);
                             },
                         });
                     }
                 }
+            }
 
-                if (!skipSpeech) {
-                    if (cleanCommand.includes('hallo') || cleanCommand.includes('halo') || cleanCommand.includes('hai')) {
-                        if (cleanCommand.includes('uli')) {
-                            stopSpeech();
-                            speechAction({
-                                text: `Hai ${userName}, saya mendengarkan Anda!`,
-                                actionOnStart: () => {
-                                    setDisplayTranscript(true);
-                                },
-                                actionOnEnd: () => {
-                                    setSpeechOn(true);
-                                },
-                            });
-                        }
+            if (!skipSpeech) {
+                if (cleanCommand.includes('hallo') || cleanCommand.includes('halo') || cleanCommand.includes('hai')) {
+                    if (cleanCommand.includes('uli')) {
+                        setTrancript(cleanCommand);
+                        stopSpeech();
+                        speechAction({
+                            text: `Hai ${userName}, saya mendengarkan Anda!`,
+                            actionOnStart: () => {
+                                setDisplayTranscript(true);
+                            },
+                            actionOnEnd: () => {
+                                setSpeechOn(true);
+                            },
+                        });
                     }
                 }
             }
-            // setTrancript(cleanCommand);
-            // console.log(cleanCommand);
         };
 
         recognition.onend = () => {
@@ -400,7 +414,7 @@ export default function Beranda() {
     }, [isClickButton, isPermit, isPlayIntruction]);
 
     return (
-        <main className='h-screen '>
+        <main className='h-screen'>
             <Navbar />
             <Hero />
             <Transkrip transcript={transcript} isTrigger={displayTranscript} />
