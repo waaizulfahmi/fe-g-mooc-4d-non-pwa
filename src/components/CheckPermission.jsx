@@ -101,7 +101,7 @@ const CheckPermission = () => {
                     <div className='flex h-[500px] w-[800px] flex-col gap-10 overflow-hidden rounded-rad-6 bg-white p-5'>
                         <h1 className='text-head-5 text-center font-bold'>Yuk kita atur dulu Aplikasinya</h1>
                         <div className='col-span-12 grid h-full grid-cols-12 '>
-                            <div className='col-span-5 flex flex-col gap-3 '>
+                            <div className='col-span-10 flex flex-col gap-3 md:col-span-5 '>
                                 <h1 className='text-body-2 font-bold'>1. Izinkan perizinan untuk mikrofon</h1>
                                 <Image alt='' src={'/images/permission-check.jpg'} width={400} height={400} />
 
@@ -111,11 +111,11 @@ const CheckPermission = () => {
                                 </div>
                             </div>
                             {/* divider */}
-                            <div className='col-span-2 flex flex-col items-center justify-center '>
+                            <div className='col-span-10 flex flex-col items-center justify-center md:col-span-2 '>
                                 <div className='h-full border border-black'></div>
                             </div>
                             {/* divider */}
-                            <div className='col-span-5 flex flex-col gap-3 '>
+                            <div className='flex flex-col gap-3 md:col-span-5 '>
                                 <h1 className='text-body-2 font-bold'>2. Kita check mikrofon</h1>
                                 <p>
                                     Untuk cek mikrofon tekan tombol <span className='text-body-3 font-bold'>Spasi</span>

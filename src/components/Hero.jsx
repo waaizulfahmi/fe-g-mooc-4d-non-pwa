@@ -64,9 +64,9 @@ const Hero = ({ className }) => {
                     </div>
                 </div>
                 <div className='col-span-6 flex items-center justify-center '>
-                    <div className='flex justify-center gap-3 '>
+                    <div className='hidden justify-center gap-3 md:flex '>
                         <Image src={'/images/blind.svg'} width={353} height={442} alt='' />
-                        <MicButton className='mt-[50px] h-max' />
+                        <MicButton className='mt-[50px] h-max ' />
                     </div>
                 </div>
             </div>

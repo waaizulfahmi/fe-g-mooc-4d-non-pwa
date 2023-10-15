@@ -70,7 +70,7 @@ const Login = () => {
             console.log(captureCount);
             // setTokenFalse();
             const waitForCameraForToggle = setInterval(() => {
-                if (webcamRef.current?.video.readyState === 4) {
+                if (webcamRef.current?.video?.readyState === 4) {
                     clearInterval(waitForCameraForToggle);
                     // faceMyDetect();
                     capture();
