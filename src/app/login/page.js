@@ -21,19 +21,31 @@ import InputRef from '@/components/InputRef';
 import PasswordInputRef from '@/components/PasswordInputRef';
 import Label from '@/components/Label';
 import Notification from '@/components/Notification';
-// import { speechWithBatch } from '@/utils/text-to-speech';
+import { speechWithBatch, speechAction } from '@/utils/text-to-speech';
+import CheckPermission from '@/components/CheckPermission';
+import { recognition } from '@/utils/speech-recognition';
+
+
+import { useSelector , useDispatch} from 'react-redux';
+import { getIsPermit,checkPermissionSlice } from '@/redux/check-permission';
+
 // import { useSession } from 'next-auth/react';
 // import * as faceapi from 'face-api.js';
 // import { recognition } from '@/utils/speech-recognition';
 
 const Login = () => {
+    const dispatch = useDispatch()
     const router = useRouter();
     const { notifData, handleNotifAction, handleNotifVisible } = useNotification();
     const webcamRef = useRef();
     const [isCameraOpen, setIsCameraOpen] = useState(true);
+    const [isCameraReady, setIsCameraReady] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const [isCapturing, setIsCapturing] = useState(true);
     const [isFaceSuccess, setIsFaceSuccess] = useState(false);
+    const isPermit = useSelector(getIsPermit);
+    const [cameraPermitStatus, setCameraPermitStatus] = useState('prompt'); // granted | denied | prompt
+    const { setIsPermit ,setCameraStatus} = checkPermissionSlice.actions;
 
     const waitForCamera = () => {
         const cameraCheckInterval = setInterval(() => {
@@ -48,10 +60,6 @@ const Login = () => {
             clearInterval(cameraCheckInterval);
         }, 5000);
     };
-
-    useEffect(() => {
-        waitForCamera();
-    }, []);
 
     const {
         register,
@@ -147,7 +155,7 @@ const Login = () => {
         });
 
         // setIsLoading();
-        console.log('DATA: ', response);
+        // console.log('DATA: ', response);
         const session = await getSession();
         console.log(captureCount);
 
@@ -155,8 +163,13 @@ const Login = () => {
             captureCount++;
             capture();
         } else if (!session && captureCount === 10) {
-            setIsCameraOpen(false);
-            captureCount = 0;
+            speechAction({
+                text: 'Maaf, kami tidak mengenali wajah anda, silakan mengisi form login dengan meminta bantuan orang lain',
+                actionOnEnd: () => {
+                    setIsCameraOpen(false);
+                    captureCount = 0;
+                },
+            });
         } else if (!response?.error) {
             isFaceSuccessFunct();
             router.replace('/', { scroll: false });
@@ -182,6 +195,77 @@ const Login = () => {
             handleNotifAction('error', response.error);
         }
     };
+    useEffect(() => {
+        const checkPermission = () => {
+            navigator.permissions.query({ name: 'camera' }).then((result) => {
+                if (result.state === 'granted') {
+                    setCameraPermitStatus(result.state);
+                    //   showLocalNewsWithGeolocation();
+                    dispatch(setCameraStatus(result.state))
+                    console.log('Camera ON');
+                } else if (result.state === 'prompt') {
+                    setCameraPermitStatus(result.state);
+                    console.log('Camera PROMP');
+                    dispatch(setCameraStatus(result.state))
+                    //   showButtonToEnableLocalNews();
+                } else if (result.state === 'denied') {
+                    setCameraPermitStatus(result.state);
+                    console.log('Camera NOT');
+                    dispatch(setCameraStatus(result.state))
+                    // console.log('Camera PROMP');
+                    //   showButtonToEnableLocalNews();
+                }
+                result.onchange = () => {
+                    // etCameraPermitStatus(false);
+                    dispatch(setCameraStatus(result.state))
+                    console.log('Camera: ', result.state);
+                };
+                // Don't do anything if the permission was denied.
+            });
+        };
+        checkPermission();
+    },[dispatch,setCameraStatus]);
+    useEffect(() => {
+        if (isCameraReady) {
+            waitForCamera();
+        }
+    }, [isCameraReady]);
+
+    useEffect(() => {
+        try {
+            recognition.start();
+        } catch (error) {
+            recognition.stop();
+        }
+    }, []);
+
+    useEffect(() => {
+        if (isPermit) {
+            speechWithBatch({
+                speechs: [
+                    {
+                        text: `Selamat datang di halaman login Aplikasi Jimuk fordi, Pastikan Perizinan Kamera sudah diaktifkan, agar kami dapat mengenali anda`,
+                    },
+                    {
+                        text: 'Posisikan wajah anda tepat didepan kamera atau webkem yang anda gunakan',
+                    },
+                    {
+                        text: 'Wajah anda akan kami rekam dan jika kami berhasil mengenali anda, maka Anda dapat masuk ke aplikasi',
+                    },
+                    {
+                        text: 'Pastikan anda sudah melakukan registrasi, agar anda dapat menggunakan aplikasi ini',
+                        actionOnEnd: () => {
+                            // KAMERA CONDITION
+                            setIsCameraReady(true);
+                            // waitForCamera();
+                        },
+                    },
+                ],
+            });
+        }
+    }, [isPermit]);
+
+    console.log('Camera permission: ', cameraPermitStatus);
 
     return (
         <section className='grid h-screen grid-cols-12'>
@@ -329,6 +413,7 @@ const Login = () => {
                 text={notifData.text}
                 type={notifData.type}
             />
+            <CheckPermission />
         </section>
     );
 };

@@ -27,7 +27,7 @@ import Image from 'next/image';
 
 // redux
 import { useSelector, useDispatch } from 'react-redux';
-import { getMicrophoneStatus, checkPermissionSlice, getIsPermit } from '@/redux/check-permission';
+import { getMicrophoneStatus, checkPermissionSlice, getIsPermit,getCameraStatus } from '@/redux/check-permission';
 
 // components
 import LabelPermission from './LabelPermission';
@@ -47,6 +47,7 @@ const CheckPermission = () => {
     const dispatch = useDispatch();
     const isPermit = useSelector(getIsPermit);
     const micprohoneStatus = useSelector(getMicrophoneStatus);
+    const cameraStatus = useSelector(getCameraStatus);
     const { setIsPermit } = checkPermissionSlice.actions;
 
     //states
@@ -63,13 +64,20 @@ const CheckPermission = () => {
                 keyCode: 32,
                 action: () => {
                     if (!isPermit) {
-                        speechAction({
-                            text: 'Mikrofon dan Speaker sudah berjalan, Anda dapat mengikuti pembelajaran!',
-                            actionOnEnd: () => {
-                                setStatusBtn(true);
-                                dispatch(setIsPermit(true));
-                            },
-                        });
+                        if(micprohoneStatus !== 'granted' && cameraStatus !== 'granted'){
+                            speechAction({
+                                text: 'Mohon berikan akses terhadap Mikrofon, Speaker dan Camera',
+                            });
+                        }else{
+                            speechAction({
+                                text: 'Mikrofon Speaker dan Camera  sudah berjalan, Anda dapat mengikuti pembelajaran!',
+                                actionOnEnd: () => {
+                                    setStatusBtn(true);
+                                    dispatch(setIsPermit(true));
+                                },
+                            });
+                        }
+                        
                     }
                 },
             });
