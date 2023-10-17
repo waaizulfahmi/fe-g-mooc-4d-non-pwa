@@ -25,8 +25,9 @@ const VerifyEmail = () => {
         if (url) {
             const fetchApi = async () => {
                 try {
-                    await authVerify({ url });
+                    const response = await authVerify({ url });
                     setVerifyStatus('success');
+                    console.log('TESSS', response);
                     // setVerifyMsg(response?.metadata?.message);
                 } catch (error) {
                     setVerifyStatus('failed');
@@ -44,7 +45,7 @@ const VerifyEmail = () => {
     switch (verifyStatus) {
         case 'failed':
             return (
-                <div className='flex h-screen w-screen items-center justify-center bg-primary-1'>
+                <div className='flex items-center justify-center w-screen h-screen bg-primary-1'>
                     <Image
                         src={'/images/icon-white.svg'}
                         alt=''
@@ -64,7 +65,7 @@ const VerifyEmail = () => {
             );
         default:
             return (
-                <div className='flex h-screen w-screen items-center justify-center bg-primary-1'>
+                <div className='flex items-center justify-center w-screen h-screen bg-primary-1'>
                     <Image
                         src={'/images/icon-white.svg'}
                         alt=''

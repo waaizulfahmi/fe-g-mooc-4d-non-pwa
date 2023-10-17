@@ -50,7 +50,7 @@ import { ApiResponseError } from '@/utils/error-handling';
 import { buttonAction } from '@/utils/space-button-action';
 import { punctuationRemoval, stemming, removeStopwords } from '@/utils/special-text';
 import { calculateTFIDFWithWeights } from '@/utils/tfidf';
-import { authLogout } from '@/axios/auth';
+// import { authLogout } from '@/axios/auth';
 
 const Kelas = () => {
     const { data } = useSession();
@@ -346,15 +346,7 @@ const Kelas = () => {
                                 speechAction({
                                     text: 'Anda harus verifikasi akun Anda terlebih dahulu. Silahkan check email Anda!',
                                     actionOnEnd: () => {
-                                        if (token) {
-                                            const logoutUserNotVerify = async () => {
-                                                await authLogout({ token });
-                                            };
-                                            logoutUserNotVerify();
-                                            router.push('/must-verify');
-                                        } else {
-                                            router.push('/must-verify');
-                                        }
+                                        router.push('/must-verify');
                                     },
                                 });
                             } else {
