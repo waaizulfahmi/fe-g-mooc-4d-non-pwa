@@ -24,6 +24,7 @@ import Notification from '@/components/Notification';
 import { speechWithBatch, speechAction } from '@/utils/text-to-speech';
 import CheckPermission from '@/components/CheckPermission';
 import { recognition } from '@/utils/speech-recognition';
+import { browserPermission } from '@/utils/browser-permission';
 
 import { useSelector, useDispatch } from 'react-redux';
 import { getIsPermit, checkPermissionSlice } from '@/redux/check-permission';
@@ -69,7 +70,7 @@ const Login = () => {
     const toggleMode = async () => {
         if (isCameraOpen) {
             setIsCameraOpen(false);
-            await capture();
+            // await capture();
         } else {
             setIsCameraOpen(true);
             setIsCapturing(true);
@@ -80,53 +81,12 @@ const Login = () => {
                 if (webcamRef.current?.video?.readyState === 4) {
                     clearInterval(waitForCameraForToggle);
                     // faceMyDetect();
-                    capture();
+                    waitForCamera();
+                    // setIsCameraReady(true);
                 }
             }, 5000);
         }
     };
-
-    // version 2
-    // const faceMyDetect = () => {
-    //     if (isCameraOpen) {
-    //         setInterval(async () => {
-    //             const webcamVideo = webcamRef.current?.video;
-    //             if (webcamVideo) {
-    //                 const detections = await faceapi.detectSingleFace(webcamVideo, new faceapi.SsdMobilenetv1Options());
-    //                 if (!detections) {
-    //                     console.log('tidak terdeteksi wajah, tidak mengirim');
-    //                 } else {
-    //                     if (detections?.classScore) {
-    //                         console.log('terdeteksi wajah');
-    //                         // DRAW YOU FACE IN WEBCAM
-    //                         if (canvasRef.current) {
-    //                             canvasRef.current.innerHtml = faceapi?.createCanvasFromMedia(webcamVideo);
-    //                             faceapi.matchDimensions(canvasRef.current, {
-    //                                 width: webcamVideo.videoWidth,
-    //                                 height: webcamVideo.videoHeight,
-    //                             });
-
-    //                             const resized = faceapi.resizeResults(detections, {
-    //                                 width: webcamVideo.videoWidth,
-    //                                 height: webcamVideo.videoHeight,
-    //                             });
-
-    //                             faceapi.draw.drawDetections(canvasRef.current, resized);
-    //                             if (!isTokenReady) {
-    //                                 try {
-    //                                     await capture();
-    //                                 } catch (error) {
-    //                                     console.error('Error during capture:', error);
-    //                                 }
-    //                             }
-    //                         }
-    //                         //Running Logic
-    //                     }
-    //                 }
-    //             }
-    //         }, 10000);
-    //     }
-    // };
 
     const isFaceSuccessFunct = async () => {
         setIsFaceSuccess(true);
@@ -163,7 +123,7 @@ const Login = () => {
             capture();
         } else if (!session && captureCount === 10) {
             speechAction({
-                text: 'Maaf, kami tidak mengenali wajah anda, anda dapat meminta bantuan orang lain untuk pengisian form login',
+                text: 'Maaf, kami tidak mengenali wajah anda, anda dapat meminta bantuan orang lain untuk pengisian form login atau dapat menekan lagi login dengan wajah',
                 actionOnEnd: () => {
                     setIsCameraOpen(false);
                     captureCount = 0;
@@ -200,34 +160,13 @@ const Login = () => {
         }
     };
     useEffect(() => {
-        const checkPermission = () => {
-            navigator.permissions.query({ name: 'camera' }).then((result) => {
-                if (result.state === 'granted') {
-                    setCameraPermitStatus(result.state);
-                    //   showLocalNewsWithGeolocation();
-                    dispatch(setCameraStatus(result.state));
-                    console.log('Camera ON');
-                } else if (result.state === 'prompt') {
-                    setCameraPermitStatus(result.state);
-                    console.log('Camera PROMP');
-                    dispatch(setCameraStatus(result.state));
-                    //   showButtonToEnableLocalNews();
-                } else if (result.state === 'denied') {
-                    setCameraPermitStatus(result.state);
-                    console.log('Camera NOT');
-                    dispatch(setCameraStatus(result.state));
-                    // console.log('Camera PROMP');
-                    //   showButtonToEnableLocalNews();
-                }
-                result.onchange = () => {
-                    // etCameraPermitStatus(false);
-                    dispatch(setCameraStatus(result.state));
-                    console.log('Camera: ', result.state);
-                };
-                // Don't do anything if the permission was denied.
-            });
-        };
-        checkPermission();
+        browserPermission('camera', (browserPermit) => {
+            if (browserPermit.error && !browserPermit.state) {
+                console.log('Error perizinan: ', browserPermit.error);
+            } else {
+                dispatch(setCameraStatus(browserPermit.state));
+            }
+        });
     }, [dispatch, setCameraStatus]);
 
     useEffect(() => {
@@ -343,7 +282,7 @@ const Login = () => {
                                     </>
                                 ) : (
                                     <div>
-                                        <h1 className='pt-5 text-center'>Mohon Tunggu Hingga Narator Selesai</h1>
+                                        <h1 className='pt-5 text-center'>Mohon Tunggu...</h1>
                                     </div>
                                 )}
                             </div>
@@ -402,7 +341,7 @@ const Login = () => {
                         </form>
                     )}
                     <button className='text-center text-base font-semibold' onClick={toggleMode}>
-                        {isCameraOpen ? 'Masuk dengan Username' : 'Masuk dengan Wajah'}
+                        {isCameraOpen ? 'Masuk dengan Email' : 'Masuk dengan Wajah'}
                     </button>
                     <button
                         className='relative text-center text-base font-semibold md:hidden'

@@ -260,9 +260,9 @@ const Register = () => {
                                 </div>
                             </Popup>
                         ) : (
-                            <FillButton onClick={openCamera} className='w-max px-[52px] py-[16px]'>
-                                Face Recognition
-                            </FillButton>
+                            <button onClick={openCamera} className='text-center text-base font-semibold'>
+                                Tambahkan Data Gambar Anda
+                            </button>
                         )}
                         <FillButton type='submit' className='w-max px-[52px] py-[16px]'>
                             Daftar

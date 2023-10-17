@@ -24,11 +24,11 @@ import PropTypes from 'prop-types';
 import { usePathname } from 'next/navigation';
 
 // third party
-import { MdKeyboardVoice } from 'react-icons/md';
+import { MdCamera, MdKeyboardVoice } from 'react-icons/md';
 
 // redux
 import { useSelector, useDispatch } from 'react-redux';
-import { getMicrophoneStatus, checkPermissionSlice } from '@/redux/check-permission';
+import { getMicrophoneStatus, checkPermissionSlice, getCameraStatus } from '@/redux/check-permission';
 
 // components
 // ---
@@ -46,6 +46,7 @@ const LabelPermission = ({ className = 'px-3 py-1' }) => {
     //redux
     const dispatch = useDispatch();
     const micprohoneStatus = useSelector(getMicrophoneStatus);
+    const cameraStatus = useSelector(getCameraStatus);
     const path = usePathname();
     const { setMicrophoneStatus } = checkPermissionSlice.actions;
 
@@ -83,6 +84,18 @@ const LabelPermission = ({ className = 'px-3 py-1' }) => {
                 } flex h-max  items-center gap-1  text-center`}>
                 <MdKeyboardVoice className='h-[24px] w-[24px]' />
                 <h1 className='font-bold'>Mikrofon Aktif</h1>
+            </div>
+        );
+    }
+    if (cameraStatus === 'granted') {
+        return (
+            <div
+                // className={`${className} ${
+                //     path === '/rapor' || path === '/peringkat' ? ' text-white' : ' text-primary-1'
+                // } `}>
+                className='flex h-max  items-center gap-1  text-center'>
+                <MdCamera className='h-[24px] w-[24px]' />
+                <h1 className='font-bold'>Kamera Aktif</h1>
             </div>
         );
     }

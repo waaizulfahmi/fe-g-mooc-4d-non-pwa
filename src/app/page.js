@@ -301,7 +301,7 @@ export default function Beranda() {
     return (
         <main className='h-screen '>
             <Navbar />
-            <Hero />
+            <Hero /> 
             <Transkrip transcript={transcript} isTrigger={displayTranscript} />
             <CheckPermission />
         </main>

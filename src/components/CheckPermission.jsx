@@ -27,10 +27,10 @@ import Image from 'next/image';
 
 // redux
 import { useSelector, useDispatch } from 'react-redux';
-import { getMicrophoneStatus, checkPermissionSlice, getIsPermit,getCameraStatus } from '@/redux/check-permission';
+import { getMicrophoneStatus, checkPermissionSlice, getIsPermit, getCameraStatus } from '@/redux/check-permission';
 
 // components
-import LabelPermission from './LabelPermission';
+// import LabelPermission from './LabelPermission';
 import FillButton from './FillButton';
 
 // data
@@ -64,11 +64,11 @@ const CheckPermission = () => {
                 keyCode: 32,
                 action: () => {
                     if (!isPermit) {
-                        if(micprohoneStatus !== 'granted' && cameraStatus !== 'granted'){
+                        if (micprohoneStatus !== 'granted' && cameraStatus !== 'granted') {
                             speechAction({
                                 text: 'Mohon berikan akses terhadap Mikrofon, Speaker dan Camera',
                             });
-                        }else{
+                        } else {
                             speechAction({
                                 text: 'Mikrofon Speaker dan Camera  sudah berjalan, Anda dapat mengikuti pembelajaran!',
                                 actionOnEnd: () => {
@@ -77,7 +77,6 @@ const CheckPermission = () => {
                                 },
                             });
                         }
-                        
                     }
                 },
             });
@@ -110,13 +109,10 @@ const CheckPermission = () => {
                         <h1 className='text-head-5 text-center font-bold'>Yuk kita atur dulu Aplikasinya</h1>
                         <div className='col-span-12 grid h-full grid-cols-12 '>
                             <div className='col-span-10 flex flex-col gap-3 md:col-span-5 '>
-                                <h1 className='text-body-2 font-bold'>1. Izinkan perizinan untuk mikrofon</h1>
+                                <h1 className='text-body-2 font-bold'>1. Izinkan perizinan untuk mikrofon </h1>
                                 <Image alt='' src={'/images/permission-check.jpg'} width={400} height={400} />
-
-                                <div className='mt-5 flex flex-col gap-3'>
-                                    <h1 className='font-bold text-black text-opacity-50'>Status Mikrofon :</h1>
-                                    <LabelPermission className='px-5 py-3 text-[20px] font-bold' />
-                                </div>
+                                <h1 className='text-body-2 font-bold'>2. Izinkan perizinan untuk kamera</h1>
+                                <Image alt='' src={'/images/camera.jpg'} width={400} height={400} />
                             </div>
                             {/* divider */}
                             <div className='col-span-10 flex flex-col items-center justify-center md:col-span-2 '>
@@ -124,7 +120,7 @@ const CheckPermission = () => {
                             </div>
                             {/* divider */}
                             <div className='flex flex-col gap-3 md:col-span-5 '>
-                                <h1 className='text-body-2 font-bold'>2. Kita check mikrofon</h1>
+                                <h1 className='text-body-2 font-bold'>3. Kita cek Mikrofon dan Kameranya</h1>
                                 <p>
                                     Untuk cek mikrofon tekan tombol <span className='text-body-3 font-bold'>Spasi</span>
                                 </p>
