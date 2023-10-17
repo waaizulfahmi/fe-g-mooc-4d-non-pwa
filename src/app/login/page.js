@@ -25,27 +25,26 @@ import { speechWithBatch, speechAction } from '@/utils/text-to-speech';
 import CheckPermission from '@/components/CheckPermission';
 import { recognition } from '@/utils/speech-recognition';
 
-
-import { useSelector , useDispatch} from 'react-redux';
-import { getIsPermit,checkPermissionSlice } from '@/redux/check-permission';
+import { useSelector, useDispatch } from 'react-redux';
+import { getIsPermit, checkPermissionSlice } from '@/redux/check-permission';
 
 // import { useSession } from 'next-auth/react';
 // import * as faceapi from 'face-api.js';
 // import { recognition } from '@/utils/speech-recognition';
 
 const Login = () => {
-    const dispatch = useDispatch()
+    const dispatch = useDispatch();
     const router = useRouter();
     const { notifData, handleNotifAction, handleNotifVisible } = useNotification();
     const webcamRef = useRef();
     const [isCameraOpen, setIsCameraOpen] = useState(true);
-    const [isCameraReady, setIsCameraReady] = useState(true);
+    const [isCameraReady, setIsCameraReady] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isCapturing, setIsCapturing] = useState(true);
     const [isFaceSuccess, setIsFaceSuccess] = useState(false);
     const isPermit = useSelector(getIsPermit);
     const [cameraPermitStatus, setCameraPermitStatus] = useState('prompt'); // granted | denied | prompt
-    const { setIsPermit ,setCameraStatus} = checkPermissionSlice.actions;
+    const { setIsPermit, setCameraStatus } = checkPermissionSlice.actions;
 
     const waitForCamera = () => {
         const cameraCheckInterval = setInterval(() => {
@@ -164,15 +163,20 @@ const Login = () => {
             capture();
         } else if (!session && captureCount === 10) {
             speechAction({
-                text: 'Maaf, kami tidak mengenali wajah anda, silakan mengisi form login dengan meminta bantuan orang lain',
+                text: 'Maaf, kami tidak mengenali wajah anda, anda dapat meminta bantuan orang lain untuk pengisian form login',
                 actionOnEnd: () => {
                     setIsCameraOpen(false);
                     captureCount = 0;
                 },
             });
         } else if (!response?.error) {
-            isFaceSuccessFunct();
-            router.replace('/', { scroll: false });
+            speechAction({
+                text: 'Kami Berhasil Mengenali Anda, tunggu beberapa saat,   anda akan diarahkan ke halaman beranda',
+                actionOnEnd: () => {
+                    isFaceSuccessFunct();
+                    router.replace('/', { scroll: false });
+                },
+            });
         } else if (response?.error) {
             handleNotifAction('error', response.error);
         }
@@ -201,30 +205,31 @@ const Login = () => {
                 if (result.state === 'granted') {
                     setCameraPermitStatus(result.state);
                     //   showLocalNewsWithGeolocation();
-                    dispatch(setCameraStatus(result.state))
+                    dispatch(setCameraStatus(result.state));
                     console.log('Camera ON');
                 } else if (result.state === 'prompt') {
                     setCameraPermitStatus(result.state);
                     console.log('Camera PROMP');
-                    dispatch(setCameraStatus(result.state))
+                    dispatch(setCameraStatus(result.state));
                     //   showButtonToEnableLocalNews();
                 } else if (result.state === 'denied') {
                     setCameraPermitStatus(result.state);
                     console.log('Camera NOT');
-                    dispatch(setCameraStatus(result.state))
+                    dispatch(setCameraStatus(result.state));
                     // console.log('Camera PROMP');
                     //   showButtonToEnableLocalNews();
                 }
                 result.onchange = () => {
                     // etCameraPermitStatus(false);
-                    dispatch(setCameraStatus(result.state))
+                    dispatch(setCameraStatus(result.state));
                     console.log('Camera: ', result.state);
                 };
                 // Don't do anything if the permission was denied.
             });
         };
         checkPermission();
-    },[dispatch,setCameraStatus]);
+    }, [dispatch, setCameraStatus]);
+
     useEffect(() => {
         if (isCameraReady) {
             waitForCamera();
@@ -338,7 +343,7 @@ const Login = () => {
                                     </>
                                 ) : (
                                     <div>
-                                        <h1 className='pt-5 text-center'>Silakan Tunggu Hingga Kamera Tampil</h1>
+                                        <h1 className='pt-5 text-center'>Mohon Tunggu Hingga Narator Selesai</h1>
                                     </div>
                                 )}
                             </div>
