@@ -107,9 +107,9 @@ const Register = () => {
             } catch (error) {
                 setIsDaftar(false);
                 if (error instanceof ApiResponseError) {
-                    console.log(`ERR REGISTER MESSAGE: `, error.data.data);
+                    console.log(`ERR REGISTER MESSAGE: `, error.message);
                     console.log(error.data); // data
-                    handleNotifAction('error', error.data.data);
+                    handleNotifAction('error', error.message);
                     return;
                 }
                 console.log(`MESSAGE: `, error.message);
