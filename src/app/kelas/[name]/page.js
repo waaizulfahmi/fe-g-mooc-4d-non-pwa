@@ -38,7 +38,8 @@ import NavbarButton from '@/components/NavbarButton';
 import VideoFrame from '@/components/VideoFrame';
 import Certificate from '@/components/Certificate';
 import Transkrip from '@/components/Transkrip';
-import MateriPoinNotification from '@/components/MateriPoinNotification';
+// import MateriPoinNotification from '@/components/MateriPoinNotification';
+import MateriPoinNotification from '@/components/MateriPointNotification';
 
 // datas
 import { Kelas, ListMateri, ListQuiz } from '@/data/model';
