@@ -38,6 +38,7 @@ import NavbarButton from '@/components/NavbarButton';
 import VideoFrame from '@/components/VideoFrame';
 import Certificate from '@/components/Certificate';
 import Transkrip from '@/components/Transkrip';
+import MateriPoinNotification from '@/components/MateriPoinNotification';
 
 // datas
 import { Kelas, ListMateri, ListQuiz } from '@/data/model';
@@ -56,6 +57,7 @@ import { ApiResponseError } from '@/utils/error-handling';
 import { buttonAction } from '@/utils/space-button-action';
 import { punctuationRemoval, stemming, removeStopwords } from '@/utils/special-text';
 import { calculateTFIDFWithWeights } from '@/utils/tfidf';
+import { useCallback } from 'react';
 
 const EnrollKelas = () => {
     const { data } = useSession();
@@ -107,6 +109,15 @@ const EnrollKelas = () => {
     const [displayTranscript, setDisplayTranscript] = useState(false); // state untuk  menampilkan transcript
     const [isClickButton, setIsClickButton] = useState(false); // state untuk aksi tombol
     const [isPlayIntruction, setIsPlayIntruction] = useState(false); // state  ketika intruksi berjalan
+
+    // NOTIFICATION
+    const [poinNotif, setPoinNotif] = useState(0);
+    const [isVisible, setVisible] = useState(false);
+
+    const handleNotifAction = useCallback(() => {
+        // setPoinNotif(poin);
+        setVisible(!isVisible);
+    }, [isVisible]);
 
     //FUNCTION
     // Fungsi untuk memuat model
@@ -331,11 +342,44 @@ const EnrollKelas = () => {
                             // Kondisi sudah ada materi berjalan dengan adanya playback
                             if (kelas.lastMateri('status') === 'belum' || kelas.lastMateri('status') === 'jalan') {
                                 // Kondisi materi terakhir 'belum' atau 'jalan'
-                                speechAction({
-                                    text: `Selamat datang kembali di kelas ${kelas.getName()}. Anda sedang belajar pada materi ke- ${
-                                        kelas.idxMateriBerjalan() + 1
-                                    }. Jangan lupa klik tombol spasi untuk menjalankan materi, dan klik kembali tombol spasi  untuk pause materi. `,
-                                });
+                                if (poin !== kelas.getPoin()) {
+                                    if (kelas.materiBerjalan().playback > 0) {
+                                        speechAction({
+                                            text: `Selamat datang kembali di kelas ${kelas.getName()}. Anda sedang belajar pada materi ke- ${
+                                                kelas.idxMateriBerjalan() + 1
+                                            }. Jangan lupa klik tombol spasi untuk menjalankan materi, dan klik kembali tombol spasi  untuk pause materi. `,
+                                        });
+                                    } else {
+                                        setPoinNotif(kelas.getPoin() - poin);
+                                        handleNotifAction();
+                                        console.log('Playback: ');
+                                        speechWithBatch({
+                                            speechs: [
+                                                {
+                                                    text: `Selamat Kamu Mendapat ${kelas.getPoin() - poin} Poin !`,
+                                                },
+                                                {
+                                                    text: `Selamat datang kembali di kelas ${kelas.getName()}. Anda sedang belajar pada materi ke- ${
+                                                        kelas.idxMateriBerjalan() + 1
+                                                    }. Jangan lupa klik tombol spasi untuk menjalankan materi, dan klik kembali tombol spasi  untuk pause materi. `,
+                                                },
+                                            ],
+                                        });
+                                        console.log('Selamat Anda mendapatkan poin sebanyak:  ', kelas.getPoin() - poin);
+                                    }
+                                } else {
+                                    speechAction({
+                                        text: `Selamat datang kembali di kelas ${kelas.getName()}. Anda sedang belajar pada materi ke- ${
+                                            kelas.idxMateriBerjalan() + 1
+                                        }. Jangan lupa klik tombol spasi untuk menjalankan materi, dan klik kembali tombol spasi  untuk pause materi. `,
+                                    });
+                                    console.log(' Anda masih belajar dikelas ini');
+                                }
+                                // speechAction({
+                                //     text: `Selamat datang kembali di kelas ${kelas.getName()}. Anda sedang belajar pada materi ke- ${
+                                //         kelas.idxMateriBerjalan() + 1
+                                //     }. Jangan lupa klik tombol spasi untuk menjalankan materi, dan klik kembali tombol spasi  untuk pause materi. `,
+                                // });
                             } else if (kelas.lastMateri('status') === 'selesai') {
                                 // Kondisi materi terakhir 'selesai'
                                 if (isQuizMode) {
@@ -669,7 +713,21 @@ const EnrollKelas = () => {
             }
         }
         setLoadData(false);
-    }, [name, loadData, token, isQuizMode, userAnswer, isAnswerMode, idxQuiz, currentQuiz, isCetakSertifikat, userName, router]);
+    }, [
+        name,
+        loadData,
+        token,
+        isQuizMode,
+        userAnswer,
+        isAnswerMode,
+        idxQuiz,
+        currentQuiz,
+        isCetakSertifikat,
+        userName,
+        router,
+        handleNotifAction,
+        poin,
+    ]);
 
     useEffect(() => {
         recognition.onresult = (event) => {
@@ -1484,6 +1542,7 @@ const EnrollKelas = () => {
                 </div>
             </div>
             <Transkrip transcript={transcript} isTrigger={displayTranscript} />
+            <MateriPoinNotification time={2000} isVisible={isVisible} poin={poinNotif} handleVisible={handleNotifAction} />
         </div>
     );
 };

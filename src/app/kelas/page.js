@@ -50,6 +50,7 @@ import { ApiResponseError } from '@/utils/error-handling';
 import { buttonAction } from '@/utils/space-button-action';
 import { punctuationRemoval, stemming, removeStopwords } from '@/utils/special-text';
 import { calculateTFIDFWithWeights } from '@/utils/tfidf';
+import { authLogout } from '@/axios/auth';
 
 const Kelas = () => {
     const { data } = useSession();
@@ -345,7 +346,15 @@ const Kelas = () => {
                                 speechAction({
                                     text: 'Anda harus verifikasi akun Anda terlebih dahulu. Silahkan check email Anda!',
                                     actionOnEnd: () => {
-                                        router.push('/must-verify');
+                                        if (token) {
+                                            const logoutUserNotVerify = async () => {
+                                                await authLogout({ token });
+                                            };
+                                            logoutUserNotVerify();
+                                            router.push('/must-verify');
+                                        } else {
+                                            router.push('/must-verify');
+                                        }
                                     },
                                 });
                             } else {
@@ -803,6 +812,11 @@ const Kelas = () => {
             window.removeEventListener('keydown', spaceButtonIntroAction);
         };
     }, [isClickButton, isPlayIntruction]);
+
+    // Need UI for not verify human
+    // if (kelas.length < 1) {
+    //     return <h1>NULL</h1>;
+    // }
 
     return (
         <div className='h-screen bg-[#EDF3F3]'>

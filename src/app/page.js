@@ -27,14 +27,14 @@ import { useSession } from 'next-auth/react';
 import * as tf from '@tensorflow/tfjs';
 
 // redux
-import { useSelector } from 'react-redux';
-import { getIsPermit } from '@/redux/check-permission';
+import { useSelector, useDispatch } from 'react-redux';
+import { getIsPermit, checkPermissionSlice } from '@/redux/check-permission';
 
 // components
 import Navbar from '@/components/Navbar';
-import CheckPermission from '@/components/CheckPermission';
 import Transkrip from '@/components/Transkrip';
 import Hero from '@/components/Hero';
+import CheckPermission from '@/components/CheckPermission';
 
 // datas
 // ---
@@ -48,12 +48,15 @@ import { recognition } from '@/utils/speech-recognition';
 import { buttonAction } from '@/utils/space-button-action';
 import { punctuationRemoval, stemming, removeStopwords } from '@/utils/special-text';
 import { calculateTFIDFWithWeights } from '@/utils/tfidf';
+import { browserPermission } from '@/utils/browserPermission';
 
 export default function Beranda() {
     const router = useRouter();
     const { data } = useSession();
     const userName = data?.user?.name;
     const isPermit = useSelector(getIsPermit);
+    const dispatch = useDispatch();
+    const { setCameraStatus, setMicrophoneStatus } = checkPermissionSlice.actions;
 
     // COMMON STATE
     // --
@@ -103,6 +106,23 @@ export default function Beranda() {
             console.error('Gagal memuat label encoder:', error);
         }
     };
+
+    useEffect(() => {
+        browserPermission('camera', (browserPermit) => {
+            if (browserPermit.error && !browserPermit.state) {
+                console.log('Error perizinan: ', browserPermit.error);
+            } else {
+                dispatch(setCameraStatus(browserPermit.state));
+            }
+        });
+        browserPermission('microphone', (browserPermit) => {
+            if (browserPermit.error && !browserPermit.state) {
+                console.log('Error perizinan: ', browserPermit.error);
+            } else {
+                dispatch(setMicrophoneStatus(browserPermit.state));
+            }
+        });
+    }, [dispatch, setCameraStatus, setMicrophoneStatus]);
 
     // EFFECTS
     // init speech recognition

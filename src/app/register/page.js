@@ -26,6 +26,7 @@ import Label from '@/components/Label';
 import Notification from '@/components/Notification';
 
 import { ApiResponseError } from '@/utils/error-handling';
+import { stopSpeech } from '@/utils/text-to-speech';
 
 const Register = () => {
     const webcamRef = useRef(null);
@@ -106,9 +107,9 @@ const Register = () => {
             } catch (error) {
                 setIsDaftar(false);
                 if (error instanceof ApiResponseError) {
-                    console.log(`ERR REGISTER MESSAGE: `, error.message);
-                    console.log(error.data);
-                    handleNotifAction('error', error?.message);
+                    console.log(`ERR REGISTER MESSAGE: `, error.data.data);
+                    console.log(error.data); // data
+                    handleNotifAction('error', error.data.data);
                     return;
                 }
                 console.log(`MESSAGE: `, error.message);
@@ -161,18 +162,24 @@ const Register = () => {
                     className={`absolute bottom-[30%] left-1/2 flex translate-x-[-50%] flex-col items-center justify-center gap-5 text-white`}>
                     <h1 className='text-[40px] font-bold leading-[20px]'>Hallo !</h1>
                     <p className='text-center '>Masukkan Detail Pribadi Anda dan Mulailah Pembelajaran Anda</p>
-                    <BorderedButton theme='light' onClick={() => router.replace('/login', { scroll: false })}>
+                    <BorderedButton
+                        theme='light'
+                        onClick={() => {
+                            stopSpeech();
+                            router.refresh();
+                            router.replace('/login', { scroll: false });
+                        }}>
                         Masuk
                     </BorderedButton>
                 </div>
             </div>
-            <div className='col-span-8 flex items-center justify-center bg-neutral-7'>
-                <div className='flex w-[646px] flex-col gap-[42px]'>
+            <div className='flex items-center justify-center col-span-8 bg-neutral-7'>
+                <div className='flex w-[646px] flex-col gap-[34px]'>
                     <div className='text-center'>
-                        <h1 className='text-title-2 font-bold'>Buat Akun Baru</h1>
+                        <h1 className='font-bold text-title-2'>Buat Akun Baru</h1>
                         <p className='text-body-2'>Buktikan Sekarang Semua Bisa Belajar</p>
                     </div>
-                    <form className='flex flex-col items-center gap-[24px]' onSubmit={handleSubmit(onSubmit)}>
+                    <form className='flex flex-col items-center gap-[14px]' onSubmit={handleSubmit(onSubmit)}>
                         <div className='w-full'>
                             <Label htmlFor='name' className={`${errors.name?.message ? 'text-alert-1' : 'text-black'}`}>
                                 {errors.name?.message || <span className='invisible'>.</span>}
@@ -244,9 +251,9 @@ const Register = () => {
                                 open={isCameraOpen}
                                 modal
                                 nested
-                                className='rounded-lg bg-gray-100 p-4'>
+                                className='p-4 bg-gray-100 rounded-lg'>
                                 <div className='fixed inset-0 bg-opacity-50 backdrop-blur-md backdrop-filter'></div>
-                                <div className='relative rounded-lg bg-white p-5 shadow-lg'>
+                                <div className='relative p-5 bg-white rounded-lg shadow-lg'>
                                     <h1 className='pb-4 text-2xl font-semibold'>Face Recognition Technology</h1>
                                     <Webcam
                                         audio={false}
@@ -255,20 +262,20 @@ const Register = () => {
                                         screenshotFormat='image/jpeg'
                                         className='w-full rounded-lg shadow-lg'
                                     />
-                                    <div className='mt-4 flex flex-col items-center'>
+                                    <div className='flex flex-col items-center mt-4'>
                                         <h3 className='text-xl font-semibold'>Memindai Wajah Anda</h3>
                                         <button
                                             onClick={closeCamera}
-                                            className='mt-2 rounded-lg bg-red-500 px-4 py-2 font-semibold text-white hover:bg-red-600'>
+                                            className='px-4 py-2 mt-2 font-semibold text-white bg-red-500 rounded-lg hover:bg-red-600'>
                                             Keluar
                                         </button>
                                     </div>
                                 </div>
                             </Popup>
                         ) : (
-                            <FillButton onClick={openCamera} className='w-max px-[52px] py-[16px]'>
-                                Face Recognition
-                            </FillButton>
+                            <button onClick={openCamera} className='pt-3 text-base font-semibold text-center'>
+                                Tambahkan Data Gambar Anda
+                            </button>
                         )}
                         <FillButton
                             style={{ backgroundColor: isDaftar ? '#00ff00' : '' }}

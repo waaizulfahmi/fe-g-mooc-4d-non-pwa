@@ -14,6 +14,7 @@ export const authRegister = async ({ name, email, password, konfirmasi_password,
         if (!name) throw new Error('Name must be submitted!');
         if (!email) throw new Error('Email must be submitted!');
         if (!host) throw new Error('Host must be submitted!');
+        if (!images) throw new Error('images must be submitted!');
 
         if (!faceMode) {
             await sanctumApiInstance.get();
