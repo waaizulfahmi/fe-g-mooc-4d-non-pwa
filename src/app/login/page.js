@@ -1,6 +1,30 @@
 'use client';
 
+/* 
+@DOCS :
+1. core
+    -> package from react / next
+2. third party
+    -> package from third party
+3. redux
+    -> redux global state management
+4. components
+    -> reusable component
+5. data
+    -> handle data model or application static data
+6. apis
+    -> api functions
+7. utils
+    -> utility functions
+*/
+
 // core
+// third party
+// redux
+// components
+// data
+// apis
+// utils
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useRef, useState, useEffect } from 'react';
@@ -21,17 +45,14 @@ import InputRef from '@/components/InputRef';
 import PasswordInputRef from '@/components/PasswordInputRef';
 import Label from '@/components/Label';
 import Notification from '@/components/Notification';
-import { speechWithBatch, speechAction } from '@/utils/text-to-speech';
+import { speechWithBatch, speechAction, stopSpeech } from '@/utils/text-to-speech';
 import CheckPermission from '@/components/CheckPermission';
 import { recognition } from '@/utils/speech-recognition';
-import { browserPermission } from '@/utils/browser-permission';
 
 import { useSelector, useDispatch } from 'react-redux';
-import { getIsPermit, checkPermissionSlice } from '@/redux/check-permission';
+import { getIsPermit, checkPermissionSlice, getCameraStatus } from '@/redux/check-permission';
 
-// import { useSession } from 'next-auth/react';
-// import * as faceapi from 'face-api.js';
-// import { recognition } from '@/utils/speech-recognition';
+import { browserPermission } from '@/utils/browserPermission';
 
 const Login = () => {
     const dispatch = useDispatch();
@@ -42,10 +63,21 @@ const Login = () => {
     const [isCameraReady, setIsCameraReady] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isCapturing, setIsCapturing] = useState(true);
+    // const [speechOn, setSpeechOn] = useState(false); // state untuk  speech recognition
+
     const [isFaceSuccess, setIsFaceSuccess] = useState(false);
     const isPermit = useSelector(getIsPermit);
-    const [cameraPermitStatus, setCameraPermitStatus] = useState('prompt'); // granted | denied | prompt
-    const { setIsPermit, setCameraStatus } = checkPermissionSlice.actions;
+    const { setCameraStatus, setMicrophoneStatus } = checkPermissionSlice.actions;
+    const cameraStatus = useSelector(getCameraStatus);
+    console.log('Camera status in UI: ', cameraStatus);
+
+    // ACCESSIBILITY STATE
+    const [speechOn, setSpeechOn] = useState(false); // state untuk  speech recognition
+    const [transcript, setTrancript] = useState(''); // state untuk menyimpan transcript hasil speech recognition
+    const [skipSpeech, setSkipSpeech] = useState(false); // state untuk  mengatasi speech recogniton ter-trigger
+    const [displayTranscript, setDisplayTranscript] = useState(false); // state untuk  menampilkan transcript
+    const [isClickButton, setIsClickButton] = useState(false); // state untuk aksi tombol
+    const [isPlayIntruction, setIsPlayIntruction] = useState(false); // state  ketika intruksi berjalan
 
     const waitForCamera = () => {
         const cameraCheckInterval = setInterval(() => {
@@ -67,7 +99,8 @@ const Login = () => {
         formState: { errors },
     } = useForm();
 
-    const toggleMode = async () => {
+    const toggleMode = () => {
+        stopSpeech();
         if (isCameraOpen) {
             setIsCameraOpen(false);
             // await capture();
@@ -77,23 +110,21 @@ const Login = () => {
             // resetStateCount();
             console.log(captureCount);
             // setTokenFalse();
-            const waitForCameraForToggle = setInterval(() => {
+            const waitForCameraForToggle = setInterval(async () => {
                 if (webcamRef.current?.video?.readyState === 4) {
                     clearInterval(waitForCameraForToggle);
                     // faceMyDetect();
-                    waitForCamera();
-                    // setIsCameraReady(true);
+                    await capture();
                 }
             }, 5000);
         }
     };
 
-    const isFaceSuccessFunct = async () => {
+    const isFaceSuccessFunct = () => {
         setIsFaceSuccess(true);
     };
 
     const capture = async () => {
-        // incrementCaptureCount();
         if (isCapturing) {
             const imageSrc = webcamRef.current?.getScreenshot();
             console.log(imageSrc);
@@ -113,27 +144,27 @@ const Login = () => {
             redirect: false,
         });
 
-        // setIsLoading();
-        // console.log('DATA: ', response);
         const session = await getSession();
         console.log(captureCount);
 
         if (!session && captureCount < 10) {
             captureCount++;
-            capture();
+            await capture();
         } else if (!session && captureCount === 10) {
             speechAction({
-                text: 'Maaf, kami tidak mengenali wajah anda, anda dapat meminta bantuan orang lain untuk pengisian form login atau dapat menekan lagi login dengan wajah',
+                text: 'Maaf, kami tidak mengenali wajah anda, anda dapat meminta bantuan orang lain untuk pengisian form login, atau dapat mengulangi pengenalan wajah dengan memanggil hai uli, dan diteruskan dengan ulangi pengenalan wajah',
                 actionOnEnd: () => {
                     setIsCameraOpen(false);
                     captureCount = 0;
+                    setSpeechOn(false);
                 },
             });
         } else if (!response?.error) {
+            isFaceSuccessFunct();
             speechAction({
                 text: 'Kami Berhasil Mengenali Anda, tunggu beberapa saat,   anda akan diarahkan ke halaman beranda',
                 actionOnEnd: () => {
-                    isFaceSuccessFunct();
+                    router.refresh();
                     router.replace('/', { scroll: false });
                 },
             });
@@ -159,6 +190,8 @@ const Login = () => {
             handleNotifAction('error', response.error);
         }
     };
+
+    // camera permission
     useEffect(() => {
         browserPermission('camera', (browserPermit) => {
             if (browserPermit.error && !browserPermit.state) {
@@ -167,21 +200,29 @@ const Login = () => {
                 dispatch(setCameraStatus(browserPermit.state));
             }
         });
-    }, [dispatch, setCameraStatus]);
+        browserPermission('microphone', (browserPermit) => {
+            if (browserPermit.error && !browserPermit.state) {
+                console.log('Error perizinan: ', browserPermit.error);
+            } else {
+                dispatch(setMicrophoneStatus(browserPermit.state));
+            }
+        });
+    }, [dispatch, setCameraStatus, setMicrophoneStatus]);
+
+    useEffect(() => {
+        try {
+            recognition.start();
+            console.log('recognition berhasil');
+        } catch (error) {
+            recognition.stop();
+        }
+    }, []);
 
     useEffect(() => {
         if (isCameraReady) {
             waitForCamera();
         }
     }, [isCameraReady]);
-
-    useEffect(() => {
-        try {
-            recognition.start();
-        } catch (error) {
-            recognition.stop();
-        }
-    }, []);
 
     useEffect(() => {
         if (isPermit) {
@@ -201,7 +242,6 @@ const Login = () => {
                         actionOnEnd: () => {
                             // KAMERA CONDITION
                             setIsCameraReady(true);
-                            // waitForCamera();
                         },
                     },
                 ],
@@ -209,11 +249,78 @@ const Login = () => {
         }
     }, [isPermit]);
 
-    console.log('Camera permission: ', cameraPermitStatus);
+    useEffect(() => {
+        recognition.onresult = (event) => {
+            const command = event?.results[0][0]?.transcript?.toLowerCase();
+            const cleanCommand = command?.replace('.', '');
+            console.log(cleanCommand);
+
+            if (speechOn && !skipSpeech) {
+                if (cleanCommand.includes('ulangi')) {
+                    if (cleanCommand.includes('pengenalan')) {
+                        if (cleanCommand.includes('wajah')) {
+                            console.log('saya disini');
+                            setSpeechOn(false);
+                            speechAction({
+                                text: 'Kami akan mengenali anda lagi',
+                                actionOnEnd: () => {
+                                    setIsCameraOpen(true);
+                                    waitForCamera();
+                                    setIsCapturing(true);
+                                },
+                            });
+                        }
+                    }
+                }
+            }
+
+            if (!skipSpeech) {
+                if (cleanCommand.includes('hallo') || cleanCommand.includes('halo') || cleanCommand.includes('hai')) {
+                    if (cleanCommand.includes('uli')) {
+                        setTrancript(cleanCommand);
+                        stopSpeech();
+                        speechAction({
+                            text: `Hai Calon Pengguna, saya mendengarkan Anda!`,
+                            actionOnStart: () => {
+                                setDisplayTranscript(true);
+                            },
+                            actionOnEnd: () => {
+                                setSpeechOn(true);
+                            },
+                        });
+                    }
+                }
+            }
+        };
+
+        recognition.onend = () => {
+            recognition.start();
+        };
+
+        console.log('TRIGGER CONDITION: ', speechOn);
+
+        if (speechOn) {
+            const timer = setTimeout(() => {
+                speechAction({
+                    text: 'saya diam',
+                    actionOnEnd: () => {
+                        console.log('speech diclear');
+                        // setDisplayTranscript(false);
+                        setSpeechOn(false);
+                    },
+                });
+            }, 10000);
+
+            return () => {
+                clearTimeout(timer);
+            };
+        }
+    }, [speechOn, isCameraOpen, skipSpeech]);
+    // console.log('Camera permission: ', cameraPermitStatus);
 
     return (
         <section className='grid h-screen grid-cols-12'>
-            <div className='relative  col-span-4 hidden h-full md:block'>
+            <div className='relative col-span-4 hidden h-full md:block'>
                 <Image priority src={'/images/left-auth.png'} alt='' fill sizes='100vh' />
                 <Image
                     alt=''
@@ -226,22 +333,28 @@ const Login = () => {
                     className={`absolute bottom-[30%] left-1/2 flex translate-x-[-50%] flex-col items-center justify-center gap-5 text-white`}>
                     <h1 className='text-[40px] font-bold leading-[20px]'>Hallo !</h1>
                     <p className='text-center '>Masukkan Detail Pribadi Anda dan Mulailah Pembelajaran Anda</p>
-                    <BorderedButton theme='light' onClick={() => router.replace('/register', { scroll: false })}>
+                    <BorderedButton
+                        theme='light'
+                        onClick={() => {
+                            stopSpeech();
+                            router.refresh();
+                            router.replace('/register', { scroll: false });
+                        }}>
                         Daftar
                     </BorderedButton>
                 </div>
             </div>
             <div className='col-span-12 flex items-center justify-center bg-neutral-7 md:col-span-8'>
-                <div className='flex w-[646px] flex-col gap-[42px]'>
+                <div className='flex w-[646px] flex-col gap-[20px]'>
                     <div className='text-center'>
                         <h1 className='text-xl font-bold md:text-title-2'>Masuk G-MOOC 4D</h1>
                         <p className='text-body-2'>Buktikan Sekarang Semua Bisa Belajar</p>
                     </div>
                     {isCameraOpen ? (
-                        <div open={isCameraOpen} className='flex flex-col items-center justify-center rounded-lg  p-4'>
+                        <div open={isCameraOpen} className='flex flex-col items-center justify-center rounded-lg p-4'>
                             {/* <div className='fixed inset-0 bg-opacity-50 backdrop-blur-md backdrop-filter'></div> */}
                             <div className='relative'>
-                                <h1 className='pb-4 text-center text-base font-semibold'>Face Recognition Technology</h1>
+                                {/* <h1 className='pb-4 text-base font-semibold text-center'>Face Recognition Technology</h1> */}
                                 <Webcam
                                     audio={false}
                                     ref={webcamRef}
@@ -288,7 +401,7 @@ const Login = () => {
                             </div>
                         </div>
                     ) : (
-                        <form className='mx-4 flex flex-col items-center gap-[24px] md:mx-0' onSubmit={handleSubmit(onSubmit)}>
+                        <form className='mx-4 flex flex-col items-center gap-[20px] md:mx-0' onSubmit={handleSubmit(onSubmit)}>
                             <div className='w-full'>
                                 <Label htmlFor='email' className={`${errors.email?.message ? 'text-alert-1' : 'text-black'}`}>
                                     {errors.email?.message || <span className='invisible'>.</span>}

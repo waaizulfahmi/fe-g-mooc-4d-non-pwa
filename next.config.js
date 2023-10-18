@@ -28,11 +28,20 @@ const nextConfig = withPWA({
     experimental: {
         newNextLinkBehavior: true,
     },
-    webpack: (config) => {
-        config.resolve.fallback = { fs: false };
-
-        return config;
-    },
+    // Customize the HTML head element
+    // async headers() {
+    //     return [
+    //         {
+    //             source: '/(.*)',
+    //             headers: [
+    //                 {
+    //                     key: 'Content-Security-Policy',
+    //                     value: 'upgrade-insecure-requests',
+    //                 },
+    //             ],
+    //         },
+    //     ];
+    // },
 });
 
 // module.exports = process.env.NODE_ENV === 'development' ? nextConfig : nextConfigWithPWA;

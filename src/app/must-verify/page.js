@@ -1,11 +1,33 @@
 'use client';
 
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import FillButton from '@/components/FillButton';
 import Image from 'next/image';
+import { useEffect } from 'react';
+import { authResendVerify } from '@/axios/auth';
 
 const MustVerify = () => {
+    const { data } = useSession();
     const router = useRouter();
+    const token = data?.user?.token;
+
+    useEffect(() => {
+        if (token) {
+            const fetchApi = async () => {
+                try {
+                    const response = await authResendVerify({ host: window?.location?.origin, token });
+
+                    console.log('VERIFIY LAGIII', response);
+                } catch (error) {
+                    // setVerifyStatus('failed');
+                    // setVerifyMsg(error?.message);
+                    console.log(error.message);
+                }
+            };
+            fetchApi();
+        }
+    }, [token]);
 
     return (
         <div className='flex items-center justify-center w-screen h-screen bg-primary-1'>

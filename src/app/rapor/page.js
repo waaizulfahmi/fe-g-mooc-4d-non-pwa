@@ -27,6 +27,7 @@ import PropTypes from 'prop-types';
 // third party
 import { AxiosError } from 'axios';
 import { useSession } from 'next-auth/react';
+import * as tf from '@tensorflow/tfjs';
 
 // redux
 // ---
@@ -50,6 +51,8 @@ import { ApiResponseError } from '@/utils/error-handling';
 import { getImageFile } from '@/utils/get-server-storage';
 import { apiInstance } from '@/axios/instance';
 import { buttonAction } from '@/utils/space-button-action';
+import { punctuationRemoval, stemming, removeStopwords } from '@/utils/special-text';
+import { calculateTFIDFWithWeights } from '@/utils/tfidf';
 
 const userGetRapotApi = async ({ token }) => {
     try {
@@ -136,6 +139,11 @@ const Rapor = () => {
     const [finishedClass, setFinishedClass] = useState([]);
     const [totalPelajaran, setTotalPelajaran] = useState([]);
 
+    // TENSORFLOW STATE
+    const [model, setModel] = useState(null);
+    const [vocab, setVocab] = useState(null);
+    const [labelEncoder, setLabelEncoder] = useState(null);
+
     // ACCESSIBILITY STATE
     const [speechOn, setSpeechOn] = useState(false); // state untuk  speech recognition
     const [transcript, setTrancript] = useState(''); // state untuk menyimpan transcript hasil speech recognition
@@ -143,6 +151,39 @@ const Rapor = () => {
     const [displayTranscript, setDisplayTranscript] = useState(false); // state untuk  menampilkan transcript
     const [isClickButton, setIsClickButton] = useState(false); // state untuk aksi tombol
     const [isPlayIntruction, setIsPlayIntruction] = useState(false); // state  ketika intruksi berjalan
+
+    //FUNCTION
+    // Fungsi untuk memuat model
+    const loadModel = async () => {
+        try {
+            const loadedModel = await tf.loadLayersModel('/model.json');
+            setModel(loadedModel);
+        } catch (error) {
+            console.error('Gagal memuat model:', error);
+        }
+    };
+
+    // Fungsi untuk memuat vocab.json
+    const loadVocab = async () => {
+        try {
+            const response = await fetch('/vocab.json');
+            const data = await response.json();
+            setVocab(data);
+        } catch (error) {
+            console.error('Gagal memuat vocab:', error);
+        }
+    };
+
+    // Fungsi untuk memuat label_encoder.json
+    const loadLabelEncoder = async () => {
+        try {
+            const response = await fetch('/label_encoder.json');
+            const data = await response.json();
+            setLabelEncoder(data);
+        } catch (error) {
+            console.error('Gagal memuat label encoder:', error);
+        }
+    };
 
     // EFFECTS
     // init speech recognition
@@ -157,6 +198,9 @@ const Rapor = () => {
     useEffect(() => {
         if (token) {
             if (loadData) {
+                loadModel();
+                loadVocab();
+                loadLabelEncoder();
                 const fetchApiRapot = async () => {
                     try {
                         const response = await userGetRapotApi({ token });
@@ -246,210 +290,300 @@ const Rapor = () => {
         recognition.onresult = (event) => {
             const command = event.results[0][0].transcript.toLowerCase();
             const cleanCommand = command?.replace('.', '');
-            setTrancript(cleanCommand);
-            console.log(cleanCommand);
 
             if (speechOn && !skipSpeech) {
-                if (cleanCommand.includes('pergi')) {
-                    if (cleanCommand.includes('beranda')) {
-                        setSpeechOn(false);
-                        speechAction({
-                            text: 'Anda akan menuju halaman Beranda',
-                            actionOnEnd: () => {
-                                setDisplayTranscript(false);
-                                router.push('/');
-                            },
-                        });
-                    } else if (cleanCommand.includes('kelas')) {
-                        setSpeechOn(false);
-                        speechAction({
-                            text: 'Anda akan menuju halaman Kelas',
-                            actionOnEnd: () => {
-                                setDisplayTranscript(false);
-                                router.push('/kelas');
-                            },
-                        });
-                    } else if (cleanCommand.includes('peringkat')) {
-                        setSpeechOn(false);
-                        speechAction({
-                            text: 'Anda akan menuju halaman Peringkat',
-                            actionOnEnd: () => {
-                                setDisplayTranscript(false);
-                                router.push('/peringkat');
-                            },
-                        });
-                    }
-                } else if (
-                    command.includes('saya sekarang dimana') ||
-                    command.includes('saya sekarang di mana') ||
-                    command.includes('saya di mana') ||
-                    command.includes('saya dimana')
-                ) {
-                    setSpeechOn(false);
-                    speechAction({
-                        text: `Kita sedang di halaman rapot`,
-                        actionOnEnd: () => {
-                            setDisplayTranscript(false);
-                        },
+                const removePunctuationWords = punctuationRemoval(cleanCommand);
+                const stemmingWords = stemming(removePunctuationWords);
+                const removedStopWords = removeStopwords(stemmingWords);
+                console.log({
+                    removePunc: removePunctuationWords,
+                    stem: stemmingWords,
+                    removeStop: removedStopWords,
+                });
+                if (!model || !vocab || !labelEncoder) {
+                    console.error('Model, vocab, label encoder  belum dimuat.');
+                } else {
+                    // Hitung TF-IDF untuk setiap kata dalam inputText dengan bobot dari vocab
+                    const tfidfResults = Object.keys(vocab).map((word) => {
+                        return {
+                            word: word,
+                            tfidf: calculateTFIDFWithWeights(word, removedStopWords, [removedStopWords], vocab),
+                        };
                     });
-                } else if (command.includes('cari')) {
-                    if (cleanCommand.includes('kelas')) {
-                        if (cleanCommand.includes('selesai')) {
+
+                    // Menyusun ulang hasil untuk menyimpan nilai TF-IDF dalam bentuk array
+                    const orderedResults = tfidfResults.map((result) => result.tfidf);
+
+                    const inputArray = [orderedResults]; // Sesuaikan dengan bentuk input model
+                    const inputTensor = tf.tensor2d(inputArray);
+                    const prediction = model.predict(inputTensor);
+                    const result = prediction.dataSync();
+
+                    // Temukan indeks kelas dengan nilai tertinggi
+                    const predictedClassIndex = result.indexOf(Math.max(...result));
+                    const checkValueOfResult = orderedResults.reduce((curr, prev) => curr + prev, 0);
+
+                    // skipping prediction
+                    if (cleanCommand.includes('pergi')) {
+                        if (cleanCommand.includes('peringkat')) {
+                            setTrancript('pergi peringkat');
                             setSpeechOn(false);
-                            console.log('Kelaas selese: ', finishedClass);
-                            if (finishedClass.length === 0) {
+                            speechAction({
+                                text: 'Anda akan menuju halaman Peringkat',
+                                actionOnEnd: () => {
+                                    setDisplayTranscript(false);
+                                    router.push('/peringkat');
+                                },
+                            });
+                        }
+                    } else if (cleanCommand.includes('cari')) {
+                        if (cleanCommand.includes('kelas')) {
+                            if (cleanCommand.includes('selesai')) {
+                                setTrancript('cari kelas selesai');
+                                setSpeechOn(false);
+                                console.log('Kelaas selese: ', finishedClass);
+                                if (finishedClass.length === 0) {
+                                    speechAction({
+                                        text: `Belum ada nilai!, Anda belum menyelesaikan kelas satu pun!`,
+                                        actionOnEnd: () => {
+                                            setDisplayTranscript(false);
+                                        },
+                                    });
+                                    return;
+                                }
                                 speechAction({
-                                    text: `Belum ada nilai!, Anda belum menyelesaikan kelas satu pun!`,
+                                    text: `Berikut daftar kelas yang telah selesai`,
+                                    actionOnEnd: () => {
+                                        setDisplayTranscript(false);
+                                        setClassShow('done');
+                                        setTotalPelajaran(finishedClass);
+                                    },
+                                });
+                                for (let i = 0; i < finishedClass.length; i++) {
+                                    const namaKelas = finishedClass[i].name;
+                                    const progress = finishedClass[i].progress;
+                                    speechAction({
+                                        text: `${namaKelas} dengan kemajuan ${progress}`,
+                                    });
+                                }
+                            } else if (cleanCommand.includes('berjalan')) {
+                                setTrancript('cari kelas berjalan');
+                                setSpeechOn(false);
+                                console.log('Kelaas jalan: ', runningClass);
+                                speechAction({
+                                    text: `Berikut daftar kelas yang sedang berjalan`,
+                                    actionOnEnd: () => {
+                                        setDisplayTranscript(false);
+                                        setClassShow('progress');
+                                        setTotalPelajaran(runningClass);
+                                    },
+                                });
+                                for (let i = 0; i < runningClass.length; i++) {
+                                    const namaKelas = runningClass[i].name;
+                                    const progress = runningClass[i].progress;
+                                    speechAction({
+                                        text: `${namaKelas} dengan kemajuan ${progress}`,
+                                    });
+                                }
+                                if (runningClass?.length > 0) {
+                                    speechAction({
+                                        text: `Untuk melanjutkan belajar di kelas, Anda dapat mengucapkan belajar lagi diikuti nama kelas, contohnya belajar lagi kelas ${runningClass[0].name}`,
+                                    });
+                                }
+                            } else {
+                                setSpeechOn(false);
+                                const kelasCommand = cleanCommand.replace('cari kelas', '').trim();
+                                setTrancript(`cari kelas ${kelasCommand}`);
+                                if (classShow === 'progress') {
+                                    const findKelas = runningClass.find((k) => k.name.toLowerCase() === kelasCommand);
+
+                                    if (!findKelas) {
+                                        console.log(kelasCommand.length);
+                                        if (kelasCommand.length >= 10) {
+                                            speechAction({
+                                                text: `kelas tidak ditemukan!, sepertinya suara yang Anda ucap kurang jelas, Anda bisa ulangi lagi!`,
+                                                actionOnEnd: () => {
+                                                    setDisplayTranscript(false);
+                                                },
+                                            });
+                                        } else {
+                                            speechAction({
+                                                text: `kelas tidak ditemukan!`,
+                                                actionOnEnd: () => {
+                                                    setDisplayTranscript(false);
+                                                },
+                                            });
+                                        }
+                                        return;
+                                    }
+                                    speechWithBatch({
+                                        speechs: [
+                                            {
+                                                text: `Ditemukan nilai dari kelas yang masih berjalan, yaitu ${kelasCommand}`,
+                                            },
+                                            {
+                                                text: `Pada kelas ${kelasCommand}, kemajuan pembelajaran Anda adalah ${findKelas.progress}.`,
+                                            },
+                                            {
+                                                text: 'Ayo selesaikan kelas Anda, agar dapat menjadi peringkat teratas!',
+                                                actionOnEnd: () => {
+                                                    setDisplayTranscript(false);
+                                                },
+                                            },
+                                        ],
+                                    });
+                                }
+                            }
+                        }
+                    } else if (cleanCommand.includes('belajar')) {
+                        if (cleanCommand.includes('kembali')) {
+                            setSpeechOn(false);
+                            const enrollClass = cleanCommand.replace('belajar kembali', '').trim();
+                            setTrancript(`belajar kembali ${enrollClass}`);
+                            const findKelas = runningClass.find((k) => k.name.toLowerCase() === enrollClass);
+
+                            if (!findKelas) {
+                                speechAction({
+                                    text: `Kelas tidak ditemukan`,
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
                                     },
                                 });
                                 return;
                             }
-                            speechAction({
-                                text: `Berikut daftar kelas yang telah selesai`,
-                                actionOnEnd: () => {
-                                    setDisplayTranscript(false);
-                                    setClassShow('done');
-                                    setTotalPelajaran(finishedClass);
-                                },
-                            });
-                            for (let i = 0; i < finishedClass.length; i++) {
-                                const namaKelas = finishedClass[i].name;
-                                const progress = finishedClass[i].progress;
-                                speechAction({
-                                    text: `${namaKelas} dengan kemajuan ${progress}`,
-                                });
-                            }
-                        } else if (cleanCommand.includes('berjalan')) {
-                            setSpeechOn(false);
-                            console.log('Kelaas jalan: ', runningClass);
-                            speechAction({
-                                text: `Berikut daftar kelas yang sedang berjalan`,
-                                actionOnEnd: () => {
-                                    setDisplayTranscript(false);
-                                    setClassShow('progress');
-                                    setTotalPelajaran(runningClass);
-                                },
-                            });
-                            for (let i = 0; i < runningClass.length; i++) {
-                                const namaKelas = runningClass[i].name;
-                                const progress = runningClass[i].progress;
-                                speechAction({
-                                    text: `${namaKelas} dengan kemajuan ${progress}`,
-                                });
-                            }
-                            if (runningClass?.length > 0) {
-                                speechAction({
-                                    text: `Untuk melanjutkan belajar di kelas, Anda dapat mengucapkan belajar lagi diikuti nama kelas, contohnya belajar lagi kelas ${runningClass[0].name}`,
-                                });
-                            }
-                        } else {
-                            setSpeechOn(false);
-                            const kelasCommand = cleanCommand.replace('cari kelas', '').trim();
-                            if (classShow === 'progress') {
-                                const findKelas = runningClass.find((k) => k.name.toLowerCase() === kelasCommand);
 
-                                if (!findKelas) {
-                                    console.log(kelasCommand.length);
-                                    if (kelasCommand.length >= 10) {
-                                        speechAction({
-                                            text: `kelas tidak ditemukan!, sepertinya suara yang Anda ucap kurang jelas, Anda bisa ulangi lagi!`,
-                                        });
-                                    } else {
-                                        speechAction({
-                                            text: `kelas tidak ditemukan!`,
-                                        });
-                                    }
-                                    return;
-                                }
-                                speechWithBatch({
-                                    speechs: [
-                                        {
-                                            text: `Ditemukan nilai dari kelas yang masih berjalan, yaitu ${kelasCommand}`,
-                                        },
-                                        {
-                                            text: `Pada kelas ${kelasCommand}, kemajuan pembelajaran Anda adalah ${findKelas.progress}.`,
-                                        },
-                                        {
-                                            text: 'Ayo selesaikan kelas Anda, agar dapat menjadi peringkat teratas!',
-                                            actionOnEnd: () => {
-                                                setDisplayTranscript(false);
-                                            },
-                                        },
-                                    ],
-                                });
-                            }
-                        }
-                    }
-                } else if (command.includes('belajar')) {
-                    if (command.includes('lagi')) {
-                        setSpeechOn(false);
-                        const enrollClass = cleanCommand.replace('belajar lagi', '').trim();
-                        const findKelas = runningClass.find((k) => k.name.toLowerCase() === enrollClass);
-                        if (findKelas) {
-                            speechAction({
-                                text: `Anda akan belajar lagi kelas ${enrollClass}`,
-                                actionOnEnd: () => {
-                                    setDisplayTranscript(false);
-                                    router.push(`/kelas/${enrollClass}`);
-                                },
-                            });
-                        }
-                    }
-                } else if (cleanCommand.includes('jelaskan')) {
-                    if (cleanCommand.includes('intruksi') || cleanCommand.includes('instruksi')) {
-                        console.log('dapet nih');
-                        setSpeechOn(false);
-                        setIsClickButton(false);
-                        setIsPlayIntruction(true);
-                        speechWithBatch({
-                            speechs: [
-                                {
-                                    text: `Hai ${userName}, sekarang Anda mendengarkan intruksi di halaman raport.`,
-                                    actionOnStart: () => {
-                                        setSkipSpeech(true);
-                                    },
+                            if (findKelas) {
+                                speechAction({
+                                    text: `Anda akan belajar kembali kelas ${enrollClass}`,
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
+                                        router.push(`/kelas/${enrollClass}`);
                                     },
-                                },
-                                {
-                                    text: `Perintah untuk mencari kelas yang sudah Anda pelajari dengan mengucapkan Cari Kelas selesai`,
-                                },
-                                {
-                                    text: `Perintah untuk mencari kelas yang sedang berjalan dengan mengucapkan Cari Kelas berjalan`,
-                                },
-                                {
-                                    text: `Perintah untuk kembali belajar di kelas yang sedang berjalan dengan mengucapkan Belajar Kembali yang diikuti nama kelas, misalnya belajar kembali kelas html`,
-                                },
-                                {
-                                    text: `Untuk navigasi halaman Anda dapat mengucapkan pergi ke halaman yang Anda tuju, misalnya pergi ke beranda, pada halaman ini Anda dapat pergi ke halaman beranda, kelas, dan peringkat`,
-                                },
-                                {
-                                    text: `jangan lupa, Anda harus ucapkan terlebih dahulu hi Uli atau hallo uli agar saya dapat mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.`,
-                                    actionOnEnd: () => {
-                                        setSkipSpeech(false);
-                                        setIsPlayIntruction(false);
-                                    },
-                                },
-                            ],
-                        });
-                    }
-                } else if (cleanCommand.includes('muat')) {
-                    if (cleanCommand.includes('ulang')) {
-                        if (cleanCommand.includes('halaman')) {
+                                });
+                            }
+                        }
+                    } else if (cleanCommand.includes('jelaskan')) {
+                        if (cleanCommand.includes('intruksi') || cleanCommand.includes('instruksi')) {
+                            setTrancript('jelaskan instruksi');
+                            console.log('dapet nih');
                             setSpeechOn(false);
-                            speechAction({
-                                text: `Anda akan load halaman ini!`,
-                                actionOnEnd: () => {
-                                    setIsClickButton(false);
-                                    setDisplayTranscript(false);
-                                    setClassShow('progress');
-                                    setLoadData(true);
-                                },
+                            setIsClickButton(false);
+                            setIsPlayIntruction(true);
+                            speechWithBatch({
+                                speechs: [
+                                    {
+                                        text: `Hai ${userName}, sekarang Anda mendengarkan intruksi di halaman raport.`,
+                                        actionOnStart: () => {
+                                            setSkipSpeech(true);
+                                        },
+                                        actionOnEnd: () => {
+                                            setDisplayTranscript(false);
+                                        },
+                                    },
+                                    {
+                                        text: `Perintah untuk mencari kelas yang sudah Anda pelajari dengan mengucapkan Cari Kelas selesai`,
+                                    },
+                                    {
+                                        text: `Perintah untuk mencari kelas yang sedang berjalan dengan mengucapkan Cari Kelas berjalan`,
+                                    },
+                                    {
+                                        text: `Perintah untuk kembali belajar di kelas yang sedang berjalan dengan mengucapkan Belajar Kembali yang diikuti nama kelas, misalnya belajar kembali kelas html`,
+                                    },
+                                    {
+                                        text: `Untuk navigasi halaman Anda dapat mengucapkan pergi ke halaman yang Anda tuju, misalnya pergi ke beranda, pada halaman ini Anda dapat pergi ke halaman beranda, kelas, dan peringkat`,
+                                    },
+                                    {
+                                        text: `jangan lupa, Anda harus ucapkan terlebih dahulu hi Uli atau hallo uli agar saya dapat mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.`,
+                                        actionOnEnd: () => {
+                                            setSkipSpeech(false);
+                                            setIsPlayIntruction(false);
+                                        },
+                                    },
+                                ],
                             });
                         }
+                    }
+
+                    // prediction
+                    if (checkValueOfResult !== 0) {
+                        const predictedCommand = labelEncoder[predictedClassIndex];
+                        console.log('Check value result: ', checkValueOfResult);
+                        console.log('Predicted command : ', predictedCommand);
+                        if (predictedCommand.includes('pergi')) {
+                            if (predictedCommand.includes('beranda')) {
+                                setTrancript(predictedCommand);
+                                setSpeechOn(false);
+                                speechAction({
+                                    text: 'Anda akan menuju halaman Beranda',
+                                    actionOnEnd: () => {
+                                        setDisplayTranscript(false);
+                                        router.push('/');
+                                    },
+                                });
+                            } else if (predictedCommand.includes('kelas')) {
+                                setTrancript(predictedCommand);
+                                setSpeechOn(false);
+                                speechAction({
+                                    text: 'Anda akan menuju halaman Kelas',
+                                    actionOnEnd: () => {
+                                        setDisplayTranscript(false);
+                                        router.push('/kelas');
+                                    },
+                                });
+                            }
+                        } else if (
+                            predictedCommand.includes('saya sekarang dimana') ||
+                            predictedCommand.includes('saya sekarang di mana') ||
+                            predictedCommand.includes('saya di mana') ||
+                            predictedCommand.includes('saya dimana')
+                        ) {
+                            setTrancript(predictedCommand);
+                            setSpeechOn(false);
+                            speechAction({
+                                text: `Kita sedang di halaman rapot`,
+                                actionOnEnd: () => {
+                                    setDisplayTranscript(false);
+                                },
+                            });
+                        } else if (predictedCommand.includes('muat')) {
+                            if (predictedCommand.includes('ulang')) {
+                                if (predictedCommand.includes('halaman')) {
+                                    setTrancript(predictedCommand);
+                                    setSpeechOn(false);
+                                    speechAction({
+                                        text: `Anda akan load halaman ini!`,
+                                        actionOnEnd: () => {
+                                            setIsClickButton(false);
+                                            setDisplayTranscript(false);
+                                            setClassShow('progress');
+                                            setLoadData(true);
+                                        },
+                                    });
+                                }
+                            }
+                        }
+                    } else {
+                        // USE CASE IF DYNAMIC SPEECH
+                        if (
+                            cleanCommand.includes('pergi ke peringkat') ||
+                            cleanCommand.includes('belajar kembali') ||
+                            cleanCommand.includes('pergi peringkat') ||
+                            cleanCommand.includes('cari kelas') ||
+                            cleanCommand.includes('cari kelas berjalan') ||
+                            cleanCommand.includes('cari kelas selesai') ||
+                            cleanCommand.includes('jelaskan intruksi') ||
+                            cleanCommand.includes('jelaskan instruksi')
+                        ) {
+                            return;
+                        }
+                        setTrancript('Perintah tidak ditemukan di halaman ini!');
+                        setSpeechOn(false);
+                        speechAction({
+                            text: 'Perintah tidak ditemukan di halaman ini!',
+                            actionOnEnd: () => {
+                                setDisplayTranscript(false);
+                            },
+                        });
                     }
                 }
             }
@@ -457,6 +591,7 @@ const Rapor = () => {
             if (!skipSpeech) {
                 if (cleanCommand.includes('hallo') || cleanCommand.includes('halo') || cleanCommand.includes('hai')) {
                     if (cleanCommand.includes('uli')) {
+                        setTrancript(cleanCommand);
                         stopSpeech();
                         speechAction({
                             text: `Hai ${userName}, saya mendengarkan Anda!`,
@@ -494,7 +629,7 @@ const Rapor = () => {
                 clearTimeout(timer);
             };
         }
-    }, [router, finishedClass, runningClass, classShow, speechOn, skipSpeech, userName]);
+    }, [router, finishedClass, runningClass, classShow, speechOn, skipSpeech, userName, model, vocab, labelEncoder]);
 
     //effects
     useEffect(() => {

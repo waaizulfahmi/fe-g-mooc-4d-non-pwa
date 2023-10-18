@@ -64,13 +64,17 @@ const CheckPermission = () => {
                 keyCode: 32,
                 action: () => {
                     if (!isPermit) {
-                        if (micprohoneStatus !== 'granted' && cameraStatus !== 'granted') {
+                        console.log({
+                            micprohoneStatus,
+                            cameraStatus,
+                        });
+                        if (micprohoneStatus !== 'granted' || cameraStatus !== 'granted') {
                             speechAction({
                                 text: 'Mohon berikan akses terhadap Mikrofon, Speaker dan Camera',
                             });
                         } else {
                             speechAction({
-                                text: 'Mikrofon Speaker dan Camera  sudah berjalan, Anda dapat mengikuti pembelajaran!',
+                                text: 'Mikrofon Speaker dan Camera  sudah berjalan!',
                                 actionOnEnd: () => {
                                     setStatusBtn(true);
                                     dispatch(setIsPermit(true));
@@ -86,7 +90,7 @@ const CheckPermission = () => {
         return () => {
             window.removeEventListener('keydown', spaceButtonAction);
         };
-    }, [dispatch, isPermit, setIsPermit]);
+    }, [dispatch, isPermit, setIsPermit, cameraStatus, micprohoneStatus]);
 
     useEffect(() => {
         if (micprohoneStatus === 'denied') {

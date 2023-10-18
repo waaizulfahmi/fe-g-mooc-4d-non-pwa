@@ -5,7 +5,7 @@ const initialState = {
     isPause: false,
     isTranscriptOn: false,
     microphoneStatus: 'denied', // granted, denied, prompt
-    cameraStatus:'denied'// granted, denied, prompt
+    cameraStatus: 'denied', // granted, denied, prompt
 };
 
 export const checkPermissionSlice = createSlice({
