@@ -46,7 +46,7 @@ const Transkrip = ({ transcript = '', isTrigger = false }) => {
     return (
         <>
             {isTrigger && (
-                <div className='absolute bottom-[20px] left-[50%] z-30  flex h-[65px] w-[80%] translate-x-[-50%] items-center justify-center rounded-[20px] bg-slate-600  text-center text-[24px] font-bold text-white opacity-80'>
+                <div className='absolute bottom-[20px] left-[50%] z-30  flex h-[40px] w-[40%] translate-x-[-50%] items-center justify-center rounded-[14px] bg-slate-600  text-center  font-bold leading-tight text-white opacity-70'>
                     <p>
                         {transcript.includes('cari kelas sulit')
                             ? transcript
