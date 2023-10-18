@@ -411,23 +411,23 @@ const EnrollKelas = () => {
                                                             token,
                                                         });
 
-                                                        if (!response?.data?.data?.answer) {
-                                                            // kondisi jawaban salah
-                                                            speechAction({
-                                                                text: `Anda menjawab ${userAnswer}`,
-                                                                actionOnEnd: () => {
-                                                                    setIdxQuiz(idxQuiz + 1);
-                                                                    setCurrentQuiz({
-                                                                        options: [],
-                                                                        question: '',
-                                                                    });
-                                                                    setAnswerMode(false);
-                                                                    setLoadData(true);
-                                                                    setUserAnswer('');
-                                                                },
-                                                            });
-                                                            return;
-                                                        }
+                                                        // if (!response?.data?.data?.answer) {
+                                                        //     // kondisi jawaban salah
+                                                        //     speechAction({
+                                                        //         text: `Anda menjawab ${userAnswer}`,
+                                                        //         actionOnEnd: () => {
+                                                        //             setIdxQuiz(idxQuiz + 1);
+                                                        //             setCurrentQuiz({
+                                                        //                 options: [],
+                                                        //                 question: '',
+                                                        //             });
+                                                        //             setAnswerMode(false);
+                                                        //             setLoadData(true);
+                                                        //             setUserAnswer('');
+                                                        //         },
+                                                        //     });
+                                                        //     return;
+                                                        // }
 
                                                         // kondisi jawaban benar
                                                         speechAction({
@@ -789,19 +789,19 @@ const EnrollKelas = () => {
                                     });
                                 }
                             } else if (predictedCommand.includes('pilih')) {
-                                const quizCommand = predictedCommand.replace('pilih', '').trim().toLowerCase();
+                                // const quizCommand = predictedCommand.replace('pilih', '').trim().toLowerCase();
                                 setTrancript(predictedCommand);
-                                if (quizCommand === 'a') {
+                                if (predictedCommand.includes('a')) {
                                     // setSpeechOn(false);
                                     console.log('Anda memilih A');
                                     setUserAnswer('A');
                                     setLoadData(true);
-                                } else if (quizCommand === 'b') {
+                                } else if (predictedCommand.includes('b')) {
                                     // setSpeechOn(false);
                                     console.log('Anda memilih B');
                                     setUserAnswer('B');
                                     setLoadData(true);
-                                } else if (quizCommand === 'c') {
+                                } else if (predictedCommand.includes('c')) {
                                     // setSpeechOn(false);
                                     console.log('Anda memilih C');
                                     setUserAnswer('C');
