@@ -63,11 +63,21 @@ const Login = () => {
     const [isCameraReady, setIsCameraReady] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isCapturing, setIsCapturing] = useState(true);
+    // const [speechOn, setSpeechOn] = useState(false); // state untuk  speech recognition
+
     const [isFaceSuccess, setIsFaceSuccess] = useState(false);
     const isPermit = useSelector(getIsPermit);
     const { setCameraStatus, setMicrophoneStatus } = checkPermissionSlice.actions;
     const cameraStatus = useSelector(getCameraStatus);
     console.log('Camera status in UI: ', cameraStatus);
+
+    // ACCESSIBILITY STATE
+    const [speechOn, setSpeechOn] = useState(false); // state untuk  speech recognition
+    const [transcript, setTrancript] = useState(''); // state untuk menyimpan transcript hasil speech recognition
+    const [skipSpeech, setSkipSpeech] = useState(false); // state untuk  mengatasi speech recogniton ter-trigger
+    const [displayTranscript, setDisplayTranscript] = useState(false); // state untuk  menampilkan transcript
+    const [isClickButton, setIsClickButton] = useState(false); // state untuk aksi tombol
+    const [isPlayIntruction, setIsPlayIntruction] = useState(false); // state  ketika intruksi berjalan
 
     const waitForCamera = () => {
         const cameraCheckInterval = setInterval(() => {
@@ -142,10 +152,11 @@ const Login = () => {
             await capture();
         } else if (!session && captureCount === 10) {
             speechAction({
-                text: 'Maaf, kami tidak mengenali wajah anda, anda dapat meminta bantuan orang lain untuk pengisian form login',
+                text: 'Maaf, kami tidak mengenali wajah anda, anda dapat meminta bantuan orang lain untuk pengisian form login, atau dapat mengulangi pengenalan wajah dengan memanggil hai uli, dan diteruskan dengan ulangi pengenalan wajah',
                 actionOnEnd: () => {
                     setIsCameraOpen(false);
                     captureCount = 0;
+                    setSpeechOn(false);
                 },
             });
         } else if (!response?.error) {
@@ -179,6 +190,8 @@ const Login = () => {
             handleNotifAction('error', response.error);
         }
     };
+
+    // camera permission
     useEffect(() => {
         browserPermission('camera', (browserPermit) => {
             if (browserPermit.error && !browserPermit.state) {
@@ -197,18 +210,19 @@ const Login = () => {
     }, [dispatch, setCameraStatus, setMicrophoneStatus]);
 
     useEffect(() => {
-        if (isCameraReady) {
-            waitForCamera();
-        }
-    }, [isCameraReady]);
-
-    useEffect(() => {
         try {
             recognition.start();
+            console.log('recognition berhasil');
         } catch (error) {
             recognition.stop();
         }
     }, []);
+
+    useEffect(() => {
+        if (isCameraReady) {
+            waitForCamera();
+        }
+    }, [isCameraReady]);
 
     useEffect(() => {
         if (isPermit) {
@@ -235,6 +249,73 @@ const Login = () => {
         }
     }, [isPermit]);
 
+    useEffect(() => {
+        recognition.onresult = (event) => {
+            const command = event?.results[0][0]?.transcript?.toLowerCase();
+            const cleanCommand = command?.replace('.', '');
+            console.log(cleanCommand);
+
+            if (speechOn && !skipSpeech) {
+                if (cleanCommand.includes('ulangi')) {
+                    if (cleanCommand.includes('pengenalan')) {
+                        if (cleanCommand.includes('wajah')) {
+                            console.log('saya disini');
+                            setSpeechOn(false);
+                            speechAction({
+                                text: 'Kami akan mengenali anda lagi',
+                                actionOnEnd: () => {
+                                    setIsCameraOpen(true);
+                                    waitForCamera();
+                                    setIsCapturing(true);
+                                },
+                            });
+                        }
+                    }
+                }
+            }
+
+            if (!skipSpeech) {
+                if (cleanCommand.includes('hallo') || cleanCommand.includes('halo') || cleanCommand.includes('hai')) {
+                    if (cleanCommand.includes('uli')) {
+                        setTrancript(cleanCommand);
+                        stopSpeech();
+                        speechAction({
+                            text: `Hai Calon Pengguna, saya mendengarkan Anda!`,
+                            actionOnStart: () => {
+                                setDisplayTranscript(true);
+                            },
+                            actionOnEnd: () => {
+                                setSpeechOn(true);
+                            },
+                        });
+                    }
+                }
+            }
+        };
+
+        recognition.onend = () => {
+            recognition.start();
+        };
+
+        console.log('TRIGGER CONDITION: ', speechOn);
+
+        if (speechOn) {
+            const timer = setTimeout(() => {
+                speechAction({
+                    text: 'saya diam',
+                    actionOnEnd: () => {
+                        console.log('speech diclear');
+                        // setDisplayTranscript(false);
+                        setSpeechOn(false);
+                    },
+                });
+            }, 10000);
+
+            return () => {
+                clearTimeout(timer);
+            };
+        }
+    }, [speechOn, isCameraOpen, skipSpeech]);
     // console.log('Camera permission: ', cameraPermitStatus);
 
     return (

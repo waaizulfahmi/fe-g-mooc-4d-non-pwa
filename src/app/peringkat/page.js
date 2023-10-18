@@ -194,7 +194,6 @@ const Peringkat = () => {
         recognition.onresult = (event) => {
             const command = event?.results[0][0]?.transcript?.toLowerCase();
             const cleanCommand = command?.replace('.', '');
-
             if (speechOn && !skipSpeech) {
                 const removePunctuationWords = punctuationRemoval(cleanCommand);
                 const stemmingWords = stemming(removePunctuationWords);

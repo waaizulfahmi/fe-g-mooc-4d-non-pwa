@@ -149,7 +149,7 @@ const Register = () => {
 
     return (
         <section className='grid h-screen grid-cols-12'>
-            <div className={`relative  col-span-4 h-full`}>
+            <div className={`relative  col-span-4 hidden h-full md:block`}>
                 <Image priority src={'/images/left-auth.png'} alt='' fill />
                 <Image
                     alt=''
@@ -284,6 +284,11 @@ const Register = () => {
                             className={`w-max px-[52px] py-[16px]`}>
                             Daftar
                         </FillButton>
+                        <div
+                            className='block text-center text-base font-semibold md:hidden'
+                            onClick={() => router.replace('/login', { scroll: false })}>
+                            Login
+                        </div>
                     </form>
                 </div>
             </div>

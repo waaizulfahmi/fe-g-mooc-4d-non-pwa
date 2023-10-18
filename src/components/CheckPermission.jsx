@@ -74,7 +74,7 @@ const CheckPermission = () => {
                             });
                         } else {
                             speechAction({
-                                text: 'Mikrofon Speaker dan Camera  sudah berjalan, Anda dapat mengikuti pembelajaran!',
+                                text: 'Mikrofon Speaker dan Camera  sudah berjalan!',
                                 actionOnEnd: () => {
                                     setStatusBtn(true);
                                     dispatch(setIsPermit(true));
@@ -110,23 +110,23 @@ const CheckPermission = () => {
             {!isPermit && (
                 <section className='fixed inset-0 z-20 flex items-center justify-center bg-black bg-opacity-60'>
                     <div className='flex h-[500px] w-[800px] flex-col gap-10 overflow-hidden rounded-rad-6 bg-white p-5'>
-                        <h1 className='font-bold text-center text-head-5'>Yuk kita atur dulu Aplikasinya</h1>
-                        <div className='grid h-full grid-cols-12 col-span-12 '>
-                            <div className='flex flex-col col-span-10 gap-3 md:col-span-5 '>
-                                <h1 className='font-bold text-body-2'>1. Izinkan perizinan untuk mikrofon </h1>
+                        <h1 className='text-head-5 text-center font-bold'>Yuk kita atur dulu Aplikasinya</h1>
+                        <div className='col-span-12 grid h-full grid-cols-12 '>
+                            <div className='col-span-10 flex flex-col gap-3 md:col-span-5 '>
+                                <h1 className='text-body-2 font-bold'>1. Izinkan perizinan untuk mikrofon </h1>
                                 <Image alt='' src={'/images/permission-check.jpg'} width={400} height={400} />
-                                <h1 className='font-bold text-body-2'>2. Izinkan perizinan untuk kamera</h1>
+                                <h1 className='text-body-2 font-bold'>2. Izinkan perizinan untuk kamera</h1>
                                 <Image alt='' src={'/images/camera.jpg'} width={400} height={400} />
                             </div>
                             {/* divider */}
-                            <div className='flex flex-col items-center justify-center col-span-10 md:col-span-2 '>
+                            <div className='col-span-10 flex flex-col items-center justify-center md:col-span-2 '>
                                 <div className='h-full border border-black'></div>
                             </div>
                             {/* divider */}
                             <div className='flex flex-col gap-3 md:col-span-5 '>
-                                <h1 className='font-bold text-body-2'>3. Kita cek Mikrofon dan Kameranya</h1>
+                                <h1 className='text-body-2 font-bold'>3. Kita cek Mikrofon dan Kameranya</h1>
                                 <p>
-                                    Untuk cek mikrofon tekan tombol <span className='font-bold text-body-3'>Spasi</span>
+                                    Untuk cek mikrofon tekan tombol <span className='text-body-3 font-bold'>Spasi</span>
                                 </p>
 
                                 <Image alt='' src={'/images/space-key.png'} width={400} height={400} />

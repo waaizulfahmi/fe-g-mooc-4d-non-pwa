@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+.appvide {
+    display: flex;
+    align-items: center;
+}
+
+.appcanvas {
+    position: absolute;
+    top: 100px;
+}
+
+.myapp {
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+}
+
 ::-webkit-scrollbar {
     width: 8px;
     display: none;
@@ -34,16 +50,16 @@ input::-webkit-inner-spin-button {
     margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
 }
 
-input[type="number"] {
+input[type='number'] {
     -moz-appearance: textfield; /* Firefox */
 }
 
-input[type="password"]::-ms-reveal,
-input[type="password"]::-ms-clear {
+input[type='password']::-ms-reveal,
+input[type='password']::-ms-clear {
     display: none;
 }
 
-input[type="checkbox"] {
+input[type='checkbox'] {
     -webkit-appearance: checkbox !important;
     -moz-appearance: checkbox !important;
     -ms-appearance: checkbox !important;

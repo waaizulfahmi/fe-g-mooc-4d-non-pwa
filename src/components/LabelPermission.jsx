@@ -46,9 +46,10 @@ const LabelPermission = ({ className = 'px-3 py-1' }) => {
     //redux
     const dispatch = useDispatch();
     const micprohoneStatus = useSelector(getMicrophoneStatus);
+    const cameraStatus = useSelector(getCameraStatus);
     const path = usePathname();
     const { setMicrophoneStatus } = checkPermissionSlice.actions;
-    const cameraStatus = useSelector(getCameraStatus);
+    // const cameraStatus = useSelector(getCameraStatus);
 
     //effects
     useEffect(() => {
@@ -78,7 +79,7 @@ const LabelPermission = ({ className = 'px-3 py-1' }) => {
                 // className={`${className} ${
                 //     path === '/rapor' || path === '/peringkat' ? ' text-white' : ' text-primary-1'
                 // } `}>
-                className='flex items-center gap-1 text-center h-max'>
+                className='flex h-max items-center gap-1 text-center'>
                 <MdCamera className='h-[24px] w-[24px]' />
                 <h1 className='font-bold'>Kamera Aktif</h1>
             </div>

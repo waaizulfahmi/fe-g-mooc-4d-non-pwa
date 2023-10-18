@@ -29,19 +29,19 @@ const nextConfig = withPWA({
         newNextLinkBehavior: true,
     },
     // Customize the HTML head element
-    async headers() {
-        return [
-            {
-                source: '/(.*)',
-                headers: [
-                    {
-                        key: 'Content-Security-Policy',
-                        value: 'upgrade-insecure-requests',
-                    },
-                ],
-            },
-        ];
-    },
+    // async headers() {
+    //     return [
+    //         {
+    //             source: '/(.*)',
+    //             headers: [
+    //                 {
+    //                     key: 'Content-Security-Policy',
+    //                     value: 'upgrade-insecure-requests',
+    //                 },
+    //             ],
+    //         },
+    //     ];
+    // },
 });
 
 // module.exports = process.env.NODE_ENV === 'development' ? nextConfig : nextConfigWithPWA;

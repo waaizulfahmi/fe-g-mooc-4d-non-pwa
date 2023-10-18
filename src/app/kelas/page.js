@@ -814,9 +814,9 @@ const Kelas = () => {
         <div className='h-screen bg-[#EDF3F3]'>
             <Navbar />
             <main style={{ height: 'calc(100vh - 90px)' }} className='w-screen bg-[#EDF3F3] pt-[90px] '>
-                <div className='grid max-w-screen-xl grid-cols-12 mx-auto'>
-                    <div className='col-span-2'>
-                        <h1 className='font-bold text-title-2 '>Level</h1>
+                <div className='mx-auto grid max-w-screen-xl grid-cols-12'>
+                    <div className='hidden md:col-span-2 md:inline-block'>
+                        <h1 className='text-title-2 font-bold '>Level</h1>
                         <div className='mt-[30px] flex flex-col gap-[18px] '>
                             <div className='flex items-center gap-2'>
                                 <input
@@ -828,7 +828,7 @@ const Kelas = () => {
                                     }}
                                     className='h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600'
                                 />
-                                <label htmlFor='check' className='font-medium text-body-4'>
+                                <label htmlFor='check' className='text-body-4 font-medium'>
                                     Mudah
                                 </label>
                             </div>
@@ -842,7 +842,7 @@ const Kelas = () => {
                                     checked={isChecked.normal}
                                     className='h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600'
                                 />
-                                <label htmlFor='check' className='font-medium text-body-4'>
+                                <label htmlFor='check' className='text-body-4 font-medium'>
                                     Normal
                                 </label>
                             </div>
@@ -856,7 +856,7 @@ const Kelas = () => {
                                     checked={isChecked.sulit}
                                     className='h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600'
                                 />
-                                <label htmlFor='check' className='font-medium text-body-4'>
+                                <label htmlFor='check' className='text-body-4 font-medium'>
                                     Sulit
                                 </label>
                             </div>
@@ -870,7 +870,7 @@ const Kelas = () => {
                                     checked={isChecked.semua}
                                     className='h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600'
                                 />
-                                <label htmlFor='check' className='font-medium text-body-4'>
+                                <label htmlFor='check' className='text-body-4 font-medium'>
                                     Semua
                                 </label>
                             </div>
@@ -878,13 +878,13 @@ const Kelas = () => {
                     </div>
                     <div
                         style={{ height: 'calc(100vh - 100px)' }}
-                        className='col-span-10 grid grid-cols-4 gap-[24px] overflow-y-scroll '>
+                        className='col-span-12 mx-auto grid grid-cols-1 items-center gap-[24px] overflow-y-scroll md:col-span-10 md:grid-cols-4 '>
                         {kelas?.length
                             ? kelas.map((kelasData, index) => {
                                   return (
                                       <div
                                           key={index}
-                                          className='relative h-[400px] rounded-rad-7  bg-white  p-[14px] shadow-lg lg:col-span-1'>
+                                          className='relative  rounded-rad-7 bg-white  p-[14px]  shadow-lg md:h-[400px] lg:col-span-1'>
                                           <div className='relative  h-[200px] w-full overflow-hidden rounded-rad-7'>
                                               <Image
                                                   alt=''
