@@ -38,7 +38,6 @@ export const authRegister = async ({ name, email, password, konfirmasi_password,
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
-                httpsAgent,
             },
         );
         return response.data;
