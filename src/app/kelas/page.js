@@ -815,7 +815,7 @@ const Kelas = () => {
             <Navbar />
             <main style={{ height: 'calc(100vh - 90px)' }} className='w-screen bg-[#EDF3F3] pt-[90px] '>
                 <div className='mx-auto grid max-w-screen-xl grid-cols-12'>
-                    <div className='hidden md:col-span-2 md:inline-block'>
+                    <div className='col-span-2'>
                         <h1 className='text-title-2 font-bold '>Level</h1>
                         <div className='mt-[30px] flex flex-col gap-[18px] '>
                             <div className='flex items-center gap-2'>
@@ -878,13 +878,13 @@ const Kelas = () => {
                     </div>
                     <div
                         style={{ height: 'calc(100vh - 100px)' }}
-                        className='col-span-12 mx-auto grid grid-cols-1 items-center gap-[24px] overflow-y-scroll md:col-span-10 md:grid-cols-4 '>
+                        className='col-span-10 grid grid-cols-4 gap-[24px] overflow-y-scroll '>
                         {kelas?.length
                             ? kelas.map((kelasData, index) => {
                                   return (
                                       <div
                                           key={index}
-                                          className='relative  rounded-rad-7 bg-white  p-[14px]  shadow-lg md:h-[400px] lg:col-span-1'>
+                                          className='relative h-[400px] rounded-rad-7  bg-white  p-[14px] shadow-lg lg:col-span-1'>
                                           <div className='relative  h-[200px] w-full overflow-hidden rounded-rad-7'>
                                               <Image
                                                   alt=''

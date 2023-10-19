@@ -1363,19 +1363,19 @@ const EnrollKelas = () => {
                     <div className=' flex items-center gap-[200px]'>
                         <div className='flex items-center gap-[20px] '>
                             <div className='flex items-center gap-[14px]'>
-                                <div className='flex h-[20px] w-[20px] items-center justify-center rounded-full  border-[4px] border-black  p-3 font-bold'>
+                                <div className='flex h-[20px] w-[20px] items-center justify-center rounded-full  border-[2px] border-black  p-3 text-[12px] font-bold'>
                                     P
                                 </div>{' '}
                                 <span className=' text-[16px] font-bold leading-[20px]'>{poin}</span>
                             </div>
                             <div className='flex items-center gap-[14px]'>
-                                <div className='flex h-[20px] w-[20px] items-center justify-center rounded-full  border-[4px] border-black  p-3 font-bold'>
+                                <div className='flex h-[20px] w-[20px] items-center justify-center rounded-full  border-[2px] border-black  p-3 text-[12px] font-bold'>
                                     N
                                 </div>{' '}
                                 <span className=' text-[16px] font-bold leading-[20px]'>{nilai}</span>
                             </div>
                             <div className='flex items-center gap-[14px]'>
-                                <div className='flex h-[20px] w-[20px] items-center justify-center rounded-full  border-[4px] border-black  p-3 font-bold'>
+                                <div className='flex h-[20px] w-[20px] items-center justify-center rounded-full  border-[2px] border-black  p-3 text-[12px] font-bold'>
                                     K
                                 </div>{' '}
                                 <span className=' text-[16px] font-bold leading-[20px]'>{progress}% </span>
@@ -1386,7 +1386,7 @@ const EnrollKelas = () => {
                 </div>
             </nav>
             <div style={{ height: 'calc(100vh - 88px)' }} className='mx-auto grid max-w-screen-xl grid-cols-12 gap-5 pt-[92px]'>
-                <div style={{ height: 'calc(100vh - 110px)' }} className='col-span-3  rounded-[20px]  bg-white p-[24px]'>
+                <div style={{ height: 'calc(100vh - 110px)' }} className='col-span-3  rounded-[20px]  bg-white p-[10px]'>
                     <div style={{ height: 'calc(100vh - 150px)' }} className='rounded-[10px] p-[16px]'>
                         <div className='rounded-[10px] bg-[#E7A645] p-[16px]'>
                             <h1 className='font-bold text-white'>Persiapan Kelas</h1>
