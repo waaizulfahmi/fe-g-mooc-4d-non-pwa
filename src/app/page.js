@@ -110,14 +110,14 @@ export default function Beranda() {
     useEffect(() => {
         browserPermission('camera', (browserPermit) => {
             if (browserPermit.error && !browserPermit.state) {
-                console.log('Error perizinan: ', browserPermit.error);
+                // console.log('Error perizinan: ', browserPermit.error);
             } else {
                 dispatch(setCameraStatus(browserPermit.state));
             }
         });
         browserPermission('microphone', (browserPermit) => {
             if (browserPermit.error && !browserPermit.state) {
-                console.log('Error perizinan: ', browserPermit.error);
+                // console.log('Error perizinan: ', browserPermit.error);
             } else {
                 dispatch(setMicrophoneStatus(browserPermit.state));
             }
@@ -186,17 +186,17 @@ export default function Beranda() {
         recognition.onresult = (event) => {
             const command = event.results[0][0].transcript.toLowerCase();
             const cleanCommand = command?.replace('.', '');
-            console.log(cleanCommand);
+            // console.log(cleanCommand);
 
             if (speechOn && !skipSpeech) {
                 const removePunctuationWords = punctuationRemoval(cleanCommand);
                 const stemmingWords = stemming(removePunctuationWords);
                 const removedStopWords = removeStopwords(stemmingWords);
-                console.log({
-                    removePunc: removePunctuationWords,
-                    stem: stemmingWords,
-                    removeStop: removedStopWords,
-                });
+                // console.log({
+                //     removePunc: removePunctuationWords,
+                //     stem: stemmingWords,
+                //     removeStop: removedStopWords,
+                // });
 
                 // Memastikan model dan vocab dimuat sebelum melakukan prediksi
                 if (!model || !vocab || !labelEncoder) {
@@ -273,8 +273,8 @@ export default function Beranda() {
                     // prediction
                     if (checkValueOfResult !== 0) {
                         const predictedCommand = labelEncoder[predictedClassIndex];
-                        console.log('Check value result: ', checkValueOfResult);
-                        console.log('Predicted command : ', predictedCommand);
+                        // console.log('Check value result: ', checkValueOfResult);
+                        // console.log('Predicted command : ', predictedCommand);
                         if (predictedCommand.includes('pergi')) {
                             if (predictedCommand.includes('kelas')) {
                                 setTrancript(predictedCommand);
@@ -371,14 +371,14 @@ export default function Beranda() {
             recognition.start();
         };
 
-        console.log('TRIGGER CONDITION: ', speechOn);
+        // console.log('TRIGGER CONDITION: ', speechOn);
 
         if (speechOn) {
             const timer = setTimeout(() => {
                 speechAction({
                     text: 'saya diam',
                     actionOnEnd: () => {
-                        console.log('speech diclear');
+                        // console.log('speech diclear');
                         setDisplayTranscript(false);
                         setSpeechOn(false);
                     },
@@ -436,7 +436,7 @@ export default function Beranda() {
     return (
         <main className='h-screen'>
             <Navbar />
-            <Hero /> 
+            <Hero />
             <Transkrip transcript={transcript} isTrigger={displayTranscript} />
             <CheckPermission />
         </main>

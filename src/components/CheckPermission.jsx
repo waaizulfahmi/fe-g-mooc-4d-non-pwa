@@ -64,10 +64,10 @@ const CheckPermission = () => {
                 keyCode: 32,
                 action: () => {
                     if (!isPermit) {
-                        console.log({
-                            micprohoneStatus,
-                            cameraStatus,
-                        });
+                        // console.log({
+                        //     micprohoneStatus,
+                        //     cameraStatus,
+                        // });
                         if (micprohoneStatus !== 'granted' || cameraStatus !== 'granted') {
                             speechAction({
                                 text: 'Mohon berikan akses terhadap Mikrofon, Speaker dan Camera',

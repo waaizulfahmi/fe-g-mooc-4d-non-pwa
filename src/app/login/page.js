@@ -69,7 +69,7 @@ const Login = () => {
     const isPermit = useSelector(getIsPermit);
     const { setCameraStatus, setMicrophoneStatus } = checkPermissionSlice.actions;
     const cameraStatus = useSelector(getCameraStatus);
-    console.log('Camera status in UI: ', cameraStatus);
+    // console.log('Camera status in UI: ', cameraStatus);
 
     // ACCESSIBILITY STATE
     const [speechOn, setSpeechOn] = useState(false); // state untuk  speech recognition
@@ -108,7 +108,7 @@ const Login = () => {
             setIsCameraOpen(true);
             setIsCapturing(true);
             // resetStateCount();
-            console.log(captureCount);
+            // console.log(captureCount);
             // setTokenFalse();
             const waitForCameraForToggle = setInterval(async () => {
                 if (webcamRef.current?.video?.readyState === 4) {
@@ -127,7 +127,7 @@ const Login = () => {
     const capture = async () => {
         if (isCapturing) {
             const imageSrc = webcamRef.current?.getScreenshot();
-            console.log(imageSrc);
+            // console.log(imageSrc);
             if (imageSrc) {
                 await submitCapturedImage(imageSrc);
             }
@@ -145,7 +145,7 @@ const Login = () => {
         });
 
         const session = await getSession();
-        console.log(captureCount);
+        // console.log(captureCount);
 
         if (!session && captureCount < 10) {
             captureCount++;
@@ -195,14 +195,14 @@ const Login = () => {
     useEffect(() => {
         browserPermission('camera', (browserPermit) => {
             if (browserPermit.error && !browserPermit.state) {
-                console.log('Error perizinan: ', browserPermit.error);
+                // console.log('Error perizinan: ', browserPermit.error);
             } else {
                 dispatch(setCameraStatus(browserPermit.state));
             }
         });
         browserPermission('microphone', (browserPermit) => {
             if (browserPermit.error && !browserPermit.state) {
-                console.log('Error perizinan: ', browserPermit.error);
+                // console.log('Error perizinan: ', browserPermit.error);
             } else {
                 dispatch(setMicrophoneStatus(browserPermit.state));
             }
@@ -212,7 +212,7 @@ const Login = () => {
     useEffect(() => {
         try {
             recognition.start();
-            console.log('recognition berhasil');
+            // console.log('recognition berhasil');
         } catch (error) {
             recognition.stop();
         }
@@ -253,13 +253,13 @@ const Login = () => {
         recognition.onresult = (event) => {
             const command = event?.results[0][0]?.transcript?.toLowerCase();
             const cleanCommand = command?.replace('.', '');
-            console.log(cleanCommand);
+            // console.log(cleanCommand);
 
             if (speechOn && !skipSpeech) {
                 if (cleanCommand.includes('ulangi')) {
                     if (cleanCommand.includes('pengenalan')) {
                         if (cleanCommand.includes('wajah')) {
-                            console.log('saya disini');
+                            // console.log('saya disini');
                             setSpeechOn(false);
                             speechAction({
                                 text: 'Kami akan mengenali anda lagi',
@@ -297,14 +297,14 @@ const Login = () => {
             recognition.start();
         };
 
-        console.log('TRIGGER CONDITION: ', speechOn);
+        // console.log('TRIGGER CONDITION: ', speechOn);
 
         if (speechOn) {
             const timer = setTimeout(() => {
                 speechAction({
                     text: 'saya diam',
                     actionOnEnd: () => {
-                        console.log('speech diclear');
+                        // console.log('speech diclear');
                         // setDisplayTranscript(false);
                         setSpeechOn(false);
                     },

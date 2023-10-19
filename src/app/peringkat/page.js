@@ -79,7 +79,7 @@ const Peringkat = () => {
             const loadedModel = await tf.loadLayersModel('/model.json');
             setModel(loadedModel);
         } catch (error) {
-            console.error('Gagal memuat model:', error);
+            //console.error('Gagal memuat model:', error);
         }
     };
 
@@ -90,7 +90,7 @@ const Peringkat = () => {
             const data = await response.json();
             setVocab(data);
         } catch (error) {
-            console.error('Gagal memuat vocab:', error);
+            //console.error('Gagal memuat vocab:', error);
         }
     };
 
@@ -101,7 +101,7 @@ const Peringkat = () => {
             const data = await response.json();
             setLabelEncoder(data);
         } catch (error) {
-            console.error('Gagal memuat label encoder:', error);
+            //console.error('Gagal memuat label encoder:', error);
         }
     };
 
@@ -145,7 +145,7 @@ const Peringkat = () => {
                         setRank(response?.ranking);
                         setUserRank(response?.user);
 
-                        console.log(response);
+                        //console.log(response);
                         speechWithBatch({
                             speechs: [
                                 {
@@ -167,8 +167,8 @@ const Peringkat = () => {
                         });
                     } catch (error) {
                         if (error instanceof ApiResponseError) {
-                            console.log(`ERR CLASS ENROLLMENT API MESSAGE: `, error.message);
-                            console.log(error.data);
+                            //console.log(`ERR CLASS ENROLLMENT API MESSAGE: `, error.message);
+                            //console.log(error.data);
                             if (
                                 error?.data?.data?.metadata?.code === 401 ||
                                 error?.message?.toLowerCase() === 'Email belum diverifikasi'.toLocaleLowerCase()
@@ -182,7 +182,7 @@ const Peringkat = () => {
                             }
                             return;
                         }
-                        console.log(`MESSAGE: `, error.message);
+                        //console.log(`MESSAGE: `, error.message);
                     }
                 };
                 fetchApiPeringkat();
@@ -198,14 +198,14 @@ const Peringkat = () => {
                 const removePunctuationWords = punctuationRemoval(cleanCommand);
                 const stemmingWords = stemming(removePunctuationWords);
                 const removedStopWords = removeStopwords(stemmingWords);
-                console.log({
-                    removePunc: removePunctuationWords,
-                    stem: stemmingWords,
-                    removeStop: removedStopWords,
-                });
+                // console.log({
+                //     removePunc: removePunctuationWords,
+                //     stem: stemmingWords,
+                //     removeStop: removedStopWords,
+                // });
 
                 if (!model || !vocab || !labelEncoder) {
-                    console.error('Model, vocab, label encoder  belum dimuat.');
+                    //console.error('Model, vocab, label encoder  belum dimuat.');
                 } else {
                     // Hitung TF-IDF untuk setiap kata dalam inputText dengan bobot dari vocab
                     const tfidfResults = Object.keys(vocab).map((word) => {
@@ -231,7 +231,7 @@ const Peringkat = () => {
                     if (cleanCommand.includes('jelaskan')) {
                         if (cleanCommand.includes('intruksi') || cleanCommand.includes('instruksi')) {
                             setTrancript('jelaskan instruksi');
-                            console.log('dapet nih');
+                            //console.log('dapet nih');
                             setSpeechOn(false);
                             setIsClickButton(false);
                             setIsPlayIntruction(true);
@@ -271,8 +271,8 @@ const Peringkat = () => {
                     // prediction
                     if (checkValueOfResult !== 0) {
                         const predictedCommand = labelEncoder[predictedClassIndex];
-                        console.log('Check value result: ', checkValueOfResult);
-                        console.log('Predicted command : ', predictedCommand);
+                        //console.log('Check value result: ', checkValueOfResult);
+                        //console.log('Predicted command : ', predictedCommand);
                         if (predictedCommand.includes('peringkat')) {
                             if (predictedCommand.includes('saya')) {
                                 setTrancript(predictedCommand);
@@ -291,7 +291,7 @@ const Peringkat = () => {
                                     speechAction({
                                         text: `Selamat, Anda sedang diperingkat ke ${userRank.ranking}, dengan ${userRank.poin} poin.`,
                                         actionOnEnd: () => {
-                                            console.log(userRank);
+                                            //console.log(userRank);
                                             setDisplayTranscript(false);
                                         },
                                     });
@@ -299,7 +299,7 @@ const Peringkat = () => {
                                     speechAction({
                                         text: `Selamat, Anda sedang diperingkat ke ${userRank.ranking} dengan poin ${userRank.poin}. Ayo tingkatkan lagi!`,
                                         actionOnEnd: () => {
-                                            console.log(userRank);
+                                            //console.log(userRank);
                                             setDisplayTranscript(false);
                                         },
                                     });
@@ -307,7 +307,7 @@ const Peringkat = () => {
                                     speechAction({
                                         text: `Selamat, Anda sedang diperingkat ke ${userRank.ranking} dengan poin ${userRank.poin}. Ayo lebih semangat lagi belajarnya ${userName}!`,
                                         actionOnEnd: () => {
-                                            console.log(userRank);
+                                            //console.log(userRank);
                                             setDisplayTranscript(false);
                                         },
                                     });
@@ -315,7 +315,7 @@ const Peringkat = () => {
                                     speechAction({
                                         text: `Anda sedang diperingkat ke - ${userRank.ranking} dengan poin ${userRank.poin}. Ayo lebih banyak lagi belajarnya ${userName}!`,
                                         actionOnEnd: () => {
-                                            console.log(userRank);
+                                            //console.log(userRank);
                                             setDisplayTranscript(false);
                                         },
                                     });
@@ -427,13 +427,13 @@ const Peringkat = () => {
         };
 
         // CLEAR TRIGGER
-        console.log('TRIGGER CONDITION: ', speechOn);
+        //console.log('TRIGGER CONDITION: ', speechOn);
         if (speechOn) {
             const timer = setTimeout(() => {
                 speechAction({
                     text: 'saya diam',
                     actionOnEnd: () => {
-                        console.log('speech diclear');
+                        //console.log('speech diclear');
                         setDisplayTranscript(false);
                         setSpeechOn(false);
                     },

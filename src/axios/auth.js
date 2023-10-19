@@ -1,6 +1,10 @@
 import axios, { AxiosError } from 'axios';
 import { apiInstance, apiMlInstance, sanctumApiInstance } from './instance';
 import { ApiResponseError } from '@/utils/error-handling';
+import * as https from 'https';
+const httpsAgent = new https.Agent({
+    rejectUnauthorized: false,
+});
 
 /* 
 @ROUTE : /register 
@@ -34,6 +38,7 @@ export const authRegister = async ({ name, email, password, konfirmasi_password,
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
+                httpsAgent,
             },
         );
         return response.data;
@@ -104,6 +109,7 @@ export const authLoginWithFace = async ({ image }) => {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
+                httpsAgent,
             },
         );
         return response.data;

@@ -27,7 +27,7 @@ const VerifyEmail = () => {
                 try {
                     const response = await authVerify({ url });
                     setVerifyStatus('success');
-                    console.log('TESSS', response);
+                    //console.log('TESSS', response);
                     // setVerifyMsg(response?.metadata?.message);
                 } catch (error) {
                     setVerifyStatus('failed');

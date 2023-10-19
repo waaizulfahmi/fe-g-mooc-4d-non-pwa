@@ -39,7 +39,7 @@ const Register = () => {
     const capture = useCallback(() => {
         const imageSrc = webcamRef.current.getScreenshot();
         if (imageSrc) {
-            console.log(imageSrc);
+            // console.log(imageSrc);
             setCapturedImages((prevImages) => [...prevImages, imageSrc]);
         }
     }, []);
@@ -65,7 +65,7 @@ const Register = () => {
             } else {
                 clearInterval(captureImageInterval); // Hentikan interval setelah 10 gambar diambil
                 closeCamera();
-                console.log(capturedImages); // Tampilkan hasil pengambilan gambar
+                // console.log(capturedImages); // Tampilkan hasil pengambilan gambar
             }
         }, interval);
     };
@@ -107,12 +107,12 @@ const Register = () => {
             } catch (error) {
                 setIsDaftar(false);
                 if (error instanceof ApiResponseError) {
-                    console.log(`ERR REGISTER MESSAGE: `, error.message);
-                    console.log(error.data); // data
+                    // console.log(`ERR REGISTER MESSAGE: `, error.message);
+                    // console.log(error.data); // data
                     handleNotifAction('error', error.message);
                     return;
                 }
-                console.log(`MESSAGE: `, error.message);
+                // console.log(`MESSAGE: `, error.message);
                 handleNotifAction('error', error?.message);
             }
         }
@@ -173,10 +173,10 @@ const Register = () => {
                     </BorderedButton>
                 </div>
             </div>
-            <div className='flex items-center justify-center col-span-8 bg-neutral-7'>
+            <div className='col-span-8 flex items-center justify-center bg-neutral-7'>
                 <div className='flex w-[646px] flex-col gap-[34px]'>
                     <div className='text-center'>
-                        <h1 className='font-bold text-title-2'>Buat Akun Baru</h1>
+                        <h1 className='text-title-2 font-bold'>Buat Akun Baru</h1>
                         <p className='text-body-2'>Buktikan Sekarang Semua Bisa Belajar</p>
                     </div>
                     <form className='flex flex-col items-center gap-[14px]' onSubmit={handleSubmit(onSubmit)}>
@@ -251,9 +251,9 @@ const Register = () => {
                                 open={isCameraOpen}
                                 modal
                                 nested
-                                className='p-4 bg-gray-100 rounded-lg'>
+                                className='rounded-lg bg-gray-100 p-4'>
                                 <div className='fixed inset-0 bg-opacity-50 backdrop-blur-md backdrop-filter'></div>
-                                <div className='relative p-5 bg-white rounded-lg shadow-lg'>
+                                <div className='relative rounded-lg bg-white p-5 shadow-lg'>
                                     <h1 className='pb-4 text-2xl font-semibold'>Face Recognition Technology</h1>
                                     <Webcam
                                         audio={false}
@@ -262,18 +262,18 @@ const Register = () => {
                                         screenshotFormat='image/jpeg'
                                         className='w-full rounded-lg shadow-lg'
                                     />
-                                    <div className='flex flex-col items-center mt-4'>
+                                    <div className='mt-4 flex flex-col items-center'>
                                         <h3 className='text-xl font-semibold'>Memindai Wajah Anda</h3>
                                         <button
                                             onClick={closeCamera}
-                                            className='px-4 py-2 mt-2 font-semibold text-white bg-red-500 rounded-lg hover:bg-red-600'>
+                                            className='mt-2 rounded-lg bg-red-500 px-4 py-2 font-semibold text-white hover:bg-red-600'>
                                             Keluar
                                         </button>
                                     </div>
                                 </div>
                             </Popup>
                         ) : (
-                            <button onClick={openCamera} className='pt-3 text-base font-semibold text-center'>
+                            <button onClick={openCamera} className='pt-3 text-center text-base font-semibold'>
                                 Tambahkan Data Gambar Anda
                             </button>
                         )}

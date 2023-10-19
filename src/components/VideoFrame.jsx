@@ -49,10 +49,10 @@ const VideoFrame = ({ playback, videoId, handleEditMateri, isInterrop }) => {
         const handleVideoLength = async (player) => {
             try {
                 const videoLength = await player.getDuration();
-                console.log('panjang video: ', videoLength);
+                // console.log('panjang video: ', videoLength);
             } catch (error) {
-                console.log(error);
-                console.log('error di panjang video: ', error);
+                // console.log(error);
+                // console.log('error di panjang video: ', error);
             }
         };
 
@@ -92,7 +92,7 @@ const VideoFrame = ({ playback, videoId, handleEditMateri, isInterrop }) => {
                                 setPause(false);
                             }
                             handleEditMateri(currentTime, 2);
-                            console.log('Video paused');
+                            //console.log('Video paused');
                         },
                     });
                     return;
@@ -104,7 +104,7 @@ const VideoFrame = ({ playback, videoId, handleEditMateri, isInterrop }) => {
                         text: 'Video sudah selesai',
                         actionOnEnd: () => {
                             handleEditMateri(currentTime, 1);
-                            console.log('Video selesai');
+                            //console.log('Video selesai');
                         },
                     });
                 }

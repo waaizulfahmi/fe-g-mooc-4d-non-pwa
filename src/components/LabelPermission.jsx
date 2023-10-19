@@ -55,7 +55,7 @@ const LabelPermission = ({ className = 'px-3 py-1' }) => {
     useEffect(() => {
         browserPermission('microphone', (browserPermit) => {
             if (browserPermit.error && !browserPermit.state) {
-                console.log('Error perizinan: ', browserPermit.error);
+                // console.log('Error perizinan: ', browserPermit.error);
             } else {
                 dispatch(setMicrophoneStatus(browserPermit.state));
             }
@@ -79,7 +79,7 @@ const LabelPermission = ({ className = 'px-3 py-1' }) => {
                 // className={`${className} ${
                 //     path === '/rapor' || path === '/peringkat' ? ' text-white' : ' text-primary-1'
                 // } `}>
-                className='flex h-max items-center gap-1 text-center'>
+                className='flex items-center gap-1 text-center h-max'>
                 <MdCamera className='h-[24px] w-[24px]' />
                 <h1 className='font-bold'>Kamera Aktif</h1>
             </div>

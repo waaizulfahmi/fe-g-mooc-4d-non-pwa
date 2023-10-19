@@ -159,7 +159,7 @@ const Rapor = () => {
             const loadedModel = await tf.loadLayersModel('/model.json');
             setModel(loadedModel);
         } catch (error) {
-            console.error('Gagal memuat model:', error);
+            //console.error('Gagal memuat model:', error);
         }
     };
 
@@ -170,7 +170,7 @@ const Rapor = () => {
             const data = await response.json();
             setVocab(data);
         } catch (error) {
-            console.error('Gagal memuat vocab:', error);
+            //console.error('Gagal memuat vocab:', error);
         }
     };
 
@@ -181,7 +181,7 @@ const Rapor = () => {
             const data = await response.json();
             setLabelEncoder(data);
         } catch (error) {
-            console.error('Gagal memuat label encoder:', error);
+            //console.error('Gagal memuat label encoder:', error);
         }
     };
 
@@ -214,7 +214,7 @@ const Rapor = () => {
                             rataProgress: response.rata_progress,
                         });
 
-                        console.log('Response rapor: ', response);
+                        //console.log('Response rapor: ', response);
 
                         setTotalPoin(rapot.getTotalPoin());
                         setCountFinishedClass(rapot.getJumlahSelesai());
@@ -222,7 +222,7 @@ const Rapor = () => {
                         setTotalPelajaran(rapot.getKelasProgress());
                         setFinishedClass(rapot.getKelasSelesai());
 
-                        console.log('response selesai : ', rapot.getKelasSelesai());
+                        //console.log('response selesai : ', rapot.getKelasSelesai());
 
                         speechWithBatch({
                             speechs: [
@@ -257,13 +257,13 @@ const Rapor = () => {
                             ],
                         });
 
-                        // console.log('semua peljara:', rapot.getSemuaPelajaran());
+                        // //console.log('semua peljara:', rapot.getSemuaPelajaran());
                         // console.log(response);
                         // console.log(rapot);
                     } catch (error) {
                         if (error instanceof ApiResponseError) {
-                            console.log(`ERR RAPOT API MESSAGE: `, error.message);
-                            console.log(error.data);
+                            //console.log(`ERR RAPOT API MESSAGE: `, error.message);
+                            //console.log(error.data);
                             if (
                                 error?.data?.data?.metadata?.code === 401 ||
                                 error?.message?.toLowerCase() === 'Email belum diverifikasi'.toLocaleLowerCase()
@@ -277,7 +277,7 @@ const Rapor = () => {
                             }
                             return;
                         }
-                        console.log(`MESSAGE: `, error.message);
+                        //console.log(`MESSAGE: `, error.message);
                     }
                 };
                 fetchApiRapot();
@@ -295,13 +295,13 @@ const Rapor = () => {
                 const removePunctuationWords = punctuationRemoval(cleanCommand);
                 const stemmingWords = stemming(removePunctuationWords);
                 const removedStopWords = removeStopwords(stemmingWords);
-                console.log({
-                    removePunc: removePunctuationWords,
-                    stem: stemmingWords,
-                    removeStop: removedStopWords,
-                });
+                // console.log({
+                //     removePunc: removePunctuationWords,
+                //     stem: stemmingWords,
+                //     removeStop: removedStopWords,
+                // });
                 if (!model || !vocab || !labelEncoder) {
-                    console.error('Model, vocab, label encoder  belum dimuat.');
+                    //console.error('Model, vocab, label encoder  belum dimuat.');
                 } else {
                     // Hitung TF-IDF untuk setiap kata dalam inputText dengan bobot dari vocab
                     const tfidfResults = Object.keys(vocab).map((word) => {
@@ -341,7 +341,7 @@ const Rapor = () => {
                             if (cleanCommand.includes('selesai')) {
                                 setTrancript('cari kelas selesai');
                                 setSpeechOn(false);
-                                console.log('Kelaas selese: ', finishedClass);
+                                //console.log('Kelaas selese: ', finishedClass);
                                 if (finishedClass.length === 0) {
                                     speechAction({
                                         text: `Belum ada nilai!, Anda belum menyelesaikan kelas satu pun!`,
@@ -369,7 +369,7 @@ const Rapor = () => {
                             } else if (cleanCommand.includes('berjalan')) {
                                 setTrancript('cari kelas berjalan');
                                 setSpeechOn(false);
-                                console.log('Kelaas jalan: ', runningClass);
+                                //console.log('Kelaas jalan: ', runningClass);
                                 speechAction({
                                     text: `Berikut daftar kelas yang sedang berjalan`,
                                     actionOnEnd: () => {
@@ -398,7 +398,7 @@ const Rapor = () => {
                                     const findKelas = runningClass.find((k) => k.name.toLowerCase() === kelasCommand);
 
                                     if (!findKelas) {
-                                        console.log(kelasCommand.length);
+                                        //console.log(kelasCommand.length);
                                         if (kelasCommand.length >= 10) {
                                             speechAction({
                                                 text: `kelas tidak ditemukan!, sepertinya suara yang Anda ucap kurang jelas, Anda bisa ulangi lagi!`,
@@ -465,7 +465,7 @@ const Rapor = () => {
                     } else if (cleanCommand.includes('jelaskan')) {
                         if (cleanCommand.includes('intruksi') || cleanCommand.includes('instruksi')) {
                             setTrancript('jelaskan instruksi');
-                            console.log('dapet nih');
+                            //console.log('dapet nih');
                             setSpeechOn(false);
                             setIsClickButton(false);
                             setIsPlayIntruction(true);
@@ -507,8 +507,8 @@ const Rapor = () => {
                     // prediction
                     if (checkValueOfResult !== 0) {
                         const predictedCommand = labelEncoder[predictedClassIndex];
-                        console.log('Check value result: ', checkValueOfResult);
-                        console.log('Predicted command : ', predictedCommand);
+                        //console.log('Check value result: ', checkValueOfResult);
+                        //console.log('Predicted command : ', predictedCommand);
                         if (predictedCommand.includes('pergi')) {
                             if (predictedCommand.includes('beranda')) {
                                 setTrancript(predictedCommand);
@@ -612,13 +612,13 @@ const Rapor = () => {
         };
 
         // CLEAR TRIGGER
-        console.log('TRIGGER CONDITION: ', speechOn);
+        //console.log('TRIGGER CONDITION: ', speechOn);
         if (speechOn) {
             const timer = setTimeout(() => {
                 speechAction({
                     text: 'saya diam',
                     actionOnEnd: () => {
-                        // console.log('speech diclear');
+                        // //console.log('speech diclear');
                         setDisplayTranscript(false);
                         setSpeechOn(false);
                     },

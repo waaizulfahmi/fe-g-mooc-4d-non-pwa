@@ -175,14 +175,14 @@ const Kelas = () => {
             }
         } catch (error) {
             if (error instanceof ApiResponseError) {
-                console.log(`ERR API MESSAGE: `, error.message);
-                console.log(error.data);
+                // console.log(`ERR API MESSAGE: `, error.message);
+                // console.log(error.data);
                 speechAction({
                     text: 'Kelas tidak ditemukan',
                 });
                 return;
             }
-            console.log(`MESSAGE: `, error.message);
+            // console.log(`MESSAGE: `, error.message);
             speechAction({
                 text: 'Kelas tidak ditemukan',
             });
@@ -336,8 +336,8 @@ const Kelas = () => {
                         });
                     } catch (error) {
                         if (error instanceof ApiResponseError) {
-                            console.log(`ERR API MESSAGE: `, error.data);
-                            console.log(error.data);
+                            // console.log(`ERR API MESSAGE: `, error.data);
+                            // console.log(error.data);
 
                             if (
                                 error?.data?.data?.metadata?.code === 401 ||
@@ -356,7 +356,7 @@ const Kelas = () => {
                             }
                             return;
                         }
-                        console.log(`MESSAGE: `, error.data);
+                        // console.log(`MESSAGE: `, error.data);
                         speechAction({
                             text: 'Kelas tidak ditemukan',
                         });
@@ -379,11 +379,11 @@ const Kelas = () => {
                 const removePunctuationWords = punctuationRemoval(cleanCommand);
                 const stemmingWords = stemming(removePunctuationWords);
                 const removedStopWords = removeStopwords(stemmingWords);
-                console.log({
-                    removePunc: removePunctuationWords,
-                    stem: stemmingWords,
-                    removeStop: removedStopWords,
-                });
+                // console.log({
+                //     removePunc: removePunctuationWords,
+                //     stem: stemmingWords,
+                //     removeStop: removedStopWords,
+                // });
 
                 // Memastikan model dan vocab dimuat sebelum melakukan prediksi
                 if (!model || !vocab || !labelEncoder) {
@@ -480,11 +480,11 @@ const Kelas = () => {
                         setSpeechOn(false);
                         const kelasCommand = cleanCommand.replace('belajar', '').trim();
                         const findKelas = kelas.find((k) => k.name.toLowerCase() === kelasCommand);
-                        console.log('belajar:   ', kelasCommand);
+                        // console.log('belajar:   ', kelasCommand);
                         setTrancript(`belajar ${kelasCommand}`);
                         if (!findKelas) {
                             // kelas not found
-                            console.log('belajar:   ', kelasCommand);
+                            // console.log('belajar:   ', kelasCommand);
                             speechAction({
                                 text: 'Kelas tidak ditemukan',
                                 actionOnEnd: () => {
@@ -528,8 +528,8 @@ const Kelas = () => {
                     // PREDICTION
                     if (checkValueOfResult !== 0) {
                         const predictedCommand = labelEncoder[predictedClassIndex];
-                        console.log('Check value result: ', checkValueOfResult);
-                        console.log('Predicted command : ', predictedCommand);
+                        // console.log('Check value result: ', checkValueOfResult);
+                        // console.log('Predicted command : ', predictedCommand);
                         if (predictedCommand.includes('cari')) {
                             //search class by level
                             if (predictedCommand.includes('kelas')) {
@@ -607,7 +607,7 @@ const Kelas = () => {
                                                 text: 'ucapkan belajar diikuti nama kelas, agar Anda dapat belajar di kelas tersebut, contohnya belajar sejarah',
                                                 actionOnEnd: () => {
                                                     setDisplayTranscript(false);
-                                                    console.log('speech diclear');
+                                                    // console.log('speech diclear');
                                                 },
                                             });
                                         },
@@ -730,13 +730,13 @@ const Kelas = () => {
         };
 
         // CLEAR TRIGGER
-        console.log('TRIGGER CONDITION: ', speechOn);
+        // console.log('TRIGGER CONDITION: ', speechOn);
         if (speechOn) {
             const timer = setTimeout(() => {
                 speechAction({
                     text: 'saya diam',
                     actionOnEnd: () => {
-                        console.log('speech diclear');
+                        // console.log('speech diclear');
                         setDisplayTranscript(false);
                         setSpeechOn(false);
                     },

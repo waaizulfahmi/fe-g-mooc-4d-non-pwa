@@ -127,7 +127,7 @@ const EnrollKelas = () => {
             const loadedModel = await tf.loadLayersModel('/model.json');
             setModel(loadedModel);
         } catch (error) {
-            console.error('Gagal memuat model:', error);
+            //console.error('Gagal memuat model:', error);
         }
     };
 
@@ -138,7 +138,7 @@ const EnrollKelas = () => {
             const data = await response.json();
             setVocab(data);
         } catch (error) {
-            console.error('Gagal memuat vocab:', error);
+            //console.error('Gagal memuat vocab:', error);
         }
     };
 
@@ -149,7 +149,7 @@ const EnrollKelas = () => {
             const data = await response.json();
             setLabelEncoder(data);
         } catch (error) {
-            console.error('Gagal memuat label encoder:', error);
+            //console.error('Gagal memuat label encoder:', error);
         }
     };
 
@@ -177,7 +177,7 @@ const EnrollKelas = () => {
 
         if (statusVideo[statusCode] === 'selesai') {
             if (currentMateri.status === 'selesai') {
-                console.log('ketika video end tidak fetch');
+                // console.log('ketika video end tidak fetch');
                 return;
             }
             const fetchApiUpdateVideoMateri = async () => {
@@ -189,17 +189,17 @@ const EnrollKelas = () => {
                         token,
                     });
 
-                    console.log('success update selesai materi', response.data);
+                    //console.log('success update selesai materi', response.data);
                     setLoadData(true);
                 } catch (error) {
-                    console.log('ERROR', error);
+                    //console.log('ERROR', error);
                 }
             };
             fetchApiUpdateVideoMateri();
-            console.log('data', dataUpdate, `dengan status SELESAI`);
+            //console.log('data', dataUpdate, `dengan status SELESAI`);
         } else if (statusVideo[statusCode] === 'pause') {
             if (currentMateri.status === 'selesai') {
-                console.log('ketika pause tidak update');
+                //console.log('ketika pause tidak update');
                 return;
             }
             const fetchApiUpdateVideoMateri = async () => {
@@ -209,13 +209,13 @@ const EnrollKelas = () => {
                         playback: dataUpdate.playback,
                         token,
                     });
-                    console.log('success update progres materi', response.data);
+                    //console.log('success update progres materi', response.data);
                 } catch (error) {
-                    console.log('ERROR', error);
+                    //console.log('ERROR', error);
                 }
             };
             fetchApiUpdateVideoMateri();
-            console.log('data', dataUpdate, `dengan status UPDATE`);
+            //console.log('data', dataUpdate, `dengan status UPDATE`);
         }
     };
 
@@ -255,8 +255,8 @@ const EnrollKelas = () => {
                             quiz_count: response.data.data.quiz_count,
                         });
 
-                        console.log('Qurrent Response: ', response);
-                        console.log('Qurrent Id Enrollment: ', kelas.getIdxEnrollment());
+                        //console.log('Qurrent Response: ', response);
+                        //console.log('Qurrent Id Enrollment: ', kelas.getIdxEnrollment());
 
                         if (kelas.materiBerjalan()) {
                             // current data ketika ada materi berjalan
@@ -353,7 +353,7 @@ const EnrollKelas = () => {
                                     } else {
                                         setPoinNotif(kelas.getPoin() - poin);
                                         handleNotifAction();
-                                        console.log('Playback: ');
+                                        //console.log('Playback: ');
                                         speechWithBatch({
                                             speechs: [
                                                 {
@@ -366,7 +366,7 @@ const EnrollKelas = () => {
                                                 },
                                             ],
                                         });
-                                        console.log('Selamat Anda mendapatkan poin sebanyak:  ', kelas.getPoin() - poin);
+                                        //console.log('Selamat Anda mendapatkan poin sebanyak:  ', kelas.getPoin() - poin);
                                     }
                                 } else {
                                     speechAction({
@@ -374,7 +374,7 @@ const EnrollKelas = () => {
                                             kelas.idxMateriBerjalan() + 1
                                         }. Jangan lupa klik tombol spasi untuk menjalankan materi, dan klik kembali tombol spasi  untuk pause materi. `,
                                     });
-                                    console.log(' Anda masih belajar dikelas ini');
+                                    //console.log(' Anda masih belajar dikelas ini');
                                 }
                                 // speechAction({
                                 //     text: `Selamat datang kembali di kelas ${kelas.getName()}. Anda sedang belajar pada materi ke- ${
@@ -445,11 +445,11 @@ const EnrollKelas = () => {
                                                         });
                                                     } catch (error) {
                                                         if (error instanceof ApiResponseError) {
-                                                            console.log(`ERR SEND ANSWER API MESSAGE: `, error.message);
-                                                            console.log(error.data);
+                                                            //console.log(`ERR SEND ANSWER API MESSAGE: `, error.message);
+                                                            //console.log(error.data);
                                                             return;
                                                         }
-                                                        console.log(`MESSAGE: `, error.message);
+                                                        //console.log(`MESSAGE: `, error.message);
                                                     }
                                                 };
                                                 fetchApiSendAnswerQuiz();
@@ -457,7 +457,7 @@ const EnrollKelas = () => {
 
                                             // jika quiz terakhir, maka akan sampaikan rekap nilai
                                             if (idxQuiz === kelas.getQuizLength() - 1) {
-                                                console.log('QUIZ terakhir');
+                                                //console.log('QUIZ terakhir');
                                                 const fetchApiSendAnswerQuiz = async () => {
                                                     try {
                                                         await userSendAnswer({
@@ -477,10 +477,10 @@ const EnrollKelas = () => {
                                                         );
 
                                                         const dts = responseLast?.data?.data;
-                                                        console.log('MY ANSWER: ', userAnswer);
-                                                        console.log('MY ANSWER DATA: ', userAnswerData);
-                                                        console.log('NILAI: ', kelas.getNilai());
-                                                        console.log('RESPONSE: ', dts);
+                                                        //console.log('MY ANSWER: ', userAnswer);
+                                                        //console.log('MY ANSWER DATA: ', userAnswerData);
+                                                        //console.log('NILAI: ', kelas.getNilai());
+                                                        //console.log('RESPONSE: ', dts);
                                                         setNilai(dts.nilai);
 
                                                         if (!dts?.ulang) {
@@ -512,7 +512,7 @@ const EnrollKelas = () => {
                                                                 } sehingga Anda lulus kelas ${kelas.getName()}.`,
                                                                 actionOnEnd: () => {
                                                                     setDisplayTranscript(false);
-                                                                    console.log('Response last materi', responseLast);
+                                                                    //console.log('Response last materi', responseLast);
                                                                     setIdxQuiz(idxQuiz + 1);
                                                                     setCurrentQuiz({
                                                                         options: [],
@@ -553,7 +553,7 @@ const EnrollKelas = () => {
                                                                 text: `Sayang sekali, nilai akhir Anda ${dts.nilai} sehingga Anda wajib mengulang mengerjakan quiz. Tetap semangat yaa`,
                                                                 actionOnEnd: () => {
                                                                     setDisplayTranscript(false);
-                                                                    console.log('Response last materi', responseLast);
+                                                                    //console.log('Response last materi', responseLast);
                                                                     setIdxQuiz(0);
                                                                     setCurrentQuiz({
                                                                         options: [],
@@ -568,11 +568,11 @@ const EnrollKelas = () => {
                                                         }
                                                     } catch (error) {
                                                         if (error instanceof ApiResponseError) {
-                                                            console.log(`ERR SEND ANSWER API MESSAGE: `, error.message);
-                                                            console.log(error.data);
+                                                            //console.log(`ERR SEND ANSWER API MESSAGE: `, error.message);
+                                                            //console.log(error.data);
                                                             return;
                                                         }
-                                                        console.log(`MESSAGE: `, error.message);
+                                                        //console.log(`MESSAGE: `, error.message);
                                                     }
                                                 };
                                                 fetchApiSendAnswerQuiz();
@@ -595,7 +595,7 @@ const EnrollKelas = () => {
                                             const currentQuizSoal = kelas.getQuiz(idxQuiz).question;
                                             const currentQuizOption = kelas.getQuiz(idxQuiz).options;
 
-                                            console.log('CURRENT QUIZ', currentQuiz);
+                                            //console.log('CURRENT QUIZ', currentQuiz);
 
                                             //  quiz yg berjalan
                                             setCurrentQuiz(currentQuiz);
@@ -692,8 +692,8 @@ const EnrollKelas = () => {
                         }
                     } catch (error) {
                         if (error instanceof ApiResponseError) {
-                            console.log(`ERR CLASS ENROLLMENT API MESSAGE: `, error.message);
-                            console.log(error.data);
+                            //console.log(`ERR CLASS ENROLLMENT API MESSAGE: `, error.message);
+                            //console.log(error.data);
                             if (
                                 error?.data?.data?.metadata?.code === 401 ||
                                 error?.message?.toLowerCase() === 'Email belum diverifikasi'.toLocaleLowerCase()
@@ -707,7 +707,7 @@ const EnrollKelas = () => {
                             }
                             return;
                         }
-                        console.log(`MESSAGE: `, error.message);
+                        //console.log(`MESSAGE: `, error.message);
                     }
                 };
                 fetchApiClassEnrollment();
@@ -737,16 +737,16 @@ const EnrollKelas = () => {
 
             // Memastikan model dan vocab dimuat sebelum melakukan prediksi
             if (!model || !vocab || !labelEncoder) {
-                console.error('Model, vocab, label encoder  belum dimuat.');
+                //console.error('Model, vocab, label encoder  belum dimuat.');
             } else {
                 const removePunctuationWords = punctuationRemoval(cleanCommand);
                 const stemmingWords = stemming(removePunctuationWords);
                 const removedStopWords = removeStopwords(stemmingWords);
-                console.log({
-                    removePunc: removePunctuationWords,
-                    stem: stemmingWords,
-                    removeStop: removedStopWords,
-                });
+                // console.log({
+                //     removePunc: removePunctuationWords,
+                //     stem: stemmingWords,
+                //     removeStop: removedStopWords,
+                // });
                 // Hitung TF-IDF untuk setiap kata dalam inputText dengan bobot dari vocab
                 const tfidfResults = Object.keys(vocab).map((word) => {
                     return {
@@ -770,10 +770,10 @@ const EnrollKelas = () => {
                 if (isQuizMode) {
                     if (checkValueOfResult !== 0) {
                         const predictedCommand = labelEncoder[predictedClassIndex];
-                        console.log('Check value result: ', checkValueOfResult);
-                        console.log('Predicted command : ', predictedCommand);
-                        console.log(`quiz berjalan: `, cleanCommand);
-                        console.log(`is answer mode: `, isAnswerMode);
+                        //console.log('Check value result: ', checkValueOfResult);
+                        //console.log('Predicted command : ', predictedCommand);
+                        //console.log(`quiz berjalan: `, cleanCommand);
+                        //console.log(`is answer mode: `, isAnswerMode);
                         setDisplayTranscript(true);
                         if (isAnswerMode) {
                             if (predictedCommand.includes('ulangi')) {
@@ -793,17 +793,17 @@ const EnrollKelas = () => {
                                 setTrancript(predictedCommand);
                                 if (predictedCommand.includes('a')) {
                                     // setSpeechOn(false);
-                                    console.log('Anda memilih A');
+                                    //console.log('Anda memilih A');
                                     setUserAnswer('A');
                                     setLoadData(true);
                                 } else if (predictedCommand.includes('b')) {
                                     // setSpeechOn(false);
-                                    console.log('Anda memilih B');
+                                    //console.log('Anda memilih B');
                                     setUserAnswer('B');
                                     setLoadData(true);
                                 } else if (predictedCommand.includes('c')) {
                                     // setSpeechOn(false);
-                                    console.log('Anda memilih C');
+                                    //console.log('Anda memilih C');
                                     setUserAnswer('C');
                                     setLoadData(true);
                                 }
@@ -853,8 +853,8 @@ const EnrollKelas = () => {
                 if (speechOn && !skipSpeech) {
                     if (checkValueOfResult !== 0) {
                         const predictedCommand = labelEncoder[predictedClassIndex];
-                        console.log('Check value result: ', checkValueOfResult);
-                        console.log('Predicted command : ', predictedCommand);
+                        //console.log('Check value result: ', checkValueOfResult);
+                        //console.log('Predicted command : ', predictedCommand);
                         if (predictedCommand.includes('kerjakan')) {
                             if (
                                 predictedCommand.includes('quiz') ||
@@ -929,7 +929,7 @@ const EnrollKelas = () => {
                                 const listMateri = new ListMateri({
                                     listMateri: materi,
                                 });
-                                console.log('MATERI COMMAND: ', materiCommand);
+                                //console.log('MATERI COMMAND: ', materiCommand);
                                 const findMateri = listMateri.getMateriByIdx(materiIdx);
                                 const findIndexMateriBerjalan = listMateri.getIdxMateriBerjalan();
 
@@ -948,12 +948,12 @@ const EnrollKelas = () => {
                                                     );
 
                                                     if (!materiBerjalan) {
-                                                        console.log('RESPONSE MATERII: ', response);
+                                                        //console.log('RESPONSE MATERII: ', response);
                                                         const lastMateri =
                                                             response.data.data.kelas.materi[
                                                                 response.data.data.kelas.materi.length - 1
                                                             ];
-                                                        console.log('last materi : ', lastMateri);
+                                                        //console.log('last materi : ', lastMateri);
                                                         speechAction({
                                                             text: `Materi telah selesai semua, Anda akan diarahkan ke materi terkakhir dari kelas ini!`,
                                                             actionOnEnd: () => {
@@ -983,14 +983,14 @@ const EnrollKelas = () => {
                                                     });
                                                 } catch (error) {
                                                     if (error instanceof ApiResponseError) {
-                                                        console.log(
-                                                            `ERR CLASS ENROLLMENT API FROM MATERI SEKARANG MESSAGE: `,
-                                                            error.message,
-                                                        );
-                                                        console.log(error.data);
+                                                        // console.log(
+                                                        //     `ERR CLASS ENROLLMENT API FROM MATERI SEKARANG MESSAGE: `,
+                                                        //     error.message,
+                                                        // );
+                                                        // console.log(error.data);
                                                         return;
                                                     }
-                                                    console.log(`MESSAGE: `, error.message);
+                                                    //console.log(`MESSAGE: `, error.message);
                                                 }
                                             };
                                             fetchApiClassEnrollment();
@@ -1155,7 +1155,7 @@ const EnrollKelas = () => {
                             });
                         } else if (predictedCommand.includes('jelaskan')) {
                             if (predictedCommand.includes('intruksi') || predictedCommand.includes('instruksi')) {
-                                console.log('dapet nih');
+                                //console.log('dapet nih');
                                 setTrancript(predictedCommand);
                                 setSpeechOn(false);
                                 setIsClickButton(false);
@@ -1267,13 +1267,13 @@ const EnrollKelas = () => {
         };
 
         // CLEAR TRIGGER
-        console.log('TRIGGER CONDITION: ', speechOn);
+        //console.log('TRIGGER CONDITION: ', speechOn);
         if (speechOn) {
             const timer = setTimeout(() => {
                 speechAction({
                     text: 'saya diam',
                     actionOnEnd: () => {
-                        console.log('speech diclear');
+                        //console.log('speech diclear');
                         setDisplayTranscript(false);
                         setSpeechOn(false);
                     },
