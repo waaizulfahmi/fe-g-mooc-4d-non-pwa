@@ -57,40 +57,94 @@ const CheckPermission = () => {
 
     //effects
     useEffect(() => {
-        const spaceButtonAction = (event) => {
-            buttonAction({
-                event: event,
-                key: ' ',
-                keyCode: 32,
-                action: () => {
-                    if (!isPermit) {
-                        // console.log({
-                        //     micprohoneStatus,
-                        //     cameraStatus,
-                        // });
-                        if (micprohoneStatus !== 'granted' || cameraStatus !== 'granted') {
-                            speechAction({
-                                text: 'Mohon berikan akses terhadap Mikrofon, Speaker dan Camera',
-                            });
-                        } else {
-                            speechAction({
-                                text: 'Mikrofon Speaker dan Camera  sudah berjalan!',
-                                actionOnEnd: () => {
-                                    setStatusBtn(true);
-                                    dispatch(setIsPermit(true));
-                                },
-                            });
-                        }
+    const spaceButtonAction = (event) => {
+        // Fungsi yang akan dijalankan saat tombol spasi ditekan
+        buttonAction({
+            event: event,
+            key: ' ',
+            keyCode: 32,
+            action: () => {
+                if (!isPermit) {
+                    if (micprohoneStatus !== 'granted' || cameraStatus !== 'granted') {
+                        speechAction({
+                            text: 'Mohon berikan akses terhadap Mikrofon, Speaker dan Camera',
+                        });
+                    } else {
+                        speechAction({
+                            text: 'Mikrofon Speaker dan Camera sudah berjalan!',
+                            actionOnEnd: () => {
+                                setStatusBtn(true);
+                                dispatch(setIsPermit(true));
+                            },
+                        });
                     }
-                },
-            });
-        };
-        window.addEventListener('keydown', spaceButtonAction);
+                }
+            },
+        });
+    };
 
-        return () => {
-            window.removeEventListener('keydown', spaceButtonAction);
-        };
-    }, [dispatch, isPermit, setIsPermit, cameraStatus, micprohoneStatus]);
+    const volumeChangedAction = () => {
+        // Fungsi yang akan dijalankan saat volume berubah
+        if (!isPermit) {
+            if (micprohoneStatus !== 'granted' || cameraStatus !== 'granted') {
+                speechAction({
+                    text: 'Mohon berikan akses terhadap Mikrofon, Speaker dan Camera',
+                });
+            } else {
+                speechAction({
+                    text: 'Mikrofon Speaker dan Camera sudah berjalan!',
+                    actionOnEnd: () => {
+                        setStatusBtn(true);
+                        dispatch(setIsPermit(true));
+                    },
+                });
+            }
+        }
+    };
+
+    window.addEventListener('keydown', spaceButtonAction);
+    window.addEventListener('volumechange', volumeChangedAction);
+
+    return () => {
+        window.removeEventListener('keydown', spaceButtonAction);
+        window.removeEventListener('volumechange', volumeChangedAction);
+    };
+}, [dispatch, isPermit, setIsPermit, cameraStatus, micprohoneStatus]);
+    // useEffect(() => {
+    //     const spaceButtonAction = (event) => {
+    //         buttonAction({
+    //             event: event,
+    //             key: ' ',
+    //             keyCode: 32,
+    //             action: () => {
+    //                 if (!isPermit) {
+    //                     // console.log({
+    //                     //     micprohoneStatus,
+    //                     //     cameraStatus,
+    //                     // });
+    //                     if (micprohoneStatus !== 'granted' || cameraStatus !== 'granted') {
+    //                         speechAction({
+    //                             text: 'Mohon berikan akses terhadap Mikrofon, Speaker dan Camera',
+    //                         });
+    //                     } else {
+    //                         speechAction({
+    //                             text: 'Mikrofon Speaker dan Camera  sudah berjalan!',
+    //                             actionOnEnd: () => {
+    //                                 setStatusBtn(true);
+    //                                 dispatch(setIsPermit(true));
+    //                             },
+    //                         });
+    //                     }
+    //                 }
+    //             },
+    //         });
+    //     };
+    //     window.addEventListener('keydown', spaceButtonAction);
+
+    //     return () => {
+    //         window.removeEventListener('keydown', spaceButtonAction);
+    //     };
+    // }, [dispatch, isPermit, setIsPermit, cameraStatus, micprohoneStatus]);
 
     useEffect(() => {
         if (micprohoneStatus === 'denied') {
