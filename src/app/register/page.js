@@ -173,13 +173,13 @@ const Register = () => {
                     </BorderedButton>
                 </div>
             </div>
-            <div className='col-span-8 flex items-center justify-center bg-neutral-7'>
+            <div className='col-span-12 flex items-center justify-center bg-neutral-7 md:col-span-8'>
                 <div className='flex w-[646px] flex-col gap-[34px]'>
                     <div className='text-center'>
-                        <h1 className='text-title-2 font-bold'>Buat Akun Baru</h1>
+                        <h1 className='text-xl font-bold md:text-title-2'>Buat Akun Baru</h1>
                         <p className='text-body-2'>Buktikan Sekarang Semua Bisa Belajar</p>
                     </div>
-                    <form className='flex flex-col items-center gap-[14px]' onSubmit={handleSubmit(onSubmit)}>
+                    <form className='flex flex-col items-center gap-[14px] md:mx-0 mx-4 ' onSubmit={handleSubmit(onSubmit)}>
                         <div className='w-full'>
                             <Label htmlFor='name' className={`${errors.name?.message ? 'text-alert-1' : 'text-black'}`}>
                                 {errors.name?.message || <span className='invisible'>.</span>}
