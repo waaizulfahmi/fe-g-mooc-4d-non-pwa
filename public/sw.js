@@ -45,25 +45,27 @@ self.addEventListener('fetch', (event) => {
                     console.log('Fetch failed; returning offline page instead.', error);
 
                     const cache = await caches.open(CACHE_NAME);
+                    const cachedResponse = await cache.match(OFFLINE_URL);
+                    return cachedResponse;
 
                     // Coba mencari kedua file "offline.html" dan "sound.wav" dalam cache
-                    const [offlineHtmlResponse, soundResponse] = await Promise.all([
-                        cache.match('/offline.html'),
-                        cache.match('/sound.wav'),
-                        cache.match('/images/favicon.ico'),
-                    ]);
+                    // const [offlineHtmlResponse, soundResponse] = await Promise.all([
+                    //     cache.match('/offline.html'),
+                    //     cache.match('/sound.wav'),
+                    //     cache.match('/images/favicon.ico'),
+                    // ]);
 
-                    if (offlineHtmlResponse && soundResponse) {
-                        return offlineHtmlResponse;
-                    } else {
-                        return new Response('404 Not Found', {
-                            status: 404,
-                            statusText: 'Not Found',
-                            headers: new Headers({
-                                'Content-Type': 'text/plain',
-                            }),
-                        });
-                    }
+                    // if (offlineHtmlResponse && soundResponse) {
+                    //     return offlineHtmlResponse;
+                    // } else {
+                    //     return new Response('404 Not Found', {
+                    //         status: 404,
+                    //         statusText: 'Not Found',
+                    //         headers: new Headers({
+                    //             'Content-Type': 'text/plain',
+                    //         }),
+                    //     });
+                    // }
                 }
             })(),
         );
