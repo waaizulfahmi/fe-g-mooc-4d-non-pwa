@@ -93,6 +93,19 @@ const Login = () => {
         }, 5000);
     };
 
+    const registerServiceWorker = () => {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker
+                .register('/sw2.js') // Sesuaikan dengan lokasi service worker Anda
+                .then((registration) => {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                })
+                .catch((error) => {
+                    console.error('Service Worker registration failed:', error);
+                });
+        }
+    };
+
     const {
         register,
         handleSubmit,
@@ -218,6 +231,10 @@ const Login = () => {
         }
     }, []);
 
+    useEffect(() => {
+        registerServiceWorker();
+    }, []);
+    
     useEffect(() => {
         if (isCameraReady) {
             waitForCamera();
