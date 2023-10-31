@@ -96,7 +96,7 @@ const Login = () => {
     const registerServiceWorker = () => {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker
-                .register('/sw2.js') // Sesuaikan dengan lokasi service worker Anda
+                .register('/sw.js') // Sesuaikan dengan lokasi service worker Anda
                 .then((registration) => {
                     console.log('Service Worker registered with scope:', registration.scope);
                 })
