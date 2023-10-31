@@ -1,14 +1,16 @@
 // eslint-disable-next-line no-unused-vars
 const OFFLINE_VERSION = 1;
 const CACHE_NAME = 'offline';
-const OFFLINE_URL = ['/offline.html', '/images/favicon.ico'];
+const OFFLINE_URL = '/offline.html';
+
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
         (async () => {
             const cache = await caches.open(CACHE_NAME);
+            await cache.add(new Request(OFFLINE_URL, { cache: 'reload' }));
 
-            await cache.addAll(OFFLINE_URL.map((url) => new Request(url, { cache: 'reload' })));
+            // await cache.addAll(OFFLINE_URL.map((url) => new Request(url, { cache: 'reload' })));
         })(),
     );
     self.skipWaiting();
