@@ -1,7 +1,7 @@
 // eslint-disable-next-line no-unused-vars
 const OFFLINE_VERSION = 1;
 const CACHE_NAME = 'offline';
-const OFFLINE_URL = ['/offline.html', '/sound.wav', '/images/favicon.ico'];
+const OFFLINE_URL = ['/offline.html', '/images/favicon.ico'];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
