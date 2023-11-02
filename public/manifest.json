@@ -9,7 +9,7 @@
     "description": "Apps for who have spirit of learning!",
     "screenshots": [
         {
-            "src": "/images/homepage g-mmoc.JPG",
+            "src": "/images/homepage g-mmoc.jpg",
             "sizes": "640x320",
             "type": "image/gif",
             "form_factor": "wide",
@@ -17,7 +17,7 @@
         },
 
         {
-            "src": "/images/kelas.JPG",
+            "src": "/images/kelas.jpg",
             "sizes": "640x320",
             "type": "image/gif",
             "form_factor": "wide",
