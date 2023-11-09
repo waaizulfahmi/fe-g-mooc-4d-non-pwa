@@ -33,7 +33,7 @@ import { usePathname } from 'next/navigation';
 import HeroIcon from './HeroIcon';
 import Links from './Links';
 import NavbarButton from './NavbarButton';
-import Link from 'next/link';
+// import Link from 'next/link';
 // data
 // ---
 
@@ -76,14 +76,14 @@ const colorTheme = (path) => {
 const Navbar = ({ className }) => {
     const path = usePathname();
     const [isScrolled, setIsScrolled] = useState(false);
-    const [isOpen, setIsOpen] = useState(false);
-    const toggleSidebar = () => {
-        setIsOpen(!isOpen);
-    };
+    // const [isOpen, setIsOpen] = useState(false);
+    // const toggleSidebar = () => {
+    //     setIsOpen(!isOpen);
+    // };
 
-    const closeSidebar = () => {
-        setIsOpen(false);
-    };
+    // const closeSidebar = () => {
+    //     setIsOpen(false);
+    // };
 
     useEffect(() => {
         const handleColorNav = () => {
@@ -118,7 +118,7 @@ const Navbar = ({ className }) => {
 
                 {/* Hamburger menu button */}
                 {/* <button className='block pe-2 lg:hidden' onClick={toggleSidebar}>
-                    <svg className='h-6 w-6 fill-current' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
+                    <svg className='w-6 h-6 fill-current' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
                         {isOpen ? (
                             <path
                                 fillRule='evenodd'
@@ -136,17 +136,15 @@ const Navbar = ({ className }) => {
                 </div>
 
                 {/* Sidebar */}
-                {isOpen && (
+                {/* {isOpen && (
                     <div
                         className={`fixed right-0 top-0 z-30 h-full w-64 transform bg-white shadow-lg transition-transform duration-300 ${
                             isOpen ? 'translate-x-0' : 'translate-x-full'
                         }`}>
-                        {' '}
-                        {/* Close button */}
                         <button
-                            className='absolute right-0 top-0 m-4 text-gray-800 hover:text-gray-600 focus:outline-none'
+                            className='absolute top-0 right-0 m-4 text-gray-800 hover:text-gray-600 focus:outline-none'
                             onClick={closeSidebar}>
-                            <svg className='h-6 w-6 fill-current' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
+                            <svg className='w-6 h-6 fill-current' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
                                 <path
                                     fillRule='evenodd'
                                     clipRule='evenodd'
@@ -154,7 +152,6 @@ const Navbar = ({ className }) => {
                                 />
                             </svg>
                         </button>
-                        {/* Sidebar content */}
                         <ul>
                             {navUrlPath.map((item, index) => (
                                 <li key={index} className='py-4 ps-2'>
@@ -163,7 +160,7 @@ const Navbar = ({ className }) => {
                             ))}
                         </ul>
                     </div>
-                )}
+                )} */}
 
                 {/* Navbar button */}
                 <NavbarButton />

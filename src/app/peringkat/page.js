@@ -34,6 +34,7 @@ import { getIsPermit, checkPermissionSlice } from '@/redux/check-permission';
 // components
 import Navbar from '@/components/Navbar';
 import Transkrip from '@/components/Transkrip';
+import CheckPermission from '@/components/CheckPermission';
 
 // datas
 // ---
@@ -48,26 +49,53 @@ import { speechAction, speechWithBatch, stopSpeech } from '@/utils/text-to-speec
 import { buttonAction } from '@/utils/space-button-action';
 import { punctuationRemoval, stemming, removeStopwords } from '@/utils/special-text';
 import { calculateTFIDFWithWeights } from '@/utils/tfidf';
-import { useCheckReloadPage, useMovePage } from '@/hooks';
-import CheckPermission from '@/components/CheckPermission';
+import { browserPermission } from '@/utils/browserPermission';
 
-const Peringkat = () => {
+//hooks
+import { useCheckReloadPage, useCheckScreenOrientation, useMl, useMovePage } from '@/hooks';
+
+// not-related state function
+const handleColorPeringkat = (urutan) => {
+    switch (urutan) {
+        case 1: {
+            return 'bg-[#FFD700]';
+        }
+        case 2: {
+            return 'bg-[#C0C0C0]';
+        }
+        case 3: {
+            return 'bg-[#CD7F32]';
+        }
+        default: {
+            return 'bg-[#EDF3F3]';
+        }
+    }
+};
+
+export default function PeringkatPage() {
+    /* SETUP */
     const { data } = useSession();
     const token = data?.user?.token;
     const userName = data?.user?.name;
-    // const router = useRouter();
+    const pathname = usePathname();
 
-    // COMMON STATE
+    /* REDUX */
+    const dispatch = useDispatch();
+    const isPermit = useSelector(getIsPermit);
+    const { setCameraStatus, setMicrophoneStatus, setIsPermit } = checkPermissionSlice.actions;
+
+    /* CUSTOM HOOKS */
+    const { sessioName } = useCheckReloadPage({ name: pathname });
+    const { handleMovePage } = useMovePage(sessioName);
+    const { windowSize } = useCheckScreenOrientation();
+    const { model, vocab, labelEncoder } = useMl();
+
+    /* COMMON STATE */
     const [loadData, setLoadData] = useState(true);
     const [rank, setRank] = useState([]);
     const [userRank, setUserRank] = useState(null);
 
-    // TENSORFLOW STATE
-    const [model, setModel] = useState(null);
-    const [vocab, setVocab] = useState(null);
-    const [labelEncoder, setLabelEncoder] = useState(null);
-
-    // ACCESSIBILITY STATE
+    /* ACCESSIBILITY STATE */
     const [speechOn, setSpeechOn] = useState(false); // state untuk  speech recognition
     const [transcript, setTrancript] = useState(''); // state untuk menyimpan transcript hasil speech recognition
     const [skipSpeech, setSkipSpeech] = useState(false); // state untuk  mengatasi speech recogniton ter-trigger
@@ -75,14 +103,11 @@ const Peringkat = () => {
     const [isClickButton, setIsClickButton] = useState(false); // state untuk aksi tombol
     const [isPlayIntruction, setIsPlayIntruction] = useState(false); // state  ketika intruksi berjalan
 
-    const dispatch = useDispatch();
-    const isPermit = useSelector(getIsPermit);
-    const { setIsPermit } = checkPermissionSlice.actions;
+    /* FUNCTION */
+    // This func related with state
+    // --
 
-    const pathname = usePathname();
-    const { sessioName } = useCheckReloadPage({ name: pathname });
-    const { handleMovePage } = useMovePage(sessioName);
-
+    /* EFFECTS */
     useEffect(() => {
         const deleteSessionReload = () => {
             console.log('it worked peringkat');
@@ -97,59 +122,28 @@ const Peringkat = () => {
         };
     }, [sessioName, dispatch, setIsPermit]);
 
-    //FUNCTION
-    // Fungsi untuk memuat model
-    const loadModel = async () => {
-        try {
-            const loadedModel = await tf.loadLayersModel('/model.json');
-            setModel(loadedModel);
-        } catch (error) {
-            //console.error('Gagal memuat model:', error);
-        }
-    };
-
-    // Fungsi untuk memuat vocab.json
-    const loadVocab = async () => {
-        try {
-            const response = await fetch('/vocab.json');
-            const data = await response.json();
-            setVocab(data);
-        } catch (error) {
-            //console.error('Gagal memuat vocab:', error);
-        }
-    };
-
-    // Fungsi untuk memuat label_encoder.json
-    const loadLabelEncoder = async () => {
-        try {
-            const response = await fetch('/label_encoder.json');
-            const data = await response.json();
-            setLabelEncoder(data);
-        } catch (error) {
-            //console.error('Gagal memuat label encoder:', error);
-        }
-    };
-
-    // FUNC
-    const handleColorPeringkat = (urutan) => {
-        switch (urutan) {
-            case 1: {
-                return 'bg-[#FFD700]';
+    // Gain Browser Permission
+    useEffect(() => {
+        // camera permission
+        browserPermission('camera', (browserPermit) => {
+            if (browserPermit.error && !browserPermit.state) {
+                // console.log('Error perizinan Camera: ', browserPermit.error);
+            } else {
+                dispatch(setCameraStatus(browserPermit.state));
             }
-            case 2: {
-                return 'bg-[#C0C0C0]';
-            }
-            case 3: {
-                return 'bg-[#CD7F32]';
-            }
-            default: {
-                return 'bg-[#EDF3F3]';
-            }
-        }
-    };
+        });
 
-    // EFFECT
-    // init speech recognition
+        // microphone permission
+        browserPermission('microphone', (browserPermit) => {
+            if (browserPermit.error && !browserPermit.state) {
+                // console.log('Error perizinan Microphone: ', browserPermit.error);
+            } else {
+                dispatch(setMicrophoneStatus(browserPermit.state));
+            }
+        });
+    }, [dispatch, setCameraStatus, setMicrophoneStatus]);
+
+    // Init speech recognition
     useEffect(() => {
         try {
             recognition.start();
@@ -158,12 +152,10 @@ const Peringkat = () => {
         }
     }, []);
 
+    // Load Data
     useEffect(() => {
         if (token) {
             if (loadData) {
-                loadModel();
-                loadVocab();
-                loadLabelEncoder();
                 const fetchApiPeringkat = async () => {
                     try {
                         const response = await userGetPeringkatApi({ token });
@@ -217,10 +209,15 @@ const Peringkat = () => {
         }
     }, [token, loadData, userName, handleMovePage]);
 
+    // Processing Speech Recognition
     useEffect(() => {
         recognition.onresult = (event) => {
             const command = event?.results[0][0]?.transcript?.toLowerCase();
             const cleanCommand = command?.replace('.', '');
+            // console.log({
+            //     cleanCommand,
+            // });
+
             if (speechOn && !skipSpeech) {
                 const removePunctuationWords = punctuationRemoval(cleanCommand);
                 const stemmingWords = stemming(removePunctuationWords);
@@ -244,7 +241,6 @@ const Peringkat = () => {
 
                     // Menyusun ulang hasil untuk menyimpan nilai TF-IDF dalam bentuk array
                     const orderedResults = tfidfResults.map((result) => result.tfidf);
-
                     const inputArray = [orderedResults]; // Sesuaikan dengan bentuk input model
                     const inputTensor = tf.tensor2d(inputArray);
                     const prediction = model.predict(inputTensor);
@@ -298,8 +294,10 @@ const Peringkat = () => {
                     // prediction
                     if (checkValueOfResult !== 0) {
                         const predictedCommand = labelEncoder[predictedClassIndex];
-                        //console.log('Check value result: ', checkValueOfResult);
-                        //console.log('Predicted command : ', predictedCommand);
+                        // console.log({
+                        //     'Check value result ': checkValueOfResult,
+                        //     'Predicted command ': predictedCommand,
+                        // });
                         if (predictedCommand.includes('peringkat')) {
                             if (predictedCommand.includes('saya')) {
                                 setTrancript(predictedCommand);
@@ -318,7 +316,6 @@ const Peringkat = () => {
                                     speechAction({
                                         text: `Selamat, Anda sedang diperingkat ke ${userRank.ranking}, dengan ${userRank.poin} poin.`,
                                         actionOnEnd: () => {
-                                            //console.log(userRank);
                                             setDisplayTranscript(false);
                                         },
                                     });
@@ -326,7 +323,6 @@ const Peringkat = () => {
                                     speechAction({
                                         text: `Selamat, Anda sedang diperingkat ke ${userRank.ranking} dengan poin ${userRank.poin}. Ayo tingkatkan lagi!`,
                                         actionOnEnd: () => {
-                                            //console.log(userRank);
                                             setDisplayTranscript(false);
                                         },
                                     });
@@ -334,7 +330,6 @@ const Peringkat = () => {
                                     speechAction({
                                         text: `Selamat, Anda sedang diperingkat ke ${userRank.ranking} dengan poin ${userRank.poin}. Ayo lebih semangat lagi belajarnya ${userName}!`,
                                         actionOnEnd: () => {
-                                            //console.log(userRank);
                                             setDisplayTranscript(false);
                                         },
                                     });
@@ -342,7 +337,6 @@ const Peringkat = () => {
                                     speechAction({
                                         text: `Anda sedang diperingkat ke - ${userRank.ranking} dengan poin ${userRank.poin}. Ayo lebih banyak lagi belajarnya ${userName}!`,
                                         actionOnEnd: () => {
-                                            //console.log(userRank);
                                             setDisplayTranscript(false);
                                         },
                                     });
@@ -357,7 +351,7 @@ const Peringkat = () => {
                                     text: `Anda akan menuju halaman Daftar Kelas`,
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        // router.push('/kelas');
+
                                         handleMovePage('/kelas');
                                     },
                                 });
@@ -369,7 +363,7 @@ const Peringkat = () => {
                                     text: `Anda akan menuju halaman beranda`,
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        // router.push('/');
+
                                         handleMovePage('/');
                                     },
                                 });
@@ -381,7 +375,7 @@ const Peringkat = () => {
                                     text: `Anda akan menuju halaman Rapor`,
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        // router.push('/rapor');
+
                                         handleMovePage('/rapor');
                                     },
                                 });
@@ -457,13 +451,18 @@ const Peringkat = () => {
         };
 
         // CLEAR TRIGGER
-        //console.log('TRIGGER CONDITION: ', speechOn);
+        // console.log({
+        //     'TRIGGER CONDITION ': speechOn,
+        // });
+
         if (speechOn) {
             const timer = setTimeout(() => {
                 speechAction({
                     text: 'saya diam',
                     actionOnEnd: () => {
-                        //console.log('speech diclear');
+                        // console.log({
+                        //     'Speeck di clear ': speechOn,
+                        // });
                         setDisplayTranscript(false);
                         setSpeechOn(false);
                     },
@@ -476,7 +475,7 @@ const Peringkat = () => {
         }
     }, [handleMovePage, userName, userRank, speechOn, skipSpeech, labelEncoder, model, vocab]);
 
-    //effects
+    // Space Keyboard Setup
     useEffect(() => {
         const spaceButtonIntroAction = (event) => {
             return buttonAction({
@@ -519,7 +518,10 @@ const Peringkat = () => {
         };
     }, [isClickButton, isPlayIntruction, isPermit]);
 
-    console.log('permittt: ', isPermit);
+    // Setting if Window in small size
+    if (windowSize.innerWidth < 768) {
+        return <h1>You cant acces this page with {windowSize.innerWidth}px</h1>;
+    }
 
     return (
         <section className='h-screen bg-primary-1'>
@@ -561,6 +563,4 @@ const Peringkat = () => {
             <CheckPermission />
         </section>
     );
-};
-
-export default Peringkat;
+}

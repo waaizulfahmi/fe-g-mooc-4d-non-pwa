@@ -33,8 +33,6 @@ const handler = NextAuth({
                         throw new Error(error.message);
                     }
                     throw new Error(error.response.data.message);
-                    // console.log("ERROR USER AUTH", error.response.data.message);
-                    // console.log(`MESSAGE: `, error.message);
                 }
             },
         }),
@@ -63,8 +61,6 @@ const handler = NextAuth({
                         throw new Error(error.message);
                     }
                     throw new Error(error.response.data.message);
-                    // console.log("ERROR USER AUTH", error.response.data.message);
-                    // console.log(`MESSAGE: `, error.message);
                 }
             },
         }),

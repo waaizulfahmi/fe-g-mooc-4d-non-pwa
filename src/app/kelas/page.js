@@ -28,12 +28,14 @@ import { useSession } from 'next-auth/react';
 import * as tf from '@tensorflow/tfjs';
 
 //redux
-//---
+import { useDispatch, useSelector } from 'react-redux';
+import { checkPermissionSlice, getIsPermit } from '@/redux/check-permission';
 
 // components
 import Navbar from '@/components/Navbar';
 import ArrowButton from '@/components/ArrowButton';
 import Transkrip from '@/components/Transkrip';
+import CheckPermission from '@/components/CheckPermission';
 
 // datas
 // ---
@@ -50,19 +52,30 @@ import { ApiResponseError } from '@/utils/error-handling';
 import { buttonAction } from '@/utils/space-button-action';
 import { punctuationRemoval, stemming, removeStopwords } from '@/utils/special-text';
 import { calculateTFIDFWithWeights } from '@/utils/tfidf';
-import { useCheckReloadPage, useMovePage } from '@/hooks';
-import CheckPermission from '@/components/CheckPermission';
-import { useDispatch } from 'react-redux';
-import { checkPermissionSlice } from '@/redux/check-permission';
-// import { authLogout } from '@/axios/auth';
+import { browserPermission } from '@/utils/browserPermission';
 
-const Kelas = () => {
+//hooks
+import { useCheckReloadPage, useMovePage, useMl, useCheckScreenOrientation } from '@/hooks';
+
+export default function DaftarKelasPage() {
+    /* SETUP */
+    const pathname = usePathname();
     const { data } = useSession();
-    // const router = useRouter();
     const token = data?.user?.token;
     const userName = data?.user?.name;
 
-    // COMMON STATE
+    /* REDUX */
+    const dispatch = useDispatch();
+    const isPermit = useSelector(getIsPermit);
+    const { setCameraStatus, setMicrophoneStatus, setIsPermit } = checkPermissionSlice.actions;
+
+    /* CUSTOM HOOKS */
+    const { sessioName } = useCheckReloadPage({ name: pathname });
+    const { handleMovePage } = useMovePage(sessioName);
+    const { windowSize } = useCheckScreenOrientation();
+    const { model, vocab, labelEncoder } = useMl();
+
+    /* COMMON STATE */
     const [loadData, setLoadData] = useState(true);
     const [kelas, setKelas] = useState([]);
     const [isChecked, setIsChecked] = useState({
@@ -73,12 +86,7 @@ const Kelas = () => {
     });
     const [introPage, setIntroPage] = useState(true);
 
-    // TENSORFLOW STATE
-    const [model, setModel] = useState(null);
-    const [vocab, setVocab] = useState(null);
-    const [labelEncoder, setLabelEncoder] = useState(null);
-
-    // ACCESSIBILITY STATE
+    /* ACCESSIBILITY STATE */
     const [speechOn, setSpeechOn] = useState(false); // state untuk  speech recognition
     const [transcript, setTrancript] = useState(''); // state untuk menyimpan transcript hasil speech recognition
     const [skipSpeech, setSkipSpeech] = useState(false); // state untuk  mengatasi speech recogniton ter-trigger
@@ -86,63 +94,12 @@ const Kelas = () => {
     const [isClickButton, setIsClickButton] = useState(false); // state untuk aksi tombol
     const [isPlayIntruction, setIsPlayIntruction] = useState(false); // state  ketika intruksi berjalan
 
-    const dispatch = useDispatch();
-    const { setIsPermit } = checkPermissionSlice.actions;
-
-    const pathname = usePathname();
-    const { sessioName } = useCheckReloadPage({ name: pathname });
-    const { handleMovePage } = useMovePage(sessioName);
-
-    useEffect(() => {
-        const deleteSessionReload = () => {
-            console.log('it worked kelas');
-            dispatch(setIsPermit(false));
-            sessionStorage.removeItem(sessioName);
-        };
-
-        window.addEventListener('pageshow', deleteSessionReload);
-
-        return () => {
-            window.removeEventListener('pageshow', deleteSessionReload);
-        };
-    }, [sessioName, dispatch, setIsPermit]);
-
-    //FUNCTION
-    // Fungsi untuk memuat model
-    const loadModel = async () => {
-        try {
-            const loadedModel = await tf.loadLayersModel('/model.json');
-            setModel(loadedModel);
-        } catch (error) {
-            console.error('Gagal memuat model:', error);
-        }
-    };
-
-    // Fungsi untuk memuat vocab.json
-    const loadVocab = async () => {
-        try {
-            const response = await fetch('/vocab.json');
-            const data = await response.json();
-            setVocab(data);
-        } catch (error) {
-            console.error('Gagal memuat vocab:', error);
-        }
-    };
-
-    // Fungsi untuk memuat label_encoder.json
-    const loadLabelEncoder = async () => {
-        try {
-            const response = await fetch('/label_encoder.json');
-            const data = await response.json();
-            setLabelEncoder(data);
-        } catch (error) {
-            console.error('Gagal memuat label encoder:', error);
-        }
-    };
-
-    // const handlePilihKelas = (namaKelas) => router.push(`/kelas/${namaKelas}`);
+    /* FUNCTION */
+    // this func related with state
+    // fungsi untuk pergi ke kelas tujuan
     const handlePilihKelas = (namaKelas) => handleMovePage(`/kelas/${namaKelas}`);
 
+    // fungsi untuk fetch kelas berdasarkan level yg dipilih
     const fetchKelasByLevel = async (idLevel, token) => {
         try {
             const kelasLevel = {
@@ -215,6 +172,7 @@ const Kelas = () => {
         }
     };
 
+    // fungsi untuk handler checkbox change
     const handleCheckBoxChange = (level) => {
         switch (level) {
             case 'mudah':
@@ -261,6 +219,7 @@ const Kelas = () => {
         }
     };
 
+    // fungsi untuk handler fetch kelas berdasarkan level yg dipilih
     // Prevent for react exhaust hook warning, using usecallback wrapper
     const handleFetchKelasByLevelName = useCallback(
         async (level) => {
@@ -302,8 +261,43 @@ const Kelas = () => {
         [token],
     );
 
-    // EFFECTS
-    // init speech recognition
+    /* EFFECTS */
+    useEffect(() => {
+        const deleteSessionReload = () => {
+            console.log('it worked kelas');
+            dispatch(setIsPermit(false));
+            sessionStorage.removeItem(sessioName);
+        };
+
+        window.addEventListener('pageshow', deleteSessionReload);
+
+        return () => {
+            window.removeEventListener('pageshow', deleteSessionReload);
+        };
+    }, [sessioName, dispatch, setIsPermit]);
+
+    // Gain Browser Permission
+    useEffect(() => {
+        // camera permission
+        browserPermission('camera', (browserPermit) => {
+            if (browserPermit.error && !browserPermit.state) {
+                // console.log('Error perizinan Camera: ', browserPermit.error);
+            } else {
+                dispatch(setCameraStatus(browserPermit.state));
+            }
+        });
+
+        // microphone permission
+        browserPermission('microphone', (browserPermit) => {
+            if (browserPermit.error && !browserPermit.state) {
+                // console.log('Error perizinan Microphone: ', browserPermit.error);
+            } else {
+                dispatch(setMicrophoneStatus(browserPermit.state));
+            }
+        });
+    }, [dispatch, setCameraStatus, setMicrophoneStatus]);
+
+    // Init speech recognition
     useEffect(() => {
         try {
             recognition.start();
@@ -312,12 +306,10 @@ const Kelas = () => {
         }
     }, []);
 
+    // Load Data
     useEffect(() => {
         if (token) {
             if (loadData) {
-                loadModel();
-                loadVocab();
-                loadLabelEncoder();
                 const fetchApiAllClass = async () => {
                     try {
                         const response = await userGetAllClassApi({ token });
@@ -395,11 +387,15 @@ const Kelas = () => {
         }
     }, [token, loadData, handleMovePage, userName]);
 
+    // Processing Speech Recognition
     useEffect(() => {
         // SPEECH RECOGNITION RESULT
         recognition.onresult = (event) => {
             const command = event.results[0][0].transcript.toLowerCase();
             const cleanCommand = command?.replace('.', '');
+            // console.log({
+            //     cleanCommand,
+            // });
 
             /* Dengan trigger */
             if (speechOn && !skipSpeech) {
@@ -426,7 +422,6 @@ const Kelas = () => {
 
                     // Menyusun ulang hasil untuk menyimpan nilai TF-IDF dalam bentuk array
                     const orderedResults = tfidfResults.map((result) => result.tfidf);
-
                     const inputArray = [orderedResults]; // Sesuaikan dengan bentuk input model
                     const inputTensor = tf.tensor2d(inputArray);
                     const prediction = model.predict(inputTensor);
@@ -445,14 +440,12 @@ const Kelas = () => {
                                 text: 'Anda akan menuju halaman Peringkat',
                                 actionOnEnd: () => {
                                     setDisplayTranscript(false);
-                                    // router.push('/peringkat');
                                     handleMovePage('/peringkat');
                                 },
                             });
                         }
                     } else if (cleanCommand.includes('jelaskan')) {
                         if (cleanCommand.includes('intruksi') || cleanCommand.includes('instruksi')) {
-                            // console.log('dapet nih');
                             setTrancript('jelaskan instruksi');
                             setSpeechOn(false);
                             setIsClickButton(false);
@@ -508,11 +501,11 @@ const Kelas = () => {
                         setSpeechOn(false);
                         const kelasCommand = cleanCommand.replace('belajar', '').trim();
                         const findKelas = kelas.find((k) => k.name.toLowerCase() === kelasCommand);
-                        // console.log('belajar:   ', kelasCommand);
+                        // console.log({ 'find kelas command:   ': kelasCommand });
                         setTrancript(`belajar ${kelasCommand}`);
                         if (!findKelas) {
                             // kelas not found
-                            // console.log('belajar:   ', kelasCommand);
+                            // console.log({ 'find kelas command not found:   ': kelasCommand });
                             speechAction({
                                 text: 'Kelas tidak ditemukan',
                                 actionOnEnd: () => {
@@ -525,7 +518,6 @@ const Kelas = () => {
                             text: `Anda akan belajar dikelas ${findKelas.name}`,
                             actionOnEnd: () => {
                                 setDisplayTranscript(false);
-                                // router.push(`/kelas/${findKelas.name.toLowerCase()}`);
                                 handleMovePage(`/kelas/${findKelas?.name?.toLowerCase()}`);
                             },
                         });
@@ -557,8 +549,10 @@ const Kelas = () => {
                     // PREDICTION
                     if (checkValueOfResult !== 0) {
                         const predictedCommand = labelEncoder[predictedClassIndex];
-                        // console.log('Check value result: ', checkValueOfResult);
-                        // console.log('Predicted command : ', predictedCommand);
+                        // console.log({
+                        //     'Check value result ': checkValueOfResult,
+                        //     'Predicted command ': predictedCommand,
+                        // });
                         if (predictedCommand.includes('cari')) {
                             //search class by level
                             if (predictedCommand.includes('kelas')) {
@@ -591,7 +585,6 @@ const Kelas = () => {
                                     text: 'Anda akan menuju halaman Beranda',
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        // router.push('/');
                                         handleMovePage('/');
                                     },
                                 });
@@ -603,7 +596,6 @@ const Kelas = () => {
                                     text: 'Anda akan menuju halaman Rapor',
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        // router.push('/rapor');
                                         handleMovePage('/rapor');
                                     },
                                 });
@@ -638,7 +630,6 @@ const Kelas = () => {
                                                 text: 'ucapkan belajar diikuti nama kelas, agar Anda dapat belajar di kelas tersebut, contohnya belajar sejarah',
                                                 actionOnEnd: () => {
                                                     setDisplayTranscript(false);
-                                                    // console.log('speech diclear');
                                                 },
                                             });
                                         },
@@ -761,13 +752,17 @@ const Kelas = () => {
         };
 
         // CLEAR TRIGGER
-        // console.log('TRIGGER CONDITION: ', speechOn);
+        // console.log({
+        //     'TRIGGER CONDITION ': speechOn,
+        // });
         if (speechOn) {
             const timer = setTimeout(() => {
                 speechAction({
                     text: 'saya diam',
                     actionOnEnd: () => {
-                        // console.log('speech diclear');
+                        // console.log({
+                        //     'Speeck di clear ': speechOn,
+                        // });
                         setDisplayTranscript(false);
                         setSpeechOn(false);
                     },
@@ -793,7 +788,7 @@ const Kelas = () => {
         vocab,
     ]);
 
-    // SINGLE BUTTON
+    // Space Keyboard Setup
     useEffect(() => {
         const spaceButtonIntroAction = (event) => {
             return buttonAction({
@@ -801,7 +796,7 @@ const Kelas = () => {
                 key: ' ',
                 keyCode: 32,
                 action: () => {
-                    if (!isClickButton) {
+                    if (!isClickButton && isPermit) {
                         setSpeechOn(false);
                         stopSpeech();
                         if (isPlayIntruction) {
@@ -834,7 +829,12 @@ const Kelas = () => {
         return () => {
             window.removeEventListener('keydown', spaceButtonIntroAction);
         };
-    }, [isClickButton, isPlayIntruction]);
+    }, [isClickButton, isPlayIntruction, isPermit]);
+
+    // Setting if Window in small size
+    if (windowSize.innerWidth < 768) {
+        return <h1>You cant acces this page with {windowSize.innerWidth}px</h1>;
+    }
 
     return (
         <div className='h-screen bg-[#EDF3F3]'>
@@ -959,6 +959,4 @@ const Kelas = () => {
             <CheckPermission />
         </div>
     );
-};
-
-export default Kelas;
+}

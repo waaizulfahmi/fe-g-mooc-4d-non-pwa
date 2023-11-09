@@ -39,7 +39,7 @@ import { usePathname, useRouter } from 'next/navigation';
 // utils
 import { stopSpeech } from '@/utils/text-to-speech';
 
-const Links = ({ className = 'flex gap-[50px]', links }) => {
+const Links = ({ className = 'flex gap-[80px]', links }) => {
     const path = usePathname();
     const router = useRouter();
 

@@ -49,37 +49,31 @@ import { buttonAction } from '@/utils/space-button-action';
 import { punctuationRemoval, stemming, removeStopwords } from '@/utils/special-text';
 import { calculateTFIDFWithWeights } from '@/utils/tfidf';
 import { browserPermission } from '@/utils/browserPermission';
-import { useCheckReloadPage, useMovePage } from '@/hooks';
 
 // hooks
-//---
+import { useCheckReloadPage, useMovePage, useCheckScreenOrientation, useMl } from '@/hooks';
 
-export default function Beranda() {
-    // const router = useRouter();
+export default function HomePage() {
+    /* SETUP */
     const pathname = usePathname();
     const { data } = useSession();
     const userName = data?.user?.name;
 
-    // REDUX
+    /* REDUX */
     const dispatch = useDispatch();
     const isPermit = useSelector(getIsPermit);
     const { setCameraStatus, setMicrophoneStatus, setIsPermit } = checkPermissionSlice.actions;
-    // const isCheckLightHouseMode = useSelector(getIsCheckLightHouseMode);
-    // console.log('STATUS LIGHTHOUSE: ', isCheckLightHouseMode);
 
-    // CUSTOM HOOKS
+    /* CUSTOM HOOKS */
     const { sessioName } = useCheckReloadPage({ name: pathname });
     const { handleMovePage } = useMovePage(sessioName);
+    const { windowSize } = useCheckScreenOrientation();
+    const { model, vocab, labelEncoder } = useMl();
 
-    // COMMON STATE
+    /* COMMON STATE */
     // --
 
-    // TENSORFLOW STATE
-    const [model, setModel] = useState(null);
-    const [vocab, setVocab] = useState(null);
-    const [labelEncoder, setLabelEncoder] = useState(null);
-
-    // ACCESSIBILITY STATE
+    /* ACCESSIBILITY STATE */
     const [speechOn, setSpeechOn] = useState(false); // state untuk  speech recognition
     const [transcript, setTrancript] = useState(''); // state untuk menyimpan transcript hasil speech recognition
     const [skipSpeech, setSkipSpeech] = useState(false); // state untuk  mengatasi speech recogniton ter-trigger
@@ -87,6 +81,12 @@ export default function Beranda() {
     const [isClickButton, setIsClickButton] = useState(false); // state untuk aksi tombol
     const [isPlayIntruction, setIsPlayIntruction] = useState(false); // state  ketika intruksi berjalan
 
+    /* FUNCTION */
+    // This func related with state
+    // --
+
+    /* EFFECTS */
+    // Processing Accesing browser with browser url
     useEffect(() => {
         const deleteSessionReload = () => {
             console.log('it worked home');
@@ -101,58 +101,28 @@ export default function Beranda() {
         };
     }, [sessioName, dispatch, setIsPermit]);
 
-    // FUNCTION
-    // Fungsi untuk memuat model
-    const loadModel = async () => {
-        try {
-            const loadedModel = await tf.loadLayersModel('/model.json');
-            setModel(loadedModel);
-        } catch (error) {
-            console.error('Gagal memuat model:', error);
-        }
-    };
-
-    // Fungsi untuk memuat vocab.json
-    const loadVocab = async () => {
-        try {
-            const response = await fetch('/vocab.json');
-            const data = await response.json();
-            setVocab(data);
-        } catch (error) {
-            console.error('Gagal memuat vocab:', error);
-        }
-    };
-
-    // Fungsi untuk memuat label_encoder.json
-    const loadLabelEncoder = async () => {
-        try {
-            const response = await fetch('/label_encoder.json');
-            const data = await response.json();
-            setLabelEncoder(data);
-        } catch (error) {
-            console.error('Gagal memuat label encoder:', error);
-        }
-    };
-
+    // Gain Browser Permission
     useEffect(() => {
+        // camera permission
         browserPermission('camera', (browserPermit) => {
             if (browserPermit.error && !browserPermit.state) {
-                // console.log('Error perizinan: ', browserPermit.error);
+                // console.log('Error perizinan Camera: ', browserPermit.error);
             } else {
                 dispatch(setCameraStatus(browserPermit.state));
             }
         });
+
+        // microphone permission
         browserPermission('microphone', (browserPermit) => {
             if (browserPermit.error && !browserPermit.state) {
-                // console.log('Error perizinan: ', browserPermit.error);
+                // console.log('Error perizinan Microphone: ', browserPermit.error);
             } else {
                 dispatch(setMicrophoneStatus(browserPermit.state));
             }
         });
     }, [dispatch, setCameraStatus, setMicrophoneStatus]);
 
-    // EFFECTS
-    // init speech recognition
+    // Init speech recognition
     useEffect(() => {
         try {
             recognition.start();
@@ -161,11 +131,9 @@ export default function Beranda() {
         }
     }, []);
 
+    // Load Data
     useEffect(() => {
         if (userName && isPermit) {
-            loadModel();
-            loadVocab();
-            loadLabelEncoder();
             speechWithBatch({
                 speechs: [
                     {
@@ -207,12 +175,14 @@ export default function Beranda() {
         }
     }, [userName, isPermit]);
 
+    // Processing Speech Recognition
     useEffect(() => {
         recognition.onresult = (event) => {
             const command = event.results[0][0].transcript.toLowerCase();
             const cleanCommand = command?.replace('.', '');
-            // console.log(cleanCommand);
-
+            // console.log({
+            //     cleanCommand,
+            // });
             if (speechOn && !skipSpeech) {
                 const removePunctuationWords = punctuationRemoval(cleanCommand);
                 const stemmingWords = stemming(removePunctuationWords);
@@ -237,7 +207,6 @@ export default function Beranda() {
 
                     // Menyusun ulang hasil untuk menyimpan nilai TF-IDF dalam bentuk array
                     const orderedResults = tfidfResults.map((result) => result.tfidf);
-
                     const inputArray = [orderedResults]; // Sesuaikan dengan bentuk input model
                     const inputTensor = tf.tensor2d(inputArray);
                     const prediction = model.predict(inputTensor);
@@ -256,8 +225,6 @@ export default function Beranda() {
                                 text: 'Anda akan menuju halaman Peringkat',
                                 actionOnEnd: () => {
                                     setDisplayTranscript(false);
-                                    // localStorage.removeItem('homepage');
-                                    // router.push('/peringkat');
                                     handleMovePage('/peringkat');
                                 },
                             });
@@ -300,8 +267,10 @@ export default function Beranda() {
                     // prediction
                     if (checkValueOfResult !== 0) {
                         const predictedCommand = labelEncoder[predictedClassIndex];
-                        // console.log('Check value result: ', checkValueOfResult);
-                        // console.log('Predicted command : ', predictedCommand);
+                        // console.log({
+                        //     'Check value result ': checkValueOfResult,
+                        //     'Predicted command ': predictedCommand,
+                        // });
                         if (predictedCommand.includes('pergi')) {
                             if (predictedCommand.includes('kelas')) {
                                 setTrancript(predictedCommand);
@@ -310,9 +279,7 @@ export default function Beranda() {
                                     text: 'Anda akan menuju halaman Daftar Kelas',
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        // localStorage.removeItem('homepage');
                                         handleMovePage('/kelas');
-                                        // router.push('/kelas');
                                     },
                                 });
                             } else if (predictedCommand.includes('rapor')) {
@@ -322,8 +289,6 @@ export default function Beranda() {
                                     text: 'Anda akan menuju halaman Rapor',
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        // localStorage.removeItem('homepage');
-                                        // router.push('/rapor');
                                         handleMovePage('/rapor');
                                     },
                                 });
@@ -402,14 +367,18 @@ export default function Beranda() {
             recognition.start();
         };
 
-        // console.log('TRIGGER CONDITION: ', speechOn);
+        // console.log({
+        //     'TRIGGER CONDITION ': speechOn,
+        // });
 
         if (speechOn) {
             const timer = setTimeout(() => {
                 speechAction({
                     text: 'saya diam',
                     actionOnEnd: () => {
-                        // console.log('speech diclear');
+                        // console.log({
+                        //     'Speeck di clear ': speechOn,
+                        // });
                         setDisplayTranscript(false);
                         setSpeechOn(false);
                     },
@@ -422,7 +391,7 @@ export default function Beranda() {
         }
     }, [handleMovePage, speechOn, userName, skipSpeech, labelEncoder, model, vocab]);
 
-    //effects
+    // Space Keyboard Setup
     useEffect(() => {
         const spaceButtonIntroAction = (event) => {
             return buttonAction({
@@ -464,6 +433,11 @@ export default function Beranda() {
             window.removeEventListener('keydown', spaceButtonIntroAction);
         };
     }, [isClickButton, isPermit, isPlayIntruction]);
+
+    // Setting if Window in small size
+    if (windowSize.innerWidth < 768) {
+        return <h1>You cant acces this page with {windowSize.innerWidth}px</h1>;
+    }
 
     return (
         <main className='h-screen'>

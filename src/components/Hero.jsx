@@ -59,7 +59,7 @@ const Hero = ({ className }) => {
                         <FillButton
                             onClick={() => router.push('/kelas')}
                             className='bg-color-1 border-color-1  rounded-rad-3 border px-[98px] py-[12px] text-body-1 font-semibold text-white'>
-                            Get Started
+                            Mulai Belajar
                         </FillButton>
                     </div>
                 </div>

@@ -30,34 +30,36 @@ import { useSession } from 'next-auth/react';
 import * as tf from '@tensorflow/tfjs';
 
 // redux
-// ---
+import { useDispatch, useSelector } from 'react-redux';
+import { checkPermissionSlice, getIsPermit } from '@/redux/check-permission';
 
 // components
 import FillButton from '@/components/FillButton';
 import Navbar from '@/components/Navbar';
 import BorderedButton from '@/components/BorderedButton';
 import Transkrip from '@/components/Transkrip';
+import CheckPermission from '@/components/CheckPermission';
 
 // datas
 import { Rapot } from '@/data/model';
 
 // apis
-//---
+import { apiInstance } from '@/axios/instance';
 
 // utils
 import { speechAction, speechWithBatch, stopSpeech } from '@/utils/text-to-speech';
 import { recognition } from '@/utils/speech-recognition';
 import { ApiResponseError } from '@/utils/error-handling';
 import { getImageFile } from '@/utils/get-server-storage';
-import { apiInstance } from '@/axios/instance';
 import { buttonAction } from '@/utils/space-button-action';
 import { punctuationRemoval, stemming, removeStopwords } from '@/utils/special-text';
 import { calculateTFIDFWithWeights } from '@/utils/tfidf';
-import { useCheckReloadPage, useMovePage } from '@/hooks';
-import CheckPermission from '@/components/CheckPermission';
-import { useDispatch, useSelector } from 'react-redux';
-import { checkPermissionSlice, getIsPermit } from '@/redux/check-permission';
+import { browserPermission } from '@/utils/browserPermission';
 
+//hooks
+import { useCheckReloadPage, useCheckScreenOrientation, useMl, useMovePage } from '@/hooks';
+
+// not-related state function
 const userGetRapotApi = async ({ token }) => {
     try {
         if (!token) throw new Error('Token must be submitted!');
@@ -88,13 +90,12 @@ const userGetRapotApi = async ({ token }) => {
     }
 };
 
+// separate component
 const DisplayClass = ({ listClass }) => {
-    // console.log('Classs nilai: ', listClass);
     return (
         <>
             {listClass?.length
                 ? listClass.map((rClass, idx) => {
-                      // console.log('Classs nilai: ', rClass);
                       return (
                           <div
                               key={idx + 1}
@@ -128,13 +129,25 @@ DisplayClass.propTypes = {
     listClass: PropTypes.array,
 };
 
-const Rapor = () => {
+export default function RaporPage() {
+    /* SETUP */
     const { data } = useSession();
     const token = data?.user?.token;
     const userName = data?.user?.name;
-    // const router = useRouter();
+    const pathname = usePathname();
 
-    // COMMON STATE
+    /* REDUX */
+    const dispatch = useDispatch();
+    const isPermit = useSelector(getIsPermit);
+    const { setCameraStatus, setMicrophoneStatus, setIsPermit } = checkPermissionSlice.actions;
+
+    /* CUSTOM HOOKS */
+    const { sessioName } = useCheckReloadPage({ name: pathname });
+    const { handleMovePage } = useMovePage(sessioName);
+    const { windowSize } = useCheckScreenOrientation();
+    const { model, vocab, labelEncoder } = useMl();
+
+    /* COMMON STATE */
     const [classShow, setClassShow] = useState('progress'); // progress || done
     const [loadData, setLoadData] = useState(true);
     const [countFinishedClass, setCountFinishedClass] = useState(0);
@@ -143,12 +156,7 @@ const Rapor = () => {
     const [finishedClass, setFinishedClass] = useState([]);
     const [totalPelajaran, setTotalPelajaran] = useState([]);
 
-    // TENSORFLOW STATE
-    const [model, setModel] = useState(null);
-    const [vocab, setVocab] = useState(null);
-    const [labelEncoder, setLabelEncoder] = useState(null);
-
-    // ACCESSIBILITY STATE
+    /* ACCESSIBILITY STATE */
     const [speechOn, setSpeechOn] = useState(false); // state untuk  speech recognition
     const [transcript, setTrancript] = useState(''); // state untuk menyimpan transcript hasil speech recognition
     const [skipSpeech, setSkipSpeech] = useState(false); // state untuk  mengatasi speech recogniton ter-trigger
@@ -156,14 +164,12 @@ const Rapor = () => {
     const [isClickButton, setIsClickButton] = useState(false); // state untuk aksi tombol
     const [isPlayIntruction, setIsPlayIntruction] = useState(false); // state  ketika intruksi berjalan
 
-    const dispatch = useDispatch();
-    const isPermit = useSelector(getIsPermit);
-    const { setIsPermit } = checkPermissionSlice.actions;
+    /* FUNCTION */
+    // This func related with state
+    // --
 
-    const pathname = usePathname();
-    const { sessioName } = useCheckReloadPage({ name: pathname });
-    const { handleMovePage } = useMovePage(sessioName);
-
+    /* EFFECTS */
+    // Processing Accesing browser with browser url
     useEffect(() => {
         const deleteSessionReload = () => {
             console.log('it worked rapor');
@@ -178,41 +184,28 @@ const Rapor = () => {
         };
     }, [sessioName, dispatch, setIsPermit]);
 
-    //FUNCTION
-    // Fungsi untuk memuat model
-    const loadModel = async () => {
-        try {
-            const loadedModel = await tf.loadLayersModel('/model.json');
-            setModel(loadedModel);
-        } catch (error) {
-            //console.error('Gagal memuat model:', error);
-        }
-    };
+    // Gain Browser Permission
+    useEffect(() => {
+        // camera permission
+        browserPermission('camera', (browserPermit) => {
+            if (browserPermit.error && !browserPermit.state) {
+                // console.log('Error perizinan Camera: ', browserPermit.error);
+            } else {
+                dispatch(setCameraStatus(browserPermit.state));
+            }
+        });
 
-    // Fungsi untuk memuat vocab.json
-    const loadVocab = async () => {
-        try {
-            const response = await fetch('/vocab.json');
-            const data = await response.json();
-            setVocab(data);
-        } catch (error) {
-            //console.error('Gagal memuat vocab:', error);
-        }
-    };
+        // microphone permission
+        browserPermission('microphone', (browserPermit) => {
+            if (browserPermit.error && !browserPermit.state) {
+                // console.log('Error perizinan Microphone: ', browserPermit.error);
+            } else {
+                dispatch(setMicrophoneStatus(browserPermit.state));
+            }
+        });
+    }, [dispatch, setCameraStatus, setMicrophoneStatus]);
 
-    // Fungsi untuk memuat label_encoder.json
-    const loadLabelEncoder = async () => {
-        try {
-            const response = await fetch('/label_encoder.json');
-            const data = await response.json();
-            setLabelEncoder(data);
-        } catch (error) {
-            //console.error('Gagal memuat label encoder:', error);
-        }
-    };
-
-    // EFFECTS
-    // init speech recognition
+    // Init speech recognition
     useEffect(() => {
         try {
             recognition.start();
@@ -221,12 +214,10 @@ const Rapor = () => {
         }
     }, []);
 
+    // Load Data
     useEffect(() => {
         if (token) {
             if (loadData) {
-                loadModel();
-                loadVocab();
-                loadLabelEncoder();
                 const fetchApiRapot = async () => {
                     try {
                         const response = await userGetRapotApi({ token });
@@ -313,10 +304,14 @@ const Rapor = () => {
         }
     }, [token, loadData, userName, handleMovePage]);
 
+    // Processing Speech Recognition
     useEffect(() => {
         recognition.onresult = (event) => {
             const command = event.results[0][0].transcript.toLowerCase();
             const cleanCommand = command?.replace('.', '');
+            // console.log({
+            //     cleanCommand,
+            // });
 
             if (speechOn && !skipSpeech) {
                 const removePunctuationWords = punctuationRemoval(cleanCommand);
@@ -340,7 +335,6 @@ const Rapor = () => {
 
                     // Menyusun ulang hasil untuk menyimpan nilai TF-IDF dalam bentuk array
                     const orderedResults = tfidfResults.map((result) => result.tfidf);
-
                     const inputArray = [orderedResults]; // Sesuaikan dengan bentuk input model
                     const inputTensor = tf.tensor2d(inputArray);
                     const prediction = model.predict(inputTensor);
@@ -359,7 +353,6 @@ const Rapor = () => {
                                 text: 'Anda akan menuju halaman Peringkat',
                                 actionOnEnd: () => {
                                     setDisplayTranscript(false);
-                                    // router.push('/peringkat');
                                     handleMovePage('/peringkat');
                                 },
                             });
@@ -369,7 +362,6 @@ const Rapor = () => {
                             if (cleanCommand.includes('selesai')) {
                                 setTrancript('cari kelas selesai');
                                 setSpeechOn(false);
-                                //console.log('Kelaas selese: ', finishedClass);
                                 if (finishedClass.length === 0) {
                                     speechAction({
                                         text: `Belum ada nilai!, Anda belum menyelesaikan kelas satu pun!`,
@@ -397,7 +389,6 @@ const Rapor = () => {
                             } else if (cleanCommand.includes('berjalan')) {
                                 setTrancript('cari kelas berjalan');
                                 setSpeechOn(false);
-                                //console.log('Kelaas jalan: ', runningClass);
                                 speechAction({
                                     text: `Berikut daftar kelas yang sedang berjalan`,
                                     actionOnEnd: () => {
@@ -426,7 +417,6 @@ const Rapor = () => {
                                     const findKelas = runningClass.find((k) => k.name.toLowerCase() === kelasCommand);
 
                                     if (!findKelas) {
-                                        //console.log(kelasCommand.length);
                                         if (kelasCommand.length >= 10) {
                                             speechAction({
                                                 text: `kelas tidak ditemukan!, sepertinya suara yang Anda ucap kurang jelas, Anda bisa ulangi lagi!`,
@@ -485,7 +475,6 @@ const Rapor = () => {
                                     text: `Anda akan belajar kembali kelas ${enrollClass}`,
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        // router.push(`/kelas/${enrollClass}`);
                                         handleMovePage(`/kelas/${enrollClass}`);
                                     },
                                 });
@@ -494,7 +483,6 @@ const Rapor = () => {
                     } else if (cleanCommand.includes('jelaskan')) {
                         if (cleanCommand.includes('intruksi') || cleanCommand.includes('instruksi')) {
                             setTrancript('jelaskan instruksi');
-                            //console.log('dapet nih');
                             setSpeechOn(false);
                             setIsClickButton(false);
                             setIsPlayIntruction(true);
@@ -536,8 +524,10 @@ const Rapor = () => {
                     // prediction
                     if (checkValueOfResult !== 0) {
                         const predictedCommand = labelEncoder[predictedClassIndex];
-                        //console.log('Check value result: ', checkValueOfResult);
-                        //console.log('Predicted command : ', predictedCommand);
+                        // console.log({
+                        //     'Check value result ': checkValueOfResult,
+                        //     'Predicted command ': predictedCommand,
+                        // });
                         if (predictedCommand.includes('pergi')) {
                             if (predictedCommand.includes('beranda')) {
                                 setTrancript(predictedCommand);
@@ -546,7 +536,6 @@ const Rapor = () => {
                                     text: 'Anda akan menuju halaman Beranda',
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        // router.push('/');
                                         handleMovePage('/');
                                     },
                                 });
@@ -557,7 +546,6 @@ const Rapor = () => {
                                     text: 'Anda akan menuju halaman Kelas',
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        // router.push('/kelas');
                                         handleMovePage('/kelas');
                                     },
                                 });
@@ -643,13 +631,17 @@ const Rapor = () => {
         };
 
         // CLEAR TRIGGER
-        //console.log('TRIGGER CONDITION: ', speechOn);
+        // console.log({
+        //     'TRIGGER CONDITION ': speechOn,
+        // });
         if (speechOn) {
             const timer = setTimeout(() => {
                 speechAction({
                     text: 'saya diam',
                     actionOnEnd: () => {
-                        // //console.log('speech diclear');
+                        // console.log({
+                        //     'Speeck di clear ': speechOn,
+                        // });
                         setDisplayTranscript(false);
                         setSpeechOn(false);
                     },
@@ -662,7 +654,7 @@ const Rapor = () => {
         }
     }, [handleMovePage, finishedClass, runningClass, classShow, speechOn, skipSpeech, userName, model, vocab, labelEncoder]);
 
-    //effects
+    // Space Keyboard Setup
     useEffect(() => {
         const spaceButtonIntroAction = (event) => {
             return buttonAction({
@@ -705,7 +697,10 @@ const Rapor = () => {
         };
     }, [isClickButton, isPlayIntruction, isPermit]);
 
-    console.log('permittt: ', isPermit);
+    // Setting if Window in small size
+    if (windowSize.innerWidth < 768) {
+        return <h1>You cant acces this page with {windowSize.innerWidth}px</h1>;
+    }
 
     return (
         <div className='h-screen bg-primary-1'>
@@ -770,6 +765,4 @@ const Rapor = () => {
             <CheckPermission />
         </div>
     );
-};
-
-export default Rapor;
+}
