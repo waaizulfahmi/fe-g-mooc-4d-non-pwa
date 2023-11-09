@@ -26,7 +26,7 @@
 // apis
 // utils
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useRef, useState, useEffect } from 'react';
 
 // third parties
@@ -36,7 +36,7 @@ import Webcam from 'react-webcam';
 // import Popup from 'reactjs-popup';
 
 // hooks
-import { useNotification } from '@/hooks';
+import { useCheckReloadPage, useNotification, useMovePage } from '@/hooks';
 
 // component
 import BorderedButton from '@/components/BorderedButton';
@@ -56,6 +56,7 @@ import { browserPermission } from '@/utils/browserPermission';
 
 const Login = () => {
     const dispatch = useDispatch();
+    const pathname = usePathname();
     const router = useRouter();
     const { notifData, handleNotifAction, handleNotifVisible } = useNotification();
     const webcamRef = useRef();
@@ -67,8 +68,8 @@ const Login = () => {
 
     const [isFaceSuccess, setIsFaceSuccess] = useState(false);
     const isPermit = useSelector(getIsPermit);
-    const { setCameraStatus, setMicrophoneStatus } = checkPermissionSlice.actions;
-    const cameraStatus = useSelector(getCameraStatus);
+    const { setCameraStatus, setMicrophoneStatus, setIsPermit } = checkPermissionSlice.actions;
+    // const cameraStatus = useSelector(getCameraStatus);
     // console.log('Camera status in UI: ', cameraStatus);
 
     // ACCESSIBILITY STATE
@@ -78,6 +79,23 @@ const Login = () => {
     const [displayTranscript, setDisplayTranscript] = useState(false); // state untuk  menampilkan transcript
     const [isClickButton, setIsClickButton] = useState(false); // state untuk aksi tombol
     const [isPlayIntruction, setIsPlayIntruction] = useState(false); // state  ketika intruksi berjalan
+
+    const { sessioName } = useCheckReloadPage({ name: pathname });
+    const { handleMovePage } = useMovePage(sessioName);
+
+    useEffect(() => {
+        const deleteSessionReload = () => {
+            console.log('it worked login');
+            sessionStorage.removeItem(sessioName);
+            dispatch(setIsPermit(false));
+        };
+
+        window.addEventListener('pageshow', deleteSessionReload);
+
+        return () => {
+            window.removeEventListener('pageshow', deleteSessionReload);
+        };
+    }, [sessioName, dispatch, setIsPermit]);
 
     const waitForCamera = () => {
         const cameraCheckInterval = setInterval(() => {
@@ -178,7 +196,8 @@ const Login = () => {
                 text: 'Kami Berhasil Mengenali Anda, tunggu beberapa saat,   anda akan diarahkan ke halaman beranda',
                 actionOnEnd: () => {
                     router.refresh();
-                    router.replace('/', { scroll: false });
+                    // router.replace('/', { scroll: false });
+                    handleMovePage('/', 'replace', false);
                 },
             });
         } else if (response?.error) {
@@ -198,7 +217,8 @@ const Login = () => {
 
         if (!response?.error) {
             router.refresh();
-            router.replace('/', { scroll: false });
+            // router.replace('/', { scroll: false });
+            handleMovePage('/', 'replace', false);
         } else if (response?.error) {
             handleNotifAction('error', response.error);
         }
@@ -234,11 +254,12 @@ const Login = () => {
     useEffect(() => {
         registerServiceWorker();
     }, []);
-    
+
     useEffect(() => {
         if (isCameraReady) {
             waitForCamera();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isCameraReady]);
 
     useEffect(() => {
@@ -332,16 +353,16 @@ const Login = () => {
                 clearTimeout(timer);
             };
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [speechOn, isCameraOpen, skipSpeech]);
-    // console.log('Camera permission: ', cameraPermitStatus);
 
     return (
         <section className='grid h-screen grid-cols-12'>
             <div className='relative col-span-4 hidden h-full md:block'>
-                <Image priority src={'/images/left-auth.png'} alt='' fill sizes='100vh' />
+                <Image priority src={'/small-images/left-auth.webp'} alt='left auth background' fill sizes='100vh' />
                 <Image
-                    alt=''
-                    src={'/images/icon-white.svg'}
+                    alt='white icon gmooc'
+                    src={'/small-images/icon-white.webp'}
                     width={166}
                     height={60}
                     className='absolute left-[24px] top-[24px] '
@@ -355,7 +376,7 @@ const Login = () => {
                         onClick={() => {
                             stopSpeech();
                             router.refresh();
-                            router.replace('/register', { scroll: false });
+                            handleMovePage('/register', 'replace', false);
                         }}>
                         Daftar
                     </BorderedButton>
@@ -380,7 +401,6 @@ const Login = () => {
                                     height={500}
                                     screenshotFormat='image/jpeg'
                                     className='mx-auto flex w-3/4 rounded-lg text-center shadow-lg'
-                                    // onUserMedia={handleUserMedia}
                                 />
 
                                 {isLoading ? (
@@ -475,7 +495,7 @@ const Login = () => {
                     </button>
                     <button
                         className='relative text-center text-base font-semibold md:hidden'
-                        onClick={() => router.replace('/register', { scroll: false })}>
+                        onClick={() => handleMovePage('/register', 'replace', false)}>
                         Daftar Akun
                     </button>
                 </div>

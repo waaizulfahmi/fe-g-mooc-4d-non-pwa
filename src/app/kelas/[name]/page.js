@@ -20,7 +20,7 @@
 
 // core
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
 import Image from 'next/image';
 
 // third party
@@ -30,7 +30,8 @@ import { PDFDownloadLink } from '@react-pdf/renderer/lib/react-pdf.browser.es.js
 import * as tf from '@tensorflow/tfjs';
 
 // redux
-// ---
+import { useDispatch, useSelector } from 'react-redux';
+import { checkPermissionSlice, getIsPermit } from '@/redux/check-permission';
 
 // components
 import HeroIcon from '@/components/HeroIcon';
@@ -59,12 +60,16 @@ import { buttonAction } from '@/utils/space-button-action';
 import { punctuationRemoval, stemming, removeStopwords } from '@/utils/special-text';
 import { calculateTFIDFWithWeights } from '@/utils/tfidf';
 import { useCallback } from 'react';
+import { useCheckReloadPage, useMovePage } from '@/hooks';
+import CheckPermission from '@/components/CheckPermission';
+import { Router } from 'next/router';
 
 const EnrollKelas = () => {
     const { data } = useSession();
     const { name } = useParams();
     const token = data?.user?.token;
-    const router = useRouter();
+    // const router = useRouter();
+    const isPermit = useSelector(getIsPermit);
 
     // STATE
     // load data
@@ -111,9 +116,30 @@ const EnrollKelas = () => {
     const [isClickButton, setIsClickButton] = useState(false); // state untuk aksi tombol
     const [isPlayIntruction, setIsPlayIntruction] = useState(false); // state  ketika intruksi berjalan
 
+    const dispatch = useDispatch();
+    const { setIsPermit } = checkPermissionSlice.actions;
+
     // NOTIFICATION
     const [poinNotif, setPoinNotif] = useState(0);
     const [isVisible, setVisible] = useState(false);
+
+    const pathname = usePathname();
+    const { sessioName } = useCheckReloadPage({ name: pathname });
+    const { handleMovePage } = useMovePage(sessioName);
+
+    useEffect(() => {
+        const deleteSessionReload = () => {
+            console.log('it worked kelas belajar');
+            dispatch(setIsPermit(false));
+            sessionStorage.removeItem(sessioName);
+        };
+
+        window.addEventListener('pageshow', deleteSessionReload);
+
+        return () => {
+            window.removeEventListener('pageshow', deleteSessionReload);
+        };
+    }, [sessioName, dispatch, setIsPermit]);
 
     const handleNotifAction = useCallback(() => {
         // setPoinNotif(poin);
@@ -701,7 +727,8 @@ const EnrollKelas = () => {
                                 speechAction({
                                     text: 'Anda harus verifikasi akun Anda terlebih dahulu. Silahkan check email Anda!',
                                     actionOnEnd: () => {
-                                        router.replace('/must-verify');
+                                        // router.replace('/must-verify');
+                                        handleMovePage('must-verify', 'replace', false);
                                     },
                                 });
                             }
@@ -725,7 +752,7 @@ const EnrollKelas = () => {
         currentQuiz,
         isCetakSertifikat,
         userName,
-        router,
+        handleMovePage,
         handleNotifAction,
         poin,
     ]);
@@ -1064,7 +1091,8 @@ const EnrollKelas = () => {
                                     text: `Anda akan menuju halaman Daftar Kelas`,
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        router.push('/kelas');
+                                        // router.push('/kelas');
+                                        handleMovePage('/kelas');
                                     },
                                 });
                             } else if (predictedCommand.includes('beranda')) {
@@ -1074,7 +1102,8 @@ const EnrollKelas = () => {
                                     text: `Anda akan menuju halaman beranda`,
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        router.push('/');
+                                        // router.push('/');
+                                        handleMovePage('/');
                                     },
                                 });
                             } else if (predictedCommand.includes('rapor')) {
@@ -1084,7 +1113,8 @@ const EnrollKelas = () => {
                                     text: `Anda akan menuju halaman Rapor`,
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        router.push('/rapor');
+                                        // router.push('/rapor');
+                                        handleMovePage('/rapor');
                                     },
                                 });
                             } else if (predictedCommand.includes('peringkat')) {
@@ -1095,7 +1125,8 @@ const EnrollKelas = () => {
                                     text: 'Anda akan menuju halaman Peringkat',
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        router.push('/peringkat');
+                                        // router.push('/peringkat');
+                                        handleMovePage('/peringkat');
                                     },
                                 });
                             } else {
@@ -1285,7 +1316,7 @@ const EnrollKelas = () => {
             };
         }
     }, [
-        router,
+        handleMovePage,
         materi,
         name,
         token,
@@ -1306,43 +1337,45 @@ const EnrollKelas = () => {
     //effects
     useEffect(() => {
         const spaceButtonIntroAction = (event) => {
-            buttonAction({
+            return buttonAction({
                 event: event,
                 key: ' ',
                 keyCode: 32,
                 action: () => {
-                    if (!isClickButton) {
-                        setSpeechOn(false);
-                        stopSpeech();
-                        if (isPlayIntruction) {
-                            speechAction({
-                                text: 'Anda mematikan intruksi',
-                                actionOnEnd: () => {
-                                    setDisplayTranscript(false);
-                                    setSkipSpeech(false);
-                                    setIsClickButton(true);
-                                    setIsPlayIntruction(false);
-                                },
-                            });
-                            return;
-                        }
-                        if (isIntro) {
-                            speechAction({
-                                text: 'Anda melewati Intro Halaman Belajar',
-                                actionOnEnd: () => {
-                                    setIntro(false);
-                                    setSkipSpeech(false);
-                                    setIsClickButton(true);
-                                },
-                            });
-                        } else {
-                            speechAction({
-                                text: 'Anda melewati Intro Halaman',
-                                actionOnEnd: () => {
-                                    setSkipSpeech(false);
-                                    setIsClickButton(true);
-                                },
-                            });
+                    if (isPermit) {
+                        if (!isClickButton) {
+                            setSpeechOn(false);
+                            stopSpeech();
+                            if (isPlayIntruction) {
+                                speechAction({
+                                    text: 'Anda mematikan intruksi',
+                                    actionOnEnd: () => {
+                                        setDisplayTranscript(false);
+                                        setSkipSpeech(false);
+                                        setIsClickButton(true);
+                                        setIsPlayIntruction(false);
+                                    },
+                                });
+                                return;
+                            }
+                            if (isIntro) {
+                                speechAction({
+                                    text: 'Anda melewati Intro Halaman Belajar',
+                                    actionOnEnd: () => {
+                                        setIntro(false);
+                                        setSkipSpeech(false);
+                                        setIsClickButton(true);
+                                    },
+                                });
+                            } else {
+                                speechAction({
+                                    text: 'Anda melewati Intro Halaman',
+                                    actionOnEnd: () => {
+                                        setSkipSpeech(false);
+                                        setIsClickButton(true);
+                                    },
+                                });
+                            }
                         }
                     }
                 },
@@ -1353,7 +1386,7 @@ const EnrollKelas = () => {
         return () => {
             window.removeEventListener('keydown', spaceButtonIntroAction);
         };
-    }, [isClickButton, isPlayIntruction, isIntro]);
+    }, [isClickButton, isPlayIntruction, isIntro, isPermit]);
 
     return (
         <div className='h-screen bg-[#EDF3F3]'>
@@ -1449,7 +1482,7 @@ const EnrollKelas = () => {
                                 <h1 className='text-[46px] font-bold leading-[57px]'>Kelas {introData?.name}</h1>
                                 <div className='mt-[40px] '>
                                     <Image
-                                        alt=''
+                                        alt={`course - ${introData?.imageUrl}`}
                                         src={getImageFile(introData?.imageUrl)}
                                         width={300}
                                         height={300}
@@ -1514,11 +1547,6 @@ const EnrollKelas = () => {
                         )}
                         {isCetakSertifikat && (
                             <div>
-                                {/* <div style={{ width: '100%', height: '80vh' }}>
-                                    <PDFViewer width='100%' height='100%'>
-                                        <Certificate name={'arief'} kelas={'JavaScript'} />
-                                    </PDFViewer>
-                                </div> */}
                                 <PDFDownloadLink
                                     document={<Certificate name={userName} kelas={enrollClassName} />}
                                     // fileName="Jamal Certificate.pdf"
@@ -1544,6 +1572,7 @@ const EnrollKelas = () => {
             </div>
             <Transkrip transcript={transcript} isTrigger={displayTranscript} />
             <MateriPoinNotification time={2000} isVisible={isVisible} poin={poinNotif} handleVisible={handleNotifAction} />
+            <CheckPermission />
         </div>
     );
 };

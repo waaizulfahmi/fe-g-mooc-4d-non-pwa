@@ -26,7 +26,9 @@ import { useEffect, useRef, useState } from 'react';
 import YouTubePlayer from 'youtube-player';
 
 // redux
-// ---
+// redux
+import { useSelector } from 'react-redux';
+import { getIsPermit } from '@/redux/check-permission';
 
 // components
 // ---
@@ -44,6 +46,7 @@ import { buttonAction } from '@/utils/space-button-action';
 const VideoFrame = ({ playback, videoId, handleEditMateri, isInterrop }) => {
     const [pause, setPause] = useState(false);
     const playerRef = useRef(null);
+    const isPermit = useSelector(getIsPermit);
 
     useEffect(() => {
         const handleVideoLength = async (player) => {
@@ -130,13 +133,16 @@ const VideoFrame = ({ playback, videoId, handleEditMateri, isInterrop }) => {
                 key: ' ',
                 keyCode: 32,
                 action: () => {
-                    if (!isInterrop) {
-                        if (!pause) {
-                            playerRef.current.playVideo();
-                            setPause(true);
-                        } else {
-                            playerRef.current.pauseVideo();
-                            setPause(false);
+                    if (isPermit) {
+                        console.log('test', isPermit);
+                        if (!isInterrop) {
+                            if (!pause) {
+                                playerRef.current.playVideo();
+                                setPause(true);
+                            } else {
+                                playerRef.current.pauseVideo();
+                                setPause(false);
+                            }
                         }
                     }
                 },
@@ -148,7 +154,7 @@ const VideoFrame = ({ playback, videoId, handleEditMateri, isInterrop }) => {
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [pause, isInterrop]);
+    }, [pause, isInterrop, isPermit]);
 
     return (
         <>

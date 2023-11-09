@@ -41,7 +41,7 @@ import PropTypes from 'prop-types';
 const HeroIcon = ({ alt, imgUrl, width, height, className, onClick }) => {
     return (
         <div onClick={onClick} className={`${className} cursor-pointer`}>
-            <Image alt={alt} src={imgUrl} width={width} height={height} />
+            <Image alt={alt} src={imgUrl} width={width} height={height} priority />
         </div>
     );
 };

@@ -20,7 +20,7 @@
 
 // core
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 // third party
 import { useSession } from 'next-auth/react';
@@ -49,14 +49,27 @@ import { buttonAction } from '@/utils/space-button-action';
 import { punctuationRemoval, stemming, removeStopwords } from '@/utils/special-text';
 import { calculateTFIDFWithWeights } from '@/utils/tfidf';
 import { browserPermission } from '@/utils/browserPermission';
+import { useCheckReloadPage, useMovePage } from '@/hooks';
+
+// hooks
+//---
 
 export default function Beranda() {
-    const router = useRouter();
+    // const router = useRouter();
+    const pathname = usePathname();
     const { data } = useSession();
     const userName = data?.user?.name;
-    const isPermit = useSelector(getIsPermit);
+
+    // REDUX
     const dispatch = useDispatch();
-    const { setCameraStatus, setMicrophoneStatus } = checkPermissionSlice.actions;
+    const isPermit = useSelector(getIsPermit);
+    const { setCameraStatus, setMicrophoneStatus, setIsPermit } = checkPermissionSlice.actions;
+    // const isCheckLightHouseMode = useSelector(getIsCheckLightHouseMode);
+    // console.log('STATUS LIGHTHOUSE: ', isCheckLightHouseMode);
+
+    // CUSTOM HOOKS
+    const { sessioName } = useCheckReloadPage({ name: pathname });
+    const { handleMovePage } = useMovePage(sessioName);
 
     // COMMON STATE
     // --
@@ -73,6 +86,20 @@ export default function Beranda() {
     const [displayTranscript, setDisplayTranscript] = useState(false); // state untuk  menampilkan transcript
     const [isClickButton, setIsClickButton] = useState(false); // state untuk aksi tombol
     const [isPlayIntruction, setIsPlayIntruction] = useState(false); // state  ketika intruksi berjalan
+
+    useEffect(() => {
+        const deleteSessionReload = () => {
+            console.log('it worked home');
+            dispatch(setIsPermit(false));
+            sessionStorage.removeItem(sessioName);
+        };
+
+        window.addEventListener('pageshow', deleteSessionReload);
+
+        return () => {
+            window.removeEventListener('pageshow', deleteSessionReload);
+        };
+    }, [sessioName, dispatch, setIsPermit]);
 
     // FUNCTION
     // Fungsi untuk memuat model
@@ -135,50 +162,48 @@ export default function Beranda() {
     }, []);
 
     useEffect(() => {
-        if (userName) {
-            if (isPermit) {
-                loadModel();
-                loadVocab();
-                loadLabelEncoder();
-                speechWithBatch({
-                    speechs: [
-                        {
-                            text: `Selamat datang di ji muk fordi, ${userName}`,
-                            actionOnStart: () => {
-                                setSkipSpeech(true);
-                            },
+        if (userName && isPermit) {
+            loadModel();
+            loadVocab();
+            loadLabelEncoder();
+            speechWithBatch({
+                speechs: [
+                    {
+                        text: `Selamat datang di ji muk fordi, ${userName}`,
+                        actionOnStart: () => {
+                            setSkipSpeech(true);
                         },
-                        {
-                            text: 'Perkenalkan saya Uli, saya akan memandu Anda untuk belajar. ucapkan hai atau hello uli agar saya dapat mendengar Anda',
+                    },
+                    {
+                        text: 'Perkenalkan saya Uli, saya akan memandu Anda untuk belajar. ucapkan hai atau hello uli agar saya dapat mendengar Anda',
+                    },
+                    {
+                        text: `Halaman ini adalah halaman beranda, pada halaman ini merupakan halaman  pertama kali ketika Anda menggunakan aplikasi.`,
+                    },
+                    {
+                        text: 'Pada halaman ini terdapat berbagai perintah untuk pergi ke halaman lain, contohnya halaman kelas, raport, dan peringkat.',
+                    },
+                    {
+                        text: 'Untuk masuk halaman tersebut Anda bisa mengucapkan pergi ke halaman yang Anda tuju, misalnya, pergi ke kelas',
+                    },
+                    {
+                        text: 'Jangan lupa ucapkan hi Uli atau hallo uli agar saya bisa mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.',
+                    },
+                    {
+                        text: `Saya juga akan diam, jika perintah sudah dilakukan. Tapi Anda jangan khawatir, panggil saja saya lagi dengan hi Uli atau hallo uli agar saya dapat mendengar Anda.`,
+                    },
+                    {
+                        text: 'Satu lagi, Anda wajib menunggu saya berbicara sampai selesai, agar saya bisa mendengar Anda kembali',
+                    },
+                    {
+                        text: 'Jika Anda masih bingung, Anda bisa ucapkan intruksi agar mendapatkan penjelasan lebih banyak.',
+                        actionOnEnd: () => {
+                            setIsClickButton(true); // ketika sampai akhir button seolah sudah terclick
+                            setSkipSpeech(false);
                         },
-                        {
-                            text: `Halaman ini adalah halaman beranda, pada halaman ini merupakan halaman  pertama kali ketika Anda menggunakan aplikasi.`,
-                        },
-                        {
-                            text: 'Pada halaman ini terdapat berbagai perintah untuk pergi ke halaman lain, contohnya halaman kelas, raport, dan peringkat.',
-                        },
-                        {
-                            text: 'Untuk masuk halaman tersebut Anda bisa mengucapkan pergi ke halaman yang Anda tuju, misalnya, pergi ke kelas',
-                        },
-                        {
-                            text: 'Jangan lupa ucapkan hi Uli atau hallo uli agar saya bisa mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.',
-                        },
-                        {
-                            text: `Saya juga akan diam, jika perintah sudah dilakukan. Tapi Anda jangan khawatir, panggil saja saya lagi dengan hi Uli atau hallo uli agar saya dapat mendengar Anda.`,
-                        },
-                        {
-                            text: 'Satu lagi, Anda wajib menunggu saya berbicara sampai selesai, agar saya bisa mendengar Anda kembali',
-                        },
-                        {
-                            text: 'Jika Anda masih bingung, Anda bisa ucapkan intruksi agar mendapatkan penjelasan lebih banyak.',
-                            actionOnEnd: () => {
-                                setIsClickButton(true); // ketika sampai akhir button seolah sudah terclick
-                                setSkipSpeech(false);
-                            },
-                        },
-                    ],
-                });
-            }
+                    },
+                ],
+            });
         }
     }, [userName, isPermit]);
 
@@ -231,7 +256,9 @@ export default function Beranda() {
                                 text: 'Anda akan menuju halaman Peringkat',
                                 actionOnEnd: () => {
                                     setDisplayTranscript(false);
-                                    router.push('/peringkat');
+                                    // localStorage.removeItem('homepage');
+                                    // router.push('/peringkat');
+                                    handleMovePage('/peringkat');
                                 },
                             });
                         }
@@ -283,7 +310,9 @@ export default function Beranda() {
                                     text: 'Anda akan menuju halaman Daftar Kelas',
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        router.push('/kelas');
+                                        // localStorage.removeItem('homepage');
+                                        handleMovePage('/kelas');
+                                        // router.push('/kelas');
                                     },
                                 });
                             } else if (predictedCommand.includes('rapor')) {
@@ -293,7 +322,9 @@ export default function Beranda() {
                                     text: 'Anda akan menuju halaman Rapor',
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        router.push('/rapor');
+                                        // localStorage.removeItem('homepage');
+                                        // router.push('/rapor');
+                                        handleMovePage('/rapor');
                                     },
                                 });
                             }
@@ -389,12 +420,12 @@ export default function Beranda() {
                 clearTimeout(timer);
             };
         }
-    }, [router, speechOn, userName, skipSpeech, labelEncoder, model, vocab]);
+    }, [handleMovePage, speechOn, userName, skipSpeech, labelEncoder, model, vocab]);
 
     //effects
     useEffect(() => {
         const spaceButtonIntroAction = (event) => {
-            buttonAction({
+            return buttonAction({
                 event: event,
                 key: ' ',
                 keyCode: 32,
@@ -426,6 +457,7 @@ export default function Beranda() {
                 },
             });
         };
+
         window.addEventListener('keydown', spaceButtonIntroAction);
 
         return () => {

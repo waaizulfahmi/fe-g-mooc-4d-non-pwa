@@ -1,7 +1,7 @@
 'use client';
 
 // core
-import { useRef, useCallback, useState } from 'react';
+import { useRef, useCallback, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
@@ -14,7 +14,7 @@ import Popup from 'reactjs-popup';
 import { authRegister } from '@/axios/auth';
 
 // hooks
-import { useNotification } from '@/hooks';
+import { useCheckReloadPage, useMovePage, useNotification } from '@/hooks';
 
 //
 
@@ -27,6 +27,10 @@ import Notification from '@/components/Notification';
 
 import { ApiResponseError } from '@/utils/error-handling';
 import { stopSpeech } from '@/utils/text-to-speech';
+import { usePathname } from 'next/navigation';
+import CheckPermission from '@/components/CheckPermission';
+import { useDispatch } from 'react-redux';
+import { checkPermissionSlice } from '@/redux/check-permission';
 
 const Register = () => {
     const webcamRef = useRef(null);
@@ -35,6 +39,27 @@ const Register = () => {
     const [isDaftar, setIsDaftar] = useState(false);
     const maxImages = 20;
     const interval = 500; // Ubah sesuai kebutuhan
+
+    const pathname = usePathname();
+    const { sessioName } = useCheckReloadPage({ name: pathname });
+    const { handleMovePage } = useMovePage(sessioName);
+
+    const dispatch = useDispatch();
+    const { setIsPermit } = checkPermissionSlice.actions;
+
+    useEffect(() => {
+        const deleteSessionReload = () => {
+            console.log('it worked register');
+            dispatch(setIsPermit(false));
+            sessionStorage.removeItem(sessioName);
+        };
+
+        window.addEventListener('pageshow', deleteSessionReload);
+
+        return () => {
+            window.removeEventListener('pageshow', deleteSessionReload);
+        };
+    }, [sessioName, dispatch, setIsPermit]);
 
     const capture = useCallback(() => {
         const imageSrc = webcamRef.current.getScreenshot();
@@ -101,7 +126,8 @@ const Register = () => {
                     setTimeout(() => {
                         setIsDaftar(false);
                         router.refresh();
-                        router.replace('/login', { scroll: false });
+                        // router.replace('/login', { scroll: false });
+                        handleMovePage('/login', 'replace', false);
                     }, 1000);
                 }
             } catch (error) {
@@ -118,42 +144,13 @@ const Register = () => {
         }
     };
 
-    // const onSubmit = async (data) => {
-    //     if (typeof window !== 'undefined') {
-    //         try {
-    //             await authRegister({
-    //                 name: data.name,
-    //                 email: data.email,
-    //                 host: window?.location?.origin,
-    //                 password: data.password,
-    //                 konfirmasi_password: data.password_confirmation,
-    //             });
-    //             handleNotifAction('success', 'Yeay ! Registrasi Berhasil.\nCheck Email Anda untuk verifikasi Akun!');
-    //             if (!notifData?.isVisible) {
-    //                 setTimeout(() => {
-    //                     router.replace('/login', { scroll: false });
-    //                 }, 1000);
-    //             }
-    //         } catch (error) {
-    //             if (error instanceof ApiResponseError) {
-    //                 console.log(`ERR REGISTER MESSAGE: `, error.message);
-    //                 console.log(error.data);
-    //                 handleNotifAction('error', error?.message);
-    //                 return;
-    //             }
-    //             console.log(`MESSAGE: `, error.message);
-    //             handleNotifAction('error', error?.message);
-    //         }
-    //     }
-    // };
-
     return (
         <section className='grid h-screen grid-cols-12'>
             <div className={`relative  col-span-4 hidden h-full md:block`}>
-                <Image priority src={'/images/left-auth.png'} alt='' fill />
+                <Image priority src={'/small-images/left-auth.webp'} alt='left auth background' fill />
                 <Image
-                    alt=''
-                    src={'/images/icon-white.svg'}
+                    alt='white icon gmooc'
+                    src={'/small-images/icon-white.webp'}
                     width={166}
                     height={60}
                     className='absolute left-[24px] top-[24px]'
@@ -167,7 +164,7 @@ const Register = () => {
                         onClick={() => {
                             stopSpeech();
                             router.refresh();
-                            router.replace('/login', { scroll: false });
+                            handleMovePage('/login', 'replace', false);
                         }}>
                         Masuk
                     </BorderedButton>
@@ -179,7 +176,7 @@ const Register = () => {
                         <h1 className='text-xl font-bold md:text-title-2'>Buat Akun Baru</h1>
                         <p className='text-body-2'>Buktikan Sekarang Semua Bisa Belajar</p>
                     </div>
-                    <form className='flex flex-col items-center gap-[14px] md:mx-0 mx-4 ' onSubmit={handleSubmit(onSubmit)}>
+                    <form className='mx-4 flex flex-col items-center gap-[14px] md:mx-0 ' onSubmit={handleSubmit(onSubmit)}>
                         <div className='w-full'>
                             <Label htmlFor='name' className={`${errors.name?.message ? 'text-alert-1' : 'text-black'}`}>
                                 {errors.name?.message || <span className='invisible'>.</span>}
@@ -286,7 +283,7 @@ const Register = () => {
                         </FillButton>
                         <div
                             className='block text-center text-base font-semibold md:hidden'
-                            onClick={() => router.replace('/login', { scroll: false })}>
+                            onClick={() => handleMovePage('/login', 'replace', false)}>
                             Login
                         </div>
                     </form>
@@ -299,6 +296,7 @@ const Register = () => {
                 text={notifData.text}
                 type={notifData.type}
             />
+            <CheckPermission />
         </section>
     );
 };

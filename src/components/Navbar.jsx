@@ -102,21 +102,6 @@ const Navbar = ({ className }) => {
     });
 
     return (
-        // <nav
-        //     className={`${colorTheme(path)} ${
-        //         isScrolled ? 'shadow-low' : 'shadow-none'
-        //     } ${className} fixed top-0 z-20 w-screen  py-[20px] `}>
-        //     <div className='mx-auto flex max-w-screen-xl flex-wrap items-center justify-between'>
-        //         <HeroIcon
-        //             alt='icons'
-        //             imgUrl={path === '/rapor' || path === '/peringkat' ? '/images/icon-white.svg' : '/images/voice-icon.svg'}
-        //             height={120}
-        //             width={140}
-        //         />
-        //         <Links links={navUrlPath} />
-        //         <NavbarButton />
-        //     </div>
-        // </nav>
         <nav
             className={`${colorTheme(path)} ${
                 isScrolled ? 'shadow-low' : 'shadow-none'
@@ -124,13 +109,15 @@ const Navbar = ({ className }) => {
             <div className='mx-auto flex max-w-screen-xl flex-wrap items-center justify-between'>
                 <HeroIcon
                     alt='icons'
-                    imgUrl={path === '/rapor' || path === '/peringkat' ? '/images/icon-white.svg' : '/images/voice-icon.svg'}
+                    imgUrl={
+                        path === '/rapor' || path === '/peringkat' ? '/small-images/icon-white.webp' : '/images/voice-icon.svg'
+                    }
                     height={120}
                     width={140}
                 />
 
                 {/* Hamburger menu button */}
-                <button className='block pe-2 lg:hidden' onClick={toggleSidebar}>
+                {/* <button className='block pe-2 lg:hidden' onClick={toggleSidebar}>
                     <svg className='h-6 w-6 fill-current' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
                         {isOpen ? (
                             <path
@@ -142,7 +129,7 @@ const Navbar = ({ className }) => {
                             <path fillRule='evenodd' clipRule='evenodd' d='M4 6H20V8H4V6ZM4 13H20V15H4V13ZM4 21H20V23H4V21Z' />
                         )}
                     </svg>
-                </button>
+                </button> */}
 
                 <div className='hidden md:block'>
                     <Links links={navUrlPath} />

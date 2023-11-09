@@ -20,7 +20,7 @@
 
 // core
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import PropTypes from 'prop-types';
 
@@ -53,6 +53,10 @@ import { apiInstance } from '@/axios/instance';
 import { buttonAction } from '@/utils/space-button-action';
 import { punctuationRemoval, stemming, removeStopwords } from '@/utils/special-text';
 import { calculateTFIDFWithWeights } from '@/utils/tfidf';
+import { useCheckReloadPage, useMovePage } from '@/hooks';
+import CheckPermission from '@/components/CheckPermission';
+import { useDispatch, useSelector } from 'react-redux';
+import { checkPermissionSlice, getIsPermit } from '@/redux/check-permission';
 
 const userGetRapotApi = async ({ token }) => {
     try {
@@ -96,7 +100,7 @@ const DisplayClass = ({ listClass }) => {
                               key={idx + 1}
                               className='flex items-center justify-between rounded-rad-7 bg-[#F5F5F5] px-[24px] py-[14px]'>
                               <div className='flex items-center gap-[34px]'>
-                                  <Image alt='' src={getImageFile(rClass.image)} width={54} height={54} />
+                                  <Image alt={`kelas ${idx}`} src={getImageFile(rClass.image)} width={54} height={54} />
                                   <p className='text-[18px] font-bold leading-[24px]'>{rClass.name}</p>
                               </div>
                               <div className='flex items-center gap-[16px]'>
@@ -128,7 +132,7 @@ const Rapor = () => {
     const { data } = useSession();
     const token = data?.user?.token;
     const userName = data?.user?.name;
-    const router = useRouter();
+    // const router = useRouter();
 
     // COMMON STATE
     const [classShow, setClassShow] = useState('progress'); // progress || done
@@ -151,6 +155,28 @@ const Rapor = () => {
     const [displayTranscript, setDisplayTranscript] = useState(false); // state untuk  menampilkan transcript
     const [isClickButton, setIsClickButton] = useState(false); // state untuk aksi tombol
     const [isPlayIntruction, setIsPlayIntruction] = useState(false); // state  ketika intruksi berjalan
+
+    const dispatch = useDispatch();
+    const isPermit = useSelector(getIsPermit);
+    const { setIsPermit } = checkPermissionSlice.actions;
+
+    const pathname = usePathname();
+    const { sessioName } = useCheckReloadPage({ name: pathname });
+    const { handleMovePage } = useMovePage(sessioName);
+
+    useEffect(() => {
+        const deleteSessionReload = () => {
+            console.log('it worked rapor');
+            dispatch(setIsPermit(false));
+            sessionStorage.removeItem(sessioName);
+        };
+
+        window.addEventListener('pageshow', deleteSessionReload);
+
+        return () => {
+            window.removeEventListener('pageshow', deleteSessionReload);
+        };
+    }, [sessioName, dispatch, setIsPermit]);
 
     //FUNCTION
     // Fungsi untuk memuat model
@@ -271,7 +297,8 @@ const Rapor = () => {
                                 speechAction({
                                     text: 'Anda harus verifikasi akun Anda terlebih dahulu. Silahkan check email Anda!',
                                     actionOnEnd: () => {
-                                        router.replace('/must-verify');
+                                        // router.replace('/must-verify');
+                                        handleMovePage('/must-verify', 'replace', false);
                                     },
                                 });
                             }
@@ -284,7 +311,7 @@ const Rapor = () => {
             }
             setLoadData(false);
         }
-    }, [token, loadData, userName, router]);
+    }, [token, loadData, userName, handleMovePage]);
 
     useEffect(() => {
         recognition.onresult = (event) => {
@@ -332,7 +359,8 @@ const Rapor = () => {
                                 text: 'Anda akan menuju halaman Peringkat',
                                 actionOnEnd: () => {
                                     setDisplayTranscript(false);
-                                    router.push('/peringkat');
+                                    // router.push('/peringkat');
+                                    handleMovePage('/peringkat');
                                 },
                             });
                         }
@@ -457,7 +485,8 @@ const Rapor = () => {
                                     text: `Anda akan belajar kembali kelas ${enrollClass}`,
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        router.push(`/kelas/${enrollClass}`);
+                                        // router.push(`/kelas/${enrollClass}`);
+                                        handleMovePage(`/kelas/${enrollClass}`);
                                     },
                                 });
                             }
@@ -517,7 +546,8 @@ const Rapor = () => {
                                     text: 'Anda akan menuju halaman Beranda',
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        router.push('/');
+                                        // router.push('/');
+                                        handleMovePage('/');
                                     },
                                 });
                             } else if (predictedCommand.includes('kelas')) {
@@ -527,7 +557,8 @@ const Rapor = () => {
                                     text: 'Anda akan menuju halaman Kelas',
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        router.push('/kelas');
+                                        // router.push('/kelas');
+                                        handleMovePage('/kelas');
                                     },
                                 });
                             }
@@ -629,17 +660,17 @@ const Rapor = () => {
                 clearTimeout(timer);
             };
         }
-    }, [router, finishedClass, runningClass, classShow, speechOn, skipSpeech, userName, model, vocab, labelEncoder]);
+    }, [handleMovePage, finishedClass, runningClass, classShow, speechOn, skipSpeech, userName, model, vocab, labelEncoder]);
 
     //effects
     useEffect(() => {
         const spaceButtonIntroAction = (event) => {
-            buttonAction({
+            return buttonAction({
                 event: event,
                 key: ' ',
                 keyCode: 32,
                 action: () => {
-                    if (!isClickButton) {
+                    if (!isClickButton && isPermit) {
                         setSpeechOn(false);
                         stopSpeech();
                         if (isPlayIntruction) {
@@ -672,7 +703,9 @@ const Rapor = () => {
         return () => {
             window.removeEventListener('keydown', spaceButtonIntroAction);
         };
-    }, [isClickButton, isPlayIntruction]);
+    }, [isClickButton, isPlayIntruction, isPermit]);
+
+    console.log('permittt: ', isPermit);
 
     return (
         <div className='h-screen bg-primary-1'>
@@ -685,7 +718,14 @@ const Rapor = () => {
                                 <h1 className='text-[32px] font-bold leading-[60px]'>Hallo, {userName}!</h1>
                                 <p className='text-[16px]  leading-[20px]'>Senang bertemu denganmu lagi</p>
                             </div>
-                            <Image alt='' src={'/images/avatar.svg'} width={117} height={159} className='mr-[95px]' />
+                            <Image
+                                alt='avatar'
+                                src={'/images/avatar.svg'}
+                                width={117}
+                                height={159}
+                                className='mr-[95px]'
+                                priority
+                            />
                         </div>
                         <div style={{ height: 'calc(100vh - 324px)' }}>
                             <div className='flex items-center gap-5'>
@@ -715,13 +755,9 @@ const Rapor = () => {
                                 <h1 className=' mb-[12px] text-[56px] font-bold leading-[60px] text-secondary-1'>{totalPoin}</h1>
                                 <p className='font-bold'>Total poin</p>
                             </div>
-                            <Image alt='' src={'/images/trophy.svg'} width={130} height={130} />
+                            <Image alt='trophy' src={'/images/trophy.svg'} width={130} height={130} priority />
                         </div>
                         <div className='mb-[50px] flex justify-end gap-[30px]'>
-                            {/* <div className='rounded-rad-7 bg-secondary-1 px-[18px] py-[20px]'>
-                                    <h1 className='text-[48px] font-bold  leading-[60px] text-white'>{rataProgress}</h1>
-                                    <span className='font-bold text-white'>Rata Rata Kemajuan</span>
-                                </div> */}
                             <div className='rounded-rad-7 bg-secondary-1 px-[18px] py-[20px]'>
                                 <h1 className='text-[48px] font-bold  leading-[60px] text-white'>{countFinishedClass}</h1>
                                 <span className='font-bold text-white '>Kelas di selesaikan</span>
@@ -731,6 +767,7 @@ const Rapor = () => {
                 </section>
             </main>
             <Transkrip transcript={transcript} isTrigger={displayTranscript} />
+            <CheckPermission />
         </div>
     );
 };

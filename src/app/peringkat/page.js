@@ -21,14 +21,15 @@
 // core
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 // third party
 import { useSession } from 'next-auth/react';
 import * as tf from '@tensorflow/tfjs';
 
 // redux
-// ---
+import { useSelector, useDispatch } from 'react-redux';
+import { getIsPermit, checkPermissionSlice } from '@/redux/check-permission';
 
 // components
 import Navbar from '@/components/Navbar';
@@ -47,12 +48,14 @@ import { speechAction, speechWithBatch, stopSpeech } from '@/utils/text-to-speec
 import { buttonAction } from '@/utils/space-button-action';
 import { punctuationRemoval, stemming, removeStopwords } from '@/utils/special-text';
 import { calculateTFIDFWithWeights } from '@/utils/tfidf';
+import { useCheckReloadPage, useMovePage } from '@/hooks';
+import CheckPermission from '@/components/CheckPermission';
 
 const Peringkat = () => {
     const { data } = useSession();
     const token = data?.user?.token;
     const userName = data?.user?.name;
-    const router = useRouter();
+    // const router = useRouter();
 
     // COMMON STATE
     const [loadData, setLoadData] = useState(true);
@@ -71,6 +74,28 @@ const Peringkat = () => {
     const [displayTranscript, setDisplayTranscript] = useState(false); // state untuk  menampilkan transcript
     const [isClickButton, setIsClickButton] = useState(false); // state untuk aksi tombol
     const [isPlayIntruction, setIsPlayIntruction] = useState(false); // state  ketika intruksi berjalan
+
+    const dispatch = useDispatch();
+    const isPermit = useSelector(getIsPermit);
+    const { setIsPermit } = checkPermissionSlice.actions;
+
+    const pathname = usePathname();
+    const { sessioName } = useCheckReloadPage({ name: pathname });
+    const { handleMovePage } = useMovePage(sessioName);
+
+    useEffect(() => {
+        const deleteSessionReload = () => {
+            console.log('it worked peringkat');
+            dispatch(setIsPermit(false));
+            sessionStorage.removeItem(sessioName);
+        };
+
+        window.addEventListener('pageshow', deleteSessionReload);
+
+        return () => {
+            window.removeEventListener('pageshow', deleteSessionReload);
+        };
+    }, [sessioName, dispatch, setIsPermit]);
 
     //FUNCTION
     // Fungsi untuk memuat model
@@ -176,7 +201,8 @@ const Peringkat = () => {
                                 speechAction({
                                     text: 'Anda harus verifikasi akun Anda terlebih dahulu. Silahkan check email Anda!',
                                     actionOnEnd: () => {
-                                        router.replace('/must-verify');
+                                        // router.replace('/must-verify');
+                                        handleMovePage('/must-verify', 'replace', false);
                                     },
                                 });
                             }
@@ -187,8 +213,9 @@ const Peringkat = () => {
                 };
                 fetchApiPeringkat();
             }
+            setLoadData(false);
         }
-    }, [token, loadData, userName, router]);
+    }, [token, loadData, userName, handleMovePage]);
 
     useEffect(() => {
         recognition.onresult = (event) => {
@@ -330,7 +357,8 @@ const Peringkat = () => {
                                     text: `Anda akan menuju halaman Daftar Kelas`,
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        router.push('/kelas');
+                                        // router.push('/kelas');
+                                        handleMovePage('/kelas');
                                     },
                                 });
                             } else if (predictedCommand.includes('beranda')) {
@@ -341,7 +369,8 @@ const Peringkat = () => {
                                     text: `Anda akan menuju halaman beranda`,
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        router.push('/');
+                                        // router.push('/');
+                                        handleMovePage('/');
                                     },
                                 });
                             } else if (predictedCommand.includes('rapor')) {
@@ -352,7 +381,8 @@ const Peringkat = () => {
                                     text: `Anda akan menuju halaman Rapor`,
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        router.push('/rapor');
+                                        // router.push('/rapor');
+                                        handleMovePage('/rapor');
                                     },
                                 });
                             }
@@ -444,17 +474,17 @@ const Peringkat = () => {
                 clearTimeout(timer);
             };
         }
-    }, [router, userName, userRank, speechOn, skipSpeech, labelEncoder, model, vocab]);
+    }, [handleMovePage, userName, userRank, speechOn, skipSpeech, labelEncoder, model, vocab]);
 
     //effects
     useEffect(() => {
         const spaceButtonIntroAction = (event) => {
-            buttonAction({
+            return buttonAction({
                 event: event,
                 key: ' ',
                 keyCode: 32,
                 action: () => {
-                    if (!isClickButton) {
+                    if (!isClickButton && isPermit) {
                         setSpeechOn(false);
                         stopSpeech();
                         if (isPlayIntruction) {
@@ -487,14 +517,16 @@ const Peringkat = () => {
         return () => {
             window.removeEventListener('keydown', spaceButtonIntroAction);
         };
-    }, [isClickButton, isPlayIntruction]);
+    }, [isClickButton, isPlayIntruction, isPermit]);
+
+    console.log('permittt: ', isPermit);
 
     return (
         <section className='h-screen bg-primary-1'>
             <Navbar />
             <main className='mx-auto max-w-screen-xl  pt-[80px] '>
                 <div className='mt-[20px] flex items-center justify-center gap-[60px]'>
-                    <Image alt='' src={'/images/mahkota.svg'} width={80} height={40} />
+                    <Image alt='mahkota' src={'/images/mahkota.svg'} width={80} height={40} priority />
                     <h1 className='text-[48px] font-bold text-white'>Papan Peringkat</h1>
                 </div>
                 <div
@@ -526,6 +558,7 @@ const Peringkat = () => {
                 </div>
             </main>
             <Transkrip transcript={transcript} isTrigger={displayTranscript} />
+            <CheckPermission />
         </section>
     );
 };

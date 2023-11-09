@@ -89,10 +89,10 @@ const MateriPoinNotification = ({ isVisible, poin, handleVisible, time }) => {
             <div className={`fixed  inset-0 z-30 flex items-center  justify-center bg-black bg-opacity-60 font-monsterrat`}>
                 <div className='relative flex h-[173px] w-[585px] flex-col items-center justify-center gap-[27px] rounded-rad-7 bg-white'>
                     <Image
-                        src={'/images/award-new.png'}
-                        alt=''
-                        width={120}
-                        height={120}
+                        src={'/small-images/award.webp'}
+                        alt='awarding point'
+                        width={69}
+                        height={97}
                         className='absolute left-[50%] top-[-60px] translate-x-[-50%]'
                     />
                     <h1 className='pt-[20px] font-bold'>Selamat Kamu Mendapat {poin} Poin !</h1>

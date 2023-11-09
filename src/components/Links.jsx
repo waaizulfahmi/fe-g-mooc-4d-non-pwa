@@ -18,8 +18,8 @@
 
 // core
 import PropTypes from 'prop-types';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+// import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 
 // third party
 // ---
@@ -37,10 +37,22 @@ import { usePathname } from 'next/navigation';
 // ---
 
 // utils
-// ---
+import { stopSpeech } from '@/utils/text-to-speech';
 
 const Links = ({ className = 'flex gap-[50px]', links }) => {
     const path = usePathname();
+    const router = useRouter();
+
+    const handleDeleteSessionReload = (pathname) => {
+        if (path === pathname) {
+            return;
+        }
+        sessionStorage.removeItem(path);
+        if (sessionStorage.getItem(path) == null) {
+            stopSpeech();
+            router.push(pathname);
+        }
+    };
 
     return (
         <ul className={`${className}`}>
@@ -48,7 +60,8 @@ const Links = ({ className = 'flex gap-[50px]', links }) => {
                 links.map((link, index) => {
                     return (
                         <li key={index} className='relative'>
-                            <Link
+                            <div
+                                onClick={() => handleDeleteSessionReload(link?.href?.toLowerCase())}
                                 className={`${
                                     link?.href?.toLowerCase() === path
                                         ? `${
@@ -64,7 +77,7 @@ const Links = ({ className = 'flex gap-[50px]', links }) => {
                                 } cursor-pointer font-bold`}
                                 href={link?.href}>
                                 {link?.name}
-                            </Link>
+                            </div>
                             {link?.href?.toLowerCase() === path && (
                                 <div className='absolute left-1/2 h-[10px] w-[10px] translate-x-[-50%] rounded-full bg-secondary-1'></div>
                             )}

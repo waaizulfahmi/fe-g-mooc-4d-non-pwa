@@ -21,7 +21,7 @@
 // core
 import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 // third party
 import { useSession } from 'next-auth/react';
@@ -50,11 +50,15 @@ import { ApiResponseError } from '@/utils/error-handling';
 import { buttonAction } from '@/utils/space-button-action';
 import { punctuationRemoval, stemming, removeStopwords } from '@/utils/special-text';
 import { calculateTFIDFWithWeights } from '@/utils/tfidf';
+import { useCheckReloadPage, useMovePage } from '@/hooks';
+import CheckPermission from '@/components/CheckPermission';
+import { useDispatch } from 'react-redux';
+import { checkPermissionSlice } from '@/redux/check-permission';
 // import { authLogout } from '@/axios/auth';
 
 const Kelas = () => {
     const { data } = useSession();
-    const router = useRouter();
+    // const router = useRouter();
     const token = data?.user?.token;
     const userName = data?.user?.name;
 
@@ -81,6 +85,27 @@ const Kelas = () => {
     const [displayTranscript, setDisplayTranscript] = useState(false); // state untuk  menampilkan transcript
     const [isClickButton, setIsClickButton] = useState(false); // state untuk aksi tombol
     const [isPlayIntruction, setIsPlayIntruction] = useState(false); // state  ketika intruksi berjalan
+
+    const dispatch = useDispatch();
+    const { setIsPermit } = checkPermissionSlice.actions;
+
+    const pathname = usePathname();
+    const { sessioName } = useCheckReloadPage({ name: pathname });
+    const { handleMovePage } = useMovePage(sessioName);
+
+    useEffect(() => {
+        const deleteSessionReload = () => {
+            console.log('it worked kelas');
+            dispatch(setIsPermit(false));
+            sessionStorage.removeItem(sessioName);
+        };
+
+        window.addEventListener('pageshow', deleteSessionReload);
+
+        return () => {
+            window.removeEventListener('pageshow', deleteSessionReload);
+        };
+    }, [sessioName, dispatch, setIsPermit]);
 
     //FUNCTION
     // Fungsi untuk memuat model
@@ -115,7 +140,8 @@ const Kelas = () => {
         }
     };
 
-    const handlePilihKelas = (namaKelas) => router.push(`/kelas/${namaKelas}`);
+    // const handlePilihKelas = (namaKelas) => router.push(`/kelas/${namaKelas}`);
+    const handlePilihKelas = (namaKelas) => handleMovePage(`/kelas/${namaKelas}`);
 
     const fetchKelasByLevel = async (idLevel, token) => {
         try {
@@ -346,7 +372,8 @@ const Kelas = () => {
                                 speechAction({
                                     text: 'Anda harus verifikasi akun Anda terlebih dahulu. Silahkan check email Anda!',
                                     actionOnEnd: () => {
-                                        router.push('/must-verify');
+                                        // router.push('/must-verify');
+                                        handleMovePage('must-verify', 'replace', false);
                                     },
                                 });
                             } else {
@@ -366,7 +393,7 @@ const Kelas = () => {
             }
             setLoadData(false);
         }
-    }, [token, loadData, router, userName]);
+    }, [token, loadData, handleMovePage, userName]);
 
     useEffect(() => {
         // SPEECH RECOGNITION RESULT
@@ -418,7 +445,8 @@ const Kelas = () => {
                                 text: 'Anda akan menuju halaman Peringkat',
                                 actionOnEnd: () => {
                                     setDisplayTranscript(false);
-                                    router.push('/peringkat');
+                                    // router.push('/peringkat');
+                                    handleMovePage('/peringkat');
                                 },
                             });
                         }
@@ -497,7 +525,8 @@ const Kelas = () => {
                             text: `Anda akan belajar dikelas ${findKelas.name}`,
                             actionOnEnd: () => {
                                 setDisplayTranscript(false);
-                                router.push(`/kelas/${findKelas.name.toLowerCase()}`);
+                                // router.push(`/kelas/${findKelas.name.toLowerCase()}`);
+                                handleMovePage(`/kelas/${findKelas?.name?.toLowerCase()}`);
                             },
                         });
                     } else if (cleanCommand.includes('jumlah kelas')) {
@@ -562,7 +591,8 @@ const Kelas = () => {
                                     text: 'Anda akan menuju halaman Beranda',
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        router.push('/');
+                                        // router.push('/');
+                                        handleMovePage('/');
                                     },
                                 });
                             } else if (predictedCommand.includes('rapor')) {
@@ -573,7 +603,8 @@ const Kelas = () => {
                                     text: 'Anda akan menuju halaman Rapor',
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        router.push('/rapor');
+                                        // router.push('/rapor');
+                                        handleMovePage('/rapor');
                                     },
                                 });
                             }
@@ -748,7 +779,7 @@ const Kelas = () => {
             };
         }
     }, [
-        router,
+        handleMovePage,
         kelas,
         token,
         isChecked,
@@ -765,7 +796,7 @@ const Kelas = () => {
     // SINGLE BUTTON
     useEffect(() => {
         const spaceButtonIntroAction = (event) => {
-            buttonAction({
+            return buttonAction({
                 event: event,
                 key: ' ',
                 keyCode: 32,
@@ -804,11 +835,6 @@ const Kelas = () => {
             window.removeEventListener('keydown', spaceButtonIntroAction);
         };
     }, [isClickButton, isPlayIntruction]);
-
-    // Need UI for not verify human
-    // if (kelas.length < 1) {
-    //     return <h1>NULL</h1>;
-    // }
 
     return (
         <div className='h-screen bg-[#EDF3F3]'>
@@ -887,10 +913,12 @@ const Kelas = () => {
                                           className='relative h-[400px] rounded-rad-7  bg-white  p-[14px] shadow-lg lg:col-span-1'>
                                           <div className='relative  h-[200px] w-full overflow-hidden rounded-rad-7'>
                                               <Image
-                                                  alt=''
+                                                  alt={`course gmooc - ${index}`}
                                                   src={getImageFile(kelasData.image)}
                                                   fill
                                                   style={{ objectFit: 'cover' }}
+                                                  priority
+                                                  sizes='100vw'
                                               />
                                           </div>
                                           <h1 className='mt-[14px] text-body-1 font-bold'>{kelasData.name}</h1>
@@ -928,6 +956,7 @@ const Kelas = () => {
                 </div>
             </main>
             <Transkrip transcript={transcript} isTrigger={displayTranscript} />
+            <CheckPermission />
         </div>
     );
 };
