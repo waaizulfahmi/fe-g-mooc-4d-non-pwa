@@ -22,6 +22,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
 import Image from 'next/image';
+import { useCallback } from 'react';
 
 // third party
 import { useSession } from 'next-auth/react';
@@ -39,15 +40,15 @@ import NavbarButton from '@/components/NavbarButton';
 import VideoFrame from '@/components/VideoFrame';
 import Certificate from '@/components/Certificate';
 import Transkrip from '@/components/Transkrip';
-// import MateriPoinNotification from '@/components/MateriPoinNotification';
 import MateriPoinNotification from '@/components/MateriPointNotification';
+import CheckPermission from '@/components/CheckPermission';
 
 // datas
 import { Kelas, ListMateri, ListQuiz } from '@/data/model';
 
 // apis
-import { userGetEnroll, userSendAnswer, userUpdateVideoMateri } from '@/axios/user';
 import axios from 'axios';
+import { userGetEnroll, userSendAnswer, userUpdateVideoMateri } from '@/axios/user';
 
 // utils
 import { recognition } from '@/utils/speech-recognition';
@@ -59,19 +60,45 @@ import { ApiResponseError } from '@/utils/error-handling';
 import { buttonAction } from '@/utils/space-button-action';
 import { punctuationRemoval, stemming, removeStopwords } from '@/utils/special-text';
 import { calculateTFIDFWithWeights } from '@/utils/tfidf';
-import { useCallback } from 'react';
-import { useCheckReloadPage, useMovePage } from '@/hooks';
-import CheckPermission from '@/components/CheckPermission';
-import { Router } from 'next/router';
 
-const EnrollKelas = () => {
+//hooks
+import { useCheckReloadPage, useMovePage, useMl, useCheckScreenOrientation } from '@/hooks';
+import { browserPermission } from '@/utils/browserPermission';
+
+// not related state function
+const saveBlobToDevice = (blob, fileName) => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+};
+
+export default function EnrollKelasPage() {
+    /* SETUP */
     const { data } = useSession();
-    const { name } = useParams();
     const token = data?.user?.token;
-    // const router = useRouter();
-    const isPermit = useSelector(getIsPermit);
+    const userName = data?.user?.name;
+    const pathname = usePathname();
+    const { name } = useParams();
 
-    // STATE
+    /* REDUX */
+    const dispatch = useDispatch();
+    const isPermit = useSelector(getIsPermit);
+    const { setIsPermit, setMicrophoneStatus, setCameraStatus } = checkPermissionSlice.actions;
+
+    /* CUSTOM HOOKS */
+    const { sessioName } = useCheckReloadPage({ name: pathname });
+    const { handleMovePage } = useMovePage(sessioName);
+    const { windowSize } = useCheckScreenOrientation();
+    const { model, vocab, labelEncoder } = useMl();
+
+    /* COMMON STATE */
+    // load data
+    const [poinNotif, setPoinNotif] = useState(0);
+    const [isVisible, setVisible] = useState(false);
     // load data
     const [loadData, setLoadData] = useState(true);
     // poin etc
@@ -98,17 +125,11 @@ const EnrollKelas = () => {
         imageUrl: '',
     });
     //sertifikat
-    const userName = data?.user?.name;
     const [isCetakSertifikat, setCetakSertifikat] = useState(false);
     const [enrollClassName, setEnrollClassName] = useState('');
     const [statusKelas, setStatusKelas] = useState('');
 
-    // TENSORFLOW STATE
-    const [model, setModel] = useState(null);
-    const [vocab, setVocab] = useState(null);
-    const [labelEncoder, setLabelEncoder] = useState(null);
-
-    // ACCESSIBILITY STATE
+    /* ACCESSIBILITY STATE */
     const [speechOn, setSpeechOn] = useState(false); // state untuk  speech recognition
     const [transcript, setTrancript] = useState(''); // state untuk menyimpan transcript hasil speech recognition
     const [skipSpeech, setSkipSpeech] = useState(false); // state untuk  mengatasi speech recogniton ter-trigger
@@ -116,78 +137,12 @@ const EnrollKelas = () => {
     const [isClickButton, setIsClickButton] = useState(false); // state untuk aksi tombol
     const [isPlayIntruction, setIsPlayIntruction] = useState(false); // state  ketika intruksi berjalan
 
-    const dispatch = useDispatch();
-    const { setIsPermit } = checkPermissionSlice.actions;
-
-    // NOTIFICATION
-    const [poinNotif, setPoinNotif] = useState(0);
-    const [isVisible, setVisible] = useState(false);
-
-    const pathname = usePathname();
-    const { sessioName } = useCheckReloadPage({ name: pathname });
-    const { handleMovePage } = useMovePage(sessioName);
-
-    useEffect(() => {
-        const deleteSessionReload = () => {
-            console.log('it worked kelas belajar');
-            dispatch(setIsPermit(false));
-            sessionStorage.removeItem(sessioName);
-        };
-
-        window.addEventListener('pageshow', deleteSessionReload);
-
-        return () => {
-            window.removeEventListener('pageshow', deleteSessionReload);
-        };
-    }, [sessioName, dispatch, setIsPermit]);
-
+    /* FUNCTION */
+    // This func related with state
     const handleNotifAction = useCallback(() => {
         // setPoinNotif(poin);
         setVisible(!isVisible);
     }, [isVisible]);
-
-    //FUNCTION
-    // Fungsi untuk memuat model
-    const loadModel = async () => {
-        try {
-            const loadedModel = await tf.loadLayersModel('/model.json');
-            setModel(loadedModel);
-        } catch (error) {
-            //console.error('Gagal memuat model:', error);
-        }
-    };
-
-    // Fungsi untuk memuat vocab.json
-    const loadVocab = async () => {
-        try {
-            const response = await fetch('/vocab.json');
-            const data = await response.json();
-            setVocab(data);
-        } catch (error) {
-            //console.error('Gagal memuat vocab:', error);
-        }
-    };
-
-    // Fungsi untuk memuat label_encoder.json
-    const loadLabelEncoder = async () => {
-        try {
-            const response = await fetch('/label_encoder.json');
-            const data = await response.json();
-            setLabelEncoder(data);
-        } catch (error) {
-            //console.error('Gagal memuat label encoder:', error);
-        }
-    };
-
-    const saveBlobToDevice = (blob, fileName) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-    };
 
     const handleEditMateri = (curr, statusCode) => {
         const statusVideo = {
@@ -208,7 +163,13 @@ const EnrollKelas = () => {
             }
             const fetchApiUpdateVideoMateri = async () => {
                 try {
-                    const response = await userUpdateVideoMateri({
+                    // const response = await userUpdateVideoMateri({
+                    //     id_materi_history: dataUpdate.id_materi_history,
+                    //     playback: dataUpdate.playback,
+                    //     is_end: true,
+                    //     token,
+                    // });
+                    await userUpdateVideoMateri({
                         id_materi_history: dataUpdate.id_materi_history,
                         playback: dataUpdate.playback,
                         is_end: true,
@@ -230,7 +191,12 @@ const EnrollKelas = () => {
             }
             const fetchApiUpdateVideoMateri = async () => {
                 try {
-                    const response = await userUpdateVideoMateri({
+                    // const response = await userUpdateVideoMateri({
+                    //     id_materi_history: dataUpdate.id_materi_history,
+                    //     playback: dataUpdate.playback,
+                    //     token,
+                    // });
+                    await userUpdateVideoMateri({
                         id_materi_history: dataUpdate.id_materi_history,
                         playback: dataUpdate.playback,
                         token,
@@ -245,8 +211,44 @@ const EnrollKelas = () => {
         }
     };
 
-    // EFFECTS
-    // init speech recognition
+    /* EFFECTS */
+    // Processing Accesing browser with browser url
+    useEffect(() => {
+        const deleteSessionReload = () => {
+            console.log('it worked kelas belajar');
+            dispatch(setIsPermit(false));
+            sessionStorage.removeItem(sessioName);
+        };
+
+        window.addEventListener('pageshow', deleteSessionReload);
+
+        return () => {
+            window.removeEventListener('pageshow', deleteSessionReload);
+        };
+    }, [sessioName, dispatch, setIsPermit]);
+
+    // Gain Browser Permission
+    useEffect(() => {
+        // camera permission
+        browserPermission('camera', (browserPermit) => {
+            if (browserPermit.error && !browserPermit.state) {
+                // console.log('Error perizinan Camera: ', browserPermit.error);
+            } else {
+                dispatch(setCameraStatus(browserPermit.state));
+            }
+        });
+
+        // microphone permission
+        browserPermission('microphone', (browserPermit) => {
+            if (browserPermit.error && !browserPermit.state) {
+                // console.log('Error perizinan Microphone: ', browserPermit.error);
+            } else {
+                dispatch(setMicrophoneStatus(browserPermit.state));
+            }
+        });
+    }, [dispatch, setCameraStatus, setMicrophoneStatus]);
+
+    // Init speech recognition
     useEffect(() => {
         try {
             recognition.start();
@@ -255,12 +257,10 @@ const EnrollKelas = () => {
         }
     }, []);
 
+    // Load Data
     useEffect(() => {
         if (token && name) {
             if (loadData) {
-                loadModel();
-                loadVocab();
-                loadLabelEncoder();
                 const fetchApiClassEnrollment = async () => {
                     try {
                         const response = await userGetEnroll({
@@ -313,12 +313,8 @@ const EnrollKelas = () => {
                                     setCetakSertifikat(false);
                                 },
                             });
-
-                            return;
-                        }
-
-                        //jika materi playback 0 maka akan masuk intro
-                        if (Number(kelas.firstPlaybackMateri()) === 0) {
+                        } else if (Number(kelas.firstPlaybackMateri()) === 0) {
+                            //jika materi playback 0 maka akan masuk intro
                             // Kondisi Baru Enroll Kelas sehingga playback masih 0.0
                             setIntro(true);
                             setIntroData({
@@ -431,7 +427,12 @@ const EnrollKelas = () => {
                                             if (idxQuiz !== kelas.getQuizLength() - 1) {
                                                 const fetchApiSendAnswerQuiz = async () => {
                                                     try {
-                                                        const response = await userSendAnswer({
+                                                        // const response = await userSendAnswer({
+                                                        //     id_quiz_history: userAnswerData.id_quiz_history,
+                                                        //     id_option: userAnswerData.id_option,
+                                                        //     token,
+                                                        // });
+                                                        await userSendAnswer({
                                                             id_quiz_history: userAnswerData.id_quiz_history,
                                                             id_option: userAnswerData.id_option,
                                                             token,
@@ -739,8 +740,8 @@ const EnrollKelas = () => {
                 };
                 fetchApiClassEnrollment();
             }
+            setLoadData(false);
         }
-        setLoadData(false);
     }, [
         name,
         loadData,
@@ -757,10 +758,14 @@ const EnrollKelas = () => {
         poin,
     ]);
 
+    // Processing Speech Recognition
     useEffect(() => {
         recognition.onresult = (event) => {
             const command = event.results[0][0].transcript.toLowerCase();
             const cleanCommand = command?.replace('.', '');
+            // console.log({
+            //     cleanCommand,
+            // });
 
             // Memastikan model dan vocab dimuat sebelum melakukan prediksi
             if (!model || !vocab || !labelEncoder) {
@@ -797,10 +802,15 @@ const EnrollKelas = () => {
                 if (isQuizMode) {
                     if (checkValueOfResult !== 0) {
                         const predictedCommand = labelEncoder[predictedClassIndex];
-                        //console.log('Check value result: ', checkValueOfResult);
-                        //console.log('Predicted command : ', predictedCommand);
-                        //console.log(`quiz berjalan: `, cleanCommand);
-                        //console.log(`is answer mode: `, isAnswerMode);
+                        // console.log({
+                        //     'Check value result ': checkValueOfResult,
+                        //     'Predicted command ': predictedCommand,
+                        // });
+
+                        // console.log({
+                        //     'Quiz berjalan ': cleanCommand,
+                        //     'Is answer mode ': isAnswerMode,
+                        // });
                         setDisplayTranscript(true);
                         if (isAnswerMode) {
                             if (predictedCommand.includes('ulangi')) {
@@ -865,16 +875,6 @@ const EnrollKelas = () => {
                             }
                         }
                     }
-                    // else {
-                    //     setTrancript('Perintah tidak ditemukan');
-                    //     setSpeechOn(false);
-                    //     speechAction({
-                    //         text: 'Perintah tidak ditemukan!',
-                    //         actionOnEnd: () => {
-                    //             setDisplayTranscript(false);
-                    //         },
-                    //     });
-                    // }
                 }
 
                 if (speechOn && !skipSpeech) {
@@ -905,7 +905,6 @@ const EnrollKelas = () => {
                                             listMateri.getList().length - listMateri.getMateriSelesai().length
                                         } materi yang belum diselesaikan.`,
                                         actionOnEnd: () => {
-                                            // setSpeechOn(false);
                                             setDisplayTranscript(false);
                                         },
                                     });
@@ -916,7 +915,6 @@ const EnrollKelas = () => {
                                     speechAction({
                                         text: `Quiz Anda sudah selesai!`,
                                         actionOnEnd: () => {
-                                            // setSpeechOn(false);
                                             setDisplayTranscript(false);
                                         },
                                     });
@@ -927,7 +925,6 @@ const EnrollKelas = () => {
                                     speechAction({
                                         text: `Anda melanjutkan mengerjakan quiz ke- ${listQuiz.getIdxQuizBerjalan() + 1}`,
                                         actionOnEnd: () => {
-                                            // setSpeechOn(false);
                                             setDisplayTranscript(false);
                                             setIdxQuiz(listQuiz.getIdxQuizBerjalan());
                                             setQuizMode(true);
@@ -940,7 +937,6 @@ const EnrollKelas = () => {
                                 speechAction({
                                     text: `Anda akan mengerjakan quiz pertama`,
                                     actionOnEnd: () => {
-                                        // setSpeechOn(false);
                                         setDisplayTranscript(false);
                                         setQuizMode(true);
                                         setLoadData(true);
@@ -1298,13 +1294,17 @@ const EnrollKelas = () => {
         };
 
         // CLEAR TRIGGER
-        //console.log('TRIGGER CONDITION: ', speechOn);
+        // console.log({
+        //     'TRIGGER CONDITION ': speechOn,
+        // });
         if (speechOn) {
             const timer = setTimeout(() => {
                 speechAction({
                     text: 'saya diam',
                     actionOnEnd: () => {
-                        //console.log('speech diclear');
+                        // console.log({
+                        //     'Speeck di clear ': speechOn,
+                        // });
                         setDisplayTranscript(false);
                         setSpeechOn(false);
                     },
@@ -1342,40 +1342,38 @@ const EnrollKelas = () => {
                 key: ' ',
                 keyCode: 32,
                 action: () => {
-                    if (isPermit) {
-                        if (!isClickButton) {
-                            setSpeechOn(false);
-                            stopSpeech();
-                            if (isPlayIntruction) {
-                                speechAction({
-                                    text: 'Anda mematikan intruksi',
-                                    actionOnEnd: () => {
-                                        setDisplayTranscript(false);
-                                        setSkipSpeech(false);
-                                        setIsClickButton(true);
-                                        setIsPlayIntruction(false);
-                                    },
-                                });
-                                return;
-                            }
-                            if (isIntro) {
-                                speechAction({
-                                    text: 'Anda melewati Intro Halaman Belajar',
-                                    actionOnEnd: () => {
-                                        setIntro(false);
-                                        setSkipSpeech(false);
-                                        setIsClickButton(true);
-                                    },
-                                });
-                            } else {
-                                speechAction({
-                                    text: 'Anda melewati Intro Halaman',
-                                    actionOnEnd: () => {
-                                        setSkipSpeech(false);
-                                        setIsClickButton(true);
-                                    },
-                                });
-                            }
+                    if (!isClickButton && isPermit) {
+                        setSpeechOn(false);
+                        stopSpeech();
+                        if (isPlayIntruction) {
+                            speechAction({
+                                text: 'Anda mematikan intruksi',
+                                actionOnEnd: () => {
+                                    setDisplayTranscript(false);
+                                    setSkipSpeech(false);
+                                    setIsClickButton(true);
+                                    setIsPlayIntruction(false);
+                                },
+                            });
+                            return;
+                        }
+                        if (isIntro) {
+                            speechAction({
+                                text: 'Anda melewati Intro Halaman Belajar',
+                                actionOnEnd: () => {
+                                    setIntro(false);
+                                    setSkipSpeech(false);
+                                    setIsClickButton(true);
+                                },
+                            });
+                        } else {
+                            speechAction({
+                                text: 'Anda melewati Intro Halaman',
+                                actionOnEnd: () => {
+                                    setSkipSpeech(false);
+                                    setIsClickButton(true);
+                                },
+                            });
                         }
                     }
                 },
@@ -1387,6 +1385,11 @@ const EnrollKelas = () => {
             window.removeEventListener('keydown', spaceButtonIntroAction);
         };
     }, [isClickButton, isPlayIntruction, isIntro, isPermit]);
+
+    // Setting if Window in small size
+    if (windowSize.innerWidth < 768) {
+        return <h1>You cant acces this page with {windowSize.innerWidth}px</h1>;
+    }
 
     return (
         <div className='h-screen bg-[#EDF3F3]'>
@@ -1575,6 +1578,4 @@ const EnrollKelas = () => {
             <CheckPermission />
         </div>
     );
-};
-
-export default EnrollKelas;
+}
