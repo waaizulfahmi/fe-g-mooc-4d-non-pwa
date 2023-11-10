@@ -373,21 +373,37 @@ export default function EnrollKelasPage() {
                                             }. Jangan lupa klik tombol spasi untuk menjalankan materi, dan klik kembali tombol spasi  untuk pause materi. `,
                                         });
                                     } else {
-                                        setPoinNotif(kelas.getPoin() - poin);
-                                        handleNotifAction();
-                                        //console.log('Playback: ');
-                                        speechWithBatch({
-                                            speechs: [
-                                                {
-                                                    text: `Selamat Kamu Mendapat ${kelas.getPoin() - poin} Poin !`,
-                                                },
-                                                {
-                                                    text: `Selamat datang kembali di kelas ${kelas.getName()}. Anda sedang belajar pada materi ke- ${
-                                                        kelas.idxMateriBerjalan() + 1
-                                                    }. Jangan lupa klik tombol spasi untuk menjalankan materi, dan klik kembali tombol spasi  untuk pause materi. `,
-                                                },
-                                            ],
-                                        });
+                                        console.log(kelas);
+                                        console.log(poin);
+                                        console.log(kelas.idxMateriBerjalan());
+                                        if (poin == 0 && kelas.idxMateriBerjalan() > 0) {
+                                            speechWithBatch({
+                                                speechs: [
+                                                    {
+                                                        text: `Selamat datang kembali di kelas ${kelas.getName()}. Anda sedang belajar pada materi ke- ${
+                                                            kelas.idxMateriBerjalan() + 1
+                                                        }. Jangan lupa klik tombol spasi untuk menjalankan materi, dan klik kembali tombol spasi  untuk pause materi. `,
+                                                    },
+                                                ],
+                                            });
+                                        } else {
+                                            setPoinNotif(kelas.getPoin() - poin);
+                                            handleNotifAction();
+                                            //console.log('Playback: ');
+                                            speechWithBatch({
+                                                speechs: [
+                                                    {
+                                                        text: `Selamat Kamu Mendapat ${kelas.getPoin() - poin} Poin !`,
+                                                    },
+                                                    {
+                                                        text: `Selamat datang kembali di kelas ${kelas.getName()}. Anda sedang belajar pada materi ke- ${
+                                                            kelas.idxMateriBerjalan() + 1
+                                                        }. Jangan lupa klik tombol spasi untuk menjalankan materi, dan klik kembali tombol spasi  untuk pause materi. `,
+                                                    },
+                                                ],
+                                            });
+                                        }
+
                                         //console.log('Selamat Anda mendapatkan poin sebanyak:  ', kelas.getPoin() - poin);
                                     }
                                 } else {
@@ -1560,11 +1576,8 @@ export default function EnrollKelasPage() {
                                         } else if (error) {
                                             return `Error: ${error}`;
                                         } else if (blob) {
-                                            // auto download
                                             saveBlobToDevice(blob, `${userName}-${enrollClassName}-Certificate.pdf`);
-                                            // setCetakSertifikat(false);
                                             return null;
-                                            // return setCetakSertifikat(false);
                                         }
                                     }}
                                 </PDFDownloadLink>
