@@ -1,11 +1,15 @@
 import axios, { AxiosError } from 'axios';
 import { apiInstance, apiMlInstance, sanctumApiInstance } from './instance';
 import { ApiResponseError } from '@/utils/error-handling';
+import * as https from 'https';
+const httpsAgent = new https.Agent({
+    rejectUnauthorized: false,
+});
 
 /* 
 @ROUTE : /register 
 */
-export const authRegister = async ({ name, email, password, konfirmasi_password, images, host }) => {
+export const authRegister = async ({ name, email, password, konfirmasi_password, images, host, faceMode = true }) => {
     try {
         if (!name && !email && !password && !konfirmasi_password && !host) throw new Error('Please insert all input form!');
         if (!password) throw new Error('Password must be submitted!');
@@ -14,8 +18,12 @@ export const authRegister = async ({ name, email, password, konfirmasi_password,
         if (!name) throw new Error('Name must be submitted!');
         if (!email) throw new Error('Email must be submitted!');
         if (!host) throw new Error('Host must be submitted!');
+        if (!images) throw new Error('images must be submitted!');
 
-        await sanctumApiInstance.get();
+        if (!faceMode) {
+            await sanctumApiInstance.get();
+        }
+
         const response = await apiMlInstance.post(
             '/register',
             {
@@ -100,6 +108,7 @@ export const authLoginWithFace = async ({ image }) => {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
+                httpsAgent,
             },
         );
         return response.data;

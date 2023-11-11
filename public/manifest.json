@@ -3,10 +3,27 @@
     "background_color": "#ffffff",
     "display": "fullscreen",
     "scope": "/",
-    "start_url": "/",
+    "start_url": "/login",
     "name": "Aplikasi GMOOC 4D",
     "short_name": "Aplikasi GMOOC 4D",
     "description": "Apps for who have spirit of learning!",
+    "screenshots": [
+        {
+            "src": "/images/homepage g-mmoc.jpg",
+            "sizes": "640x320",
+            "type": "image/gif",
+            "form_factor": "wide",
+            "label": "homepage g-mooc"
+        },
+
+        {
+            "src": "/images/kelas.jpg",
+            "sizes": "640x320",
+            "type": "image/gif",
+            "form_factor": "wide",
+            "label": "kelas g-mooc"
+        }
+    ],
     "icons": [
         {
             "src": "/images/icon-192x192.png",

@@ -1,101 +1,88 @@
-/**
- * Copyright 2018 Google Inc. All Rights Reserved.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *     http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// eslint-disable-next-line no-unused-vars
+const OFFLINE_VERSION = 1;
+const CACHE_NAME = 'offline';
+const OFFLINE_URL = '/offline.html';
 
-// If the loader is already loaded, just stop.
-if (!self.define) {
-  let registry = {};
 
-  // Used for `eval` and `importScripts` where we can't get script URL by other means.
-  // In both cases, it's safe to use a global var because those functions are synchronous.
-  let nextDefineUri;
+self.addEventListener('install', (event) => {
+    event.waitUntil(
+        (async () => {
+            const cache = await caches.open(CACHE_NAME);
+            await cache.add(new Request(OFFLINE_URL, { cache: 'reload' }));
 
-  const singleRequire = (uri, parentUri) => {
-    uri = new URL(uri + ".js", parentUri).href;
-    return registry[uri] || (
-      
-        new Promise(resolve => {
-          if ("document" in self) {
-            const script = document.createElement("script");
-            script.src = uri;
-            script.onload = resolve;
-            document.head.appendChild(script);
-          } else {
-            nextDefineUri = uri;
-            importScripts(uri);
-            resolve();
-          }
-        })
-      
-      .then(() => {
-        let promise = registry[uri];
-        if (!promise) {
-          throw new Error(`Module ${uri} didn’t register its module`);
-        }
-        return promise;
-      })
+            // await cache.addAll(OFFLINE_URL.map((url) => new Request(url, { cache: 'reload' })));
+        })(),
     );
-  };
+    self.skipWaiting();
+});
 
-  self.define = (depsNames, factory) => {
-    const uri = nextDefineUri || ("document" in self ? document.currentScript.src : "") || location.href;
-    if (registry[uri]) {
-      // Module is already loading or loaded.
-      return;
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        (async () => {
+            if ('navigationPreload' in self.registration) {
+                await self.registration.navigationPreload.enable();
+            }
+        })(),
+    );
+
+    self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+    if (event.request.mode === 'navigate') {
+        event.respondWith(
+            (async () => {
+                try {
+                    const preloadResponse = await event.preloadResponse;
+                    if (preloadResponse) {
+                        return preloadResponse;
+                    }
+
+                    // Always try the network first.
+                    const networkResponse = await fetch(event.request);
+                    return networkResponse;
+                } catch (error) {
+                    console.log('Fetch failed; returning offline page instead.', error);
+
+                    const cache = await caches.open(CACHE_NAME);
+                    const cachedResponse = await cache.match(OFFLINE_URL);
+                    return cachedResponse;
+
+                    // Coba mencari kedua file "offline.html" dan "sound.wav" dalam cache
+                    // const [offlineHtmlResponse, soundResponse] = await Promise.all([
+                    //     cache.match('/offline.html'),
+                    //     cache.match('/sound.wav'),
+                    //     cache.match('/images/favicon.ico'),
+                    // ]);
+
+                    // if (offlineHtmlResponse && soundResponse) {
+                    //     return offlineHtmlResponse;
+                    // } else {
+                    //     return new Response('404 Not Found', {
+                    //         status: 404,
+                    //         statusText: 'Not Found',
+                    //         headers: new Headers({
+                    //             'Content-Type': 'text/plain',
+                    //         }),
+                    //     });
+                    // }
+                }
+            })(),
+        );
     }
-    let exports = {};
-    const require = depUri => singleRequire(depUri, uri);
-    const specialDeps = {
-      module: { uri },
-      exports,
-      require
+});
+
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+});
+
+self.addEventListener('push', (event) => {
+    const options = {
+        body: 'Halloo Pengguna',
+        icon: 'icon.png', // Ganti dengan ikon notifikasi Anda
+        badge: 'badge.png', // Ganti dengan badge notifikasi Anda
+        // sound: '/sound.wav', // Ganti dengan file suara notifikasi Anda
     };
-    registry[uri] = Promise.all(depsNames.map(
-      depName => specialDeps[depName] || require(depName)
-    )).then(deps => {
-      factory(...deps);
-      return exports;
-    });
-  };
-}
-define(['./workbox-8f0e986c'], (function (workbox) { 'use strict';
 
-  importScripts();
-  self.skipWaiting();
-  workbox.clientsClaim();
-  workbox.registerRoute("/", new workbox.NetworkFirst({
-    "cacheName": "start-url",
-    plugins: [{
-      cacheWillUpdate: async ({
-        request,
-        response,
-        event,
-        state
-      }) => {
-        if (response && response.type === 'opaqueredirect') {
-          return new Response(response.body, {
-            status: 200,
-            statusText: 'OK',
-            headers: response.headers
-          });
-        }
-        return response;
-      }
-    }]
-  }), 'GET');
-  workbox.registerRoute(/.*/i, new workbox.NetworkOnly({
-    "cacheName": "dev",
-    plugins: []
-  }), 'GET');
-
-}));
-//# sourceMappingURL=sw.js.map
+    event.waitUntil(self.registration.showNotification('Selamat Datang Kembali Pengguna', options));
+});

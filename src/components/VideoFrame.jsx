@@ -26,7 +26,9 @@ import { useEffect, useRef, useState } from 'react';
 import YouTubePlayer from 'youtube-player';
 
 // redux
-// ---
+// redux
+import { useSelector } from 'react-redux';
+import { getIsPermit } from '@/redux/check-permission';
 
 // components
 // ---
@@ -44,15 +46,16 @@ import { buttonAction } from '@/utils/space-button-action';
 const VideoFrame = ({ playback, videoId, handleEditMateri, isInterrop }) => {
     const [pause, setPause] = useState(false);
     const playerRef = useRef(null);
+    const isPermit = useSelector(getIsPermit);
 
     useEffect(() => {
         const handleVideoLength = async (player) => {
             try {
                 const videoLength = await player.getDuration();
-                console.log('panjang video: ', videoLength);
+                // console.log('panjang video: ', videoLength);
             } catch (error) {
-                console.log(error);
-                console.log('error di panjang video: ', error);
+                // console.log(error);
+                // console.log('error di panjang video: ', error);
             }
         };
 
@@ -92,7 +95,7 @@ const VideoFrame = ({ playback, videoId, handleEditMateri, isInterrop }) => {
                                 setPause(false);
                             }
                             handleEditMateri(currentTime, 2);
-                            console.log('Video paused');
+                            //console.log('Video paused');
                         },
                     });
                     return;
@@ -104,7 +107,7 @@ const VideoFrame = ({ playback, videoId, handleEditMateri, isInterrop }) => {
                         text: 'Video sudah selesai',
                         actionOnEnd: () => {
                             handleEditMateri(currentTime, 1);
-                            console.log('Video selesai');
+                            //console.log('Video selesai');
                         },
                     });
                 }
@@ -130,13 +133,16 @@ const VideoFrame = ({ playback, videoId, handleEditMateri, isInterrop }) => {
                 key: ' ',
                 keyCode: 32,
                 action: () => {
-                    if (!isInterrop) {
-                        if (!pause) {
-                            playerRef.current.playVideo();
-                            setPause(true);
-                        } else {
-                            playerRef.current.pauseVideo();
-                            setPause(false);
+                    if (isPermit) {
+                        console.log('test', isPermit);
+                        if (!isInterrop) {
+                            if (!pause) {
+                                playerRef.current.playVideo();
+                                setPause(true);
+                            } else {
+                                playerRef.current.pauseVideo();
+                                setPause(false);
+                            }
                         }
                     }
                 },
@@ -148,7 +154,7 @@ const VideoFrame = ({ playback, videoId, handleEditMateri, isInterrop }) => {
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [pause, isInterrop]);
+    }, [pause, isInterrop, isPermit]);
 
     return (
         <>

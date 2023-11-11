@@ -20,7 +20,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
     return (
         <html lang='en' className={`${monsterrat.variable}`}>
-            <body suppressHydrationWarning>
+            <body suppressHydrationWarning className='antialiased'>
                 <NextAuthProvider>
                     <ReduxProvider>{children}</ReduxProvider>
                 </NextAuthProvider>

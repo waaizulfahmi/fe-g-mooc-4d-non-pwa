@@ -27,10 +27,10 @@ import Image from 'next/image';
 
 // redux
 import { useSelector, useDispatch } from 'react-redux';
-import { getMicrophoneStatus, checkPermissionSlice, getIsPermit } from '@/redux/check-permission';
+import { getMicrophoneStatus, checkPermissionSlice, getIsPermit, getCameraStatus } from '@/redux/check-permission';
 
 // components
-import LabelPermission from './LabelPermission';
+// import LabelPermission from './LabelPermission';
 import FillButton from './FillButton';
 
 // data
@@ -40,13 +40,14 @@ import FillButton from './FillButton';
 // ---
 
 // utils
-import { speechAction } from '@/utils/text-to-speech';
+import { speechAction, stopSpeech } from '@/utils/text-to-speech';
 import { buttonAction } from '@/utils/space-button-action';
 
 const CheckPermission = () => {
     const dispatch = useDispatch();
     const isPermit = useSelector(getIsPermit);
     const micprohoneStatus = useSelector(getMicrophoneStatus);
+    const cameraStatus = useSelector(getCameraStatus);
     const { setIsPermit } = checkPermissionSlice.actions;
 
     //states
@@ -57,29 +58,94 @@ const CheckPermission = () => {
     //effects
     useEffect(() => {
         const spaceButtonAction = (event) => {
-            buttonAction({
+            // Fungsi yang akan dijalankan saat tombol spasi ditekan
+            return buttonAction({
                 event: event,
                 key: ' ',
                 keyCode: 32,
                 action: () => {
                     if (!isPermit) {
-                        speechAction({
-                            text: 'Mikrofon dan Speaker sudah berjalan, Anda dapat mengikuti pembelajaran!',
-                            actionOnEnd: () => {
-                                setStatusBtn(true);
-                                dispatch(setIsPermit(true));
-                            },
-                        });
+                        if (micprohoneStatus !== 'granted' || cameraStatus !== 'granted') {
+                            speechAction({
+                                text: 'Mohon berikan akses terhadap Mikrofon, Speaker dan Camera',
+                            });
+                        } else {
+                            stopSpeech();
+                            speechAction({
+                                text: 'Mikrofon Speaker dan Camera sudah berjalan!',
+                                actionOnEnd: () => {
+                                    setStatusBtn(true);
+                                    dispatch(setIsPermit(true));
+                                },
+                            });
+                        }
                     }
                 },
             });
         };
+
+        // const volumeChangedAction = () => {
+        //     // Fungsi yang akan dijalankan saat volume berubah
+        //     if (!isPermit) {
+        //         if (micprohoneStatus !== 'granted' || cameraStatus !== 'granted') {
+        //             speechAction({
+        //                 text: 'Mohon berikan akses terhadap Mikrofon, Speaker dan Camera',
+        //             });
+        //         } else {
+        //             speechAction({
+        //                 text: 'Mikrofon Speaker dan Camera sudah berjalan!',
+        //                 actionOnEnd: () => {
+        //                     setStatusBtn(true);
+        //                     dispatch(setIsPermit(true));
+        //                 },
+        //             });
+        //         }
+        //     }
+        // };
+
         window.addEventListener('keydown', spaceButtonAction);
+        // window.addEventListener('volumechange', volumeChangedAction);
 
         return () => {
             window.removeEventListener('keydown', spaceButtonAction);
+            // window.removeEventListener('volumechange', volumeChangedAction);
         };
-    }, [dispatch, isPermit, setIsPermit]);
+    }, [dispatch, isPermit, setIsPermit, cameraStatus, micprohoneStatus]);
+    // useEffect(() => {
+    //     const spaceButtonAction = (event) => {
+    //         buttonAction({
+    //             event: event,
+    //             key: ' ',
+    //             keyCode: 32,
+    //             action: () => {
+    //                 if (!isPermit) {
+    //                     // console.log({
+    //                     //     micprohoneStatus,
+    //                     //     cameraStatus,
+    //                     // });
+    //                     if (micprohoneStatus !== 'granted' || cameraStatus !== 'granted') {
+    //                         speechAction({
+    //                             text: 'Mohon berikan akses terhadap Mikrofon, Speaker dan Camera',
+    //                         });
+    //                     } else {
+    //                         speechAction({
+    //                             text: 'Mikrofon Speaker dan Camera  sudah berjalan!',
+    //                             actionOnEnd: () => {
+    //                                 setStatusBtn(true);
+    //                                 dispatch(setIsPermit(true));
+    //                             },
+    //                         });
+    //                     }
+    //                 }
+    //             },
+    //         });
+    //     };
+    //     window.addEventListener('keydown', spaceButtonAction);
+
+    //     return () => {
+    //         window.removeEventListener('keydown', spaceButtonAction);
+    //     };
+    // }, [dispatch, isPermit, setIsPermit, cameraStatus, micprohoneStatus]);
 
     useEffect(() => {
         if (micprohoneStatus === 'denied') {
@@ -101,27 +167,24 @@ const CheckPermission = () => {
                     <div className='flex h-[500px] w-[800px] flex-col gap-10 overflow-hidden rounded-rad-6 bg-white p-5'>
                         <h1 className='text-head-5 text-center font-bold'>Yuk kita atur dulu Aplikasinya</h1>
                         <div className='col-span-12 grid h-full grid-cols-12 '>
-                            <div className='col-span-5 flex flex-col gap-3 '>
-                                <h1 className='text-body-2 font-bold'>1. Izinkan perizinan untuk mikrofon</h1>
-                                <Image alt='' src={'/images/permission-check.jpg'} width={400} height={400} />
-
-                                <div className='mt-5 flex flex-col gap-3'>
-                                    <h1 className='font-bold text-black text-opacity-50'>Status Mikrofon :</h1>
-                                    <LabelPermission className='px-5 py-3 text-[20px] font-bold' />
-                                </div>
+                            <div className='col-span-10 flex flex-col gap-3 md:col-span-5 '>
+                                <h1 className='text-body-2 font-bold'>1. Izinkan perizinan untuk mikrofon </h1>
+                                <Image alt='' src={'/small-images/permission-check.webp'} width={400} height={400} priority />
+                                <h1 className='text-body-2 font-bold'>2. Izinkan perizinan untuk kamera</h1>
+                                <Image alt='' src={'/small-images/camera.webp'} width={400} height={400} priority />
                             </div>
                             {/* divider */}
-                            <div className='col-span-2 flex flex-col items-center justify-center '>
+                            <div className='col-span-10 flex flex-col items-center justify-center md:col-span-2 '>
                                 <div className='h-full border border-black'></div>
                             </div>
                             {/* divider */}
-                            <div className='col-span-5 flex flex-col gap-3 '>
-                                <h1 className='text-body-2 font-bold'>2. Kita check mikrofon</h1>
+                            <div className='flex flex-col gap-3 md:col-span-5 '>
+                                <h1 className='text-body-2 font-bold'>3. Kita cek Mikrofon dan Kameranya</h1>
                                 <p>
                                     Untuk cek mikrofon tekan tombol <span className='text-body-3 font-bold'>Spasi</span>
                                 </p>
 
-                                <Image alt='' src={'/images/space-key.png'} width={400} height={400} />
+                                <Image alt='' src={'/small-images/space-key.webp'} width={400} height={400} priority />
                                 <p>
                                     <span className='font-bold text-red-600'>NOTE :</span> <br />
                                     Cek mikrofon di browser Anda <br /> sampai terdengar suara!

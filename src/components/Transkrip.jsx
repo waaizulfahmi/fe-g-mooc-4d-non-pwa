@@ -47,7 +47,13 @@ const Transkrip = ({ transcript = '', isTrigger = false }) => {
         <>
             {isTrigger && (
                 <div className='absolute bottom-[20px] left-[50%] z-30  flex h-[40px] w-[40%] translate-x-[-50%] items-center justify-center rounded-[14px] bg-slate-600  text-center  font-bold leading-tight text-white opacity-70'>
-                    <p>{transcript.includes('uli') ? `Hai, ${userName}` : transcript}</p>
+                    <p>
+                        {transcript.includes('cari kelas sulit')
+                            ? transcript
+                            : transcript.includes('uli')
+                            ? `Hai, ${userName}`
+                            : transcript}
+                    </p>
                 </div>
             )}
         </>
