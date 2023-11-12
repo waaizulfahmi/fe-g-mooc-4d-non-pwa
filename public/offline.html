@@ -2,18 +2,28 @@
 <html>
     <head>
         <title>Offline Access</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="icon" type="image/x-icon" href="/images/favicon.ico" />
         <style>
             body {
-                background-color: #f0f0f0;
-                margin: 0;
+                background: linear-gradient(to bottom, #A2C579, #FFFFDD);
+
+                /* margin: 0; */
                 padding: 0;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
                 height: 100vh;
-                font-family: Arial, sans-serif;
+                font-family: 'Avenir', sans-serif;
+                margin: auto;
+                /* width: 640px; */
+                /* padding: 50px; */
+            }
+
+      
+            img{
+                padding: 10px;
             }
 
             #offline-container {
@@ -23,14 +33,15 @@
             }
 
             #offline-icon {
-                width: 100px;
-                height: 100px;
-                fill: #ff6347; /* Merah */
+                height: 300px;
+                justify-content: center;
+                margin: auto;
+                fill: #ffffff; /* Merah */
             }
 
             #notification {
-                font-size: 24px;
-                color: #ff6347; /* Merah */
+                font-size: 20px;
+                color: #000000; 
                 margin-top: 20px;
             }
 
@@ -57,12 +68,22 @@
                 border-radius: 5px;
                 cursor: pointer;
             }
+            img {
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+            }
         </style>
     </head>
     <body onload="naratorSpeech()">
         <div id="offline-container">
+
+            <div style="text-align: center;">
+                <img src="no-internet.png" alt="" style="width:100%;">
+            
+            </div>
            
-            <p id="notification">Anda sedang offline. Silakan Cek Koneksi Internet Anda</p>
+            <p id="notification">Anda sedang <b><i>offline</i></b>. Silakan Cek Koneksi Internet Anda</p>
             <!-- <audio id="notification-sound" src="sound.wav" preload="auto" autoplay></audio> -->
             <button id="refresh-button">Refresh</button>
 <!--             <button id="notification-sound-button">Putar Suara</button> -->
@@ -113,8 +134,7 @@
                                     audio.play();
                                 });
                             } else {
-                                console.log("'sound.wav' tidak ditemukan dalam cache"); // Ini akan mencetak pesan saat file tidak ditemukan dalam cache
-                            }
+                                console.log("'sound.wav' tidak ditemukan dalam cache"); 
                         });
                     });
                 });

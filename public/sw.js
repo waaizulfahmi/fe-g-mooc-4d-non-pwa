@@ -1,6 +1,7 @@
 // eslint-disable-next-line no-unused-vars
 const OFFLINE_VERSION = 1;
 const CACHE_NAME = 'offline';
+// const OFFLINE_URL = ['/offline.html', '/no-internet.png'];
 const OFFLINE_URL = '/offline.html';
 
 
