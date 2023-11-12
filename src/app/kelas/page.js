@@ -314,6 +314,7 @@ export default function DaftarKelasPage() {
                     try {
                         const response = await userGetAllClassApi({ token });
                         setKelas(response.data);
+                        console.log(kelas);
                         handleCheckBoxChange('semua');
 
                         speechWithBatch({
@@ -355,7 +356,7 @@ export default function DaftarKelasPage() {
                     } catch (error) {
                         if (error instanceof ApiResponseError) {
                             // console.log(`ERR API MESSAGE: `, error.data);
-                            // console.log(error.data);
+                            console.log(error.data);
 
                             if (
                                 error?.data?.data?.metadata?.code === 401 ||
