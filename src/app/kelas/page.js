@@ -842,9 +842,12 @@ export default function DaftarKelasPage() {
                     height={80}
                     className='absolute left-1/2 top-1/4 z-10 -translate-x-1/2 -translate-y-1/3 transform'
                 />
-                <h1 className='z-0 px-3 pt-4 text-center'>
-                    <b>Maaf</b>, Aplikasi tidak dapat berjalan dengan baik pada layar {windowSize.innerWidth}px. Buka di layar
-                    lebih dari 640px atau gunakan
+                <h1 className='z-0 px-3 pt-2 text-center'>
+                    <b>Maaf</b>, Aplikasi tidak dapat berjalan dengan baik pada layar {windowSize.innerWidth}px atau{' '}
+                    <b>
+                        <i>smartphone</i>
+                    </b>
+                    . Buka di layar lebih dari 640px atau gunakan
                     <b> laptop</b>.
                 </h1>
             </div>
@@ -855,9 +858,9 @@ export default function DaftarKelasPage() {
         <div className='h-screen bg-[#EDF3F3]'>
             <Navbar />
             <main style={{ height: 'calc(100vh - 90px)' }} className='w-screen bg-[#EDF3F3] pt-[90px] '>
-                <div className='grid max-w-screen-xl grid-cols-12 mx-auto'>
+                <div className='mx-auto grid max-w-screen-xl grid-cols-12'>
                     <div className='col-span-2'>
-                        <h1 className='font-bold text-title-2 '>Level</h1>
+                        <h1 className='text-title-2 font-bold '>Level</h1>
                         <div className='mt-[30px] flex flex-col gap-[18px] '>
                             <div className='flex items-center gap-2'>
                                 <input
@@ -869,7 +872,7 @@ export default function DaftarKelasPage() {
                                     }}
                                     className='h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600'
                                 />
-                                <label htmlFor='check' className='font-medium text-body-4'>
+                                <label htmlFor='check' className='text-body-4 font-medium'>
                                     Mudah
                                 </label>
                             </div>
@@ -883,7 +886,7 @@ export default function DaftarKelasPage() {
                                     checked={isChecked.normal}
                                     className='h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600'
                                 />
-                                <label htmlFor='check' className='font-medium text-body-4'>
+                                <label htmlFor='check' className='text-body-4 font-medium'>
                                     Normal
                                 </label>
                             </div>
@@ -897,7 +900,7 @@ export default function DaftarKelasPage() {
                                     checked={isChecked.sulit}
                                     className='h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600'
                                 />
-                                <label htmlFor='check' className='font-medium text-body-4'>
+                                <label htmlFor='check' className='text-body-4 font-medium'>
                                     Sulit
                                 </label>
                             </div>
@@ -911,7 +914,7 @@ export default function DaftarKelasPage() {
                                     checked={isChecked.semua}
                                     className='h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600'
                                 />
-                                <label htmlFor='check' className='font-medium text-body-4'>
+                                <label htmlFor='check' className='text-body-4 font-medium'>
                                     Semua
                                 </label>
                             </div>
