@@ -36,7 +36,7 @@ import Webcam from 'react-webcam';
 // import Popup from 'reactjs-popup';
 
 // hooks
-import { useCheckReloadPage, useNotification, useMovePage } from '@/hooks';
+import { useCheckReloadPage, useNotification, useMovePage, useCheckScreenOrientation } from '@/hooks';
 
 // component
 import BorderedButton from '@/components/BorderedButton';
@@ -69,6 +69,7 @@ const Login = () => {
     const [isFaceSuccess, setIsFaceSuccess] = useState(false);
     const isPermit = useSelector(getIsPermit);
     const { setCameraStatus, setMicrophoneStatus, setIsPermit } = checkPermissionSlice.actions;
+    const { windowSize } = useCheckScreenOrientation();
     // const cameraStatus = useSelector(getCameraStatus);
     // console.log('Camera status in UI: ', cameraStatus);
 
@@ -355,6 +356,25 @@ const Login = () => {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [speechOn, isCameraOpen, skipSpeech]);
+
+    if (windowSize.innerWidth < 640) {
+        return (
+            <div className='relative flex h-screen items-center justify-center gap-2'>
+                <Image
+                    alt='white icon gmooc'
+                    src={'/small-images/monitor-size.webp'}
+                    width={200}
+                    height={80}
+                    className='absolute left-1/2 top-1/4 z-10 -translate-x-1/2 -translate-y-1/3 transform'
+                />
+                <h1 className='z-0 px-3 pt-4 text-center'>
+                    <b>Maaf</b>, Aplikasi tidak dapat berjalan dengan baik pada layar {windowSize.innerWidth}px. Buka di layar
+                    lebih dari 640px atau gunakan
+                    <b> laptop</b>.
+                </h1>
+            </div>
+        );
+    }
 
     return (
         <section className='grid h-screen grid-cols-12'>

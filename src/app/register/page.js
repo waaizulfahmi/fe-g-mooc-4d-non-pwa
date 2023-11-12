@@ -14,7 +14,7 @@ import Popup from 'reactjs-popup';
 import { authRegister } from '@/axios/auth';
 
 // hooks
-import { useCheckReloadPage, useMovePage, useNotification } from '@/hooks';
+import { useCheckReloadPage, useMovePage, useNotification, useCheckScreenOrientation } from '@/hooks';
 
 //
 
@@ -43,6 +43,7 @@ const Register = () => {
     const pathname = usePathname();
     const { sessioName } = useCheckReloadPage({ name: pathname });
     const { handleMovePage } = useMovePage(sessioName);
+    const { windowSize } = useCheckScreenOrientation();
 
     const dispatch = useDispatch();
     const { setIsPermit } = checkPermissionSlice.actions;
@@ -143,6 +144,25 @@ const Register = () => {
             }
         }
     };
+
+    if (windowSize.innerWidth < 640) {
+        return (
+            <div className='relative flex h-screen items-center justify-center gap-2'>
+                <Image
+                    alt='white icon gmooc'
+                    src={'/small-images/monitor-size.webp'}
+                    width={200}
+                    height={80}
+                    className='absolute left-1/2 top-1/4 z-10 -translate-x-1/2 -translate-y-1/3 transform'
+                />
+                <h1 className='z-0 px-3 pt-4 text-center'>
+                    <b>Maaf</b>, Aplikasi tidak dapat berjalan dengan baik pada layar {windowSize.innerWidth}px. Buka di layar
+                    lebih dari 640px atau gunakan
+                    <b> laptop</b>.
+                </h1>
+            </div>
+        );
+    }
 
     return (
         <section className='grid h-screen grid-cols-12'>

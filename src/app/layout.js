@@ -17,6 +17,7 @@ export const metadata = {
     manifest: '/manifest.json',
 };
 
+
 export default function RootLayout({ children }) {
     return (
         <html lang='en' className={`${monsterrat.variable}`}>
