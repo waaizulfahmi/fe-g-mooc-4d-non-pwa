@@ -84,6 +84,8 @@ export default function EnrollKelasPage() {
     const pathname = usePathname();
     const { name } = useParams();
 
+    // console.log('replace: ', decodeURI(name));
+
     /* REDUX */
     const dispatch = useDispatch();
     const isPermit = useSelector(getIsPermit);
@@ -264,7 +266,7 @@ export default function EnrollKelasPage() {
                 const fetchApiClassEnrollment = async () => {
                     try {
                         const response = await userGetEnroll({
-                            namaKelas: name,
+                            namaKelas: decodeURI(name),
                             token,
                         });
                         const kelas = new Kelas({
@@ -326,7 +328,9 @@ export default function EnrollKelasPage() {
                             speechWithBatch({
                                 speechs: [
                                     {
-                                        text: `Selamat datang di Kelas ${name}. Pada kelas ini Anda akan belajar sebanyak ${kelas.getMateriLength()} materi dan mengerjakan ${kelas.getQuizLength()} quiz.`,
+                                        text: `Selamat datang di Kelas ${decodeURI(
+                                            name,
+                                        )}. Pada kelas ini Anda akan belajar sebanyak ${kelas.getMateriLength()} materi dan mengerjakan ${kelas.getQuizLength()} quiz.`,
                                         actionOnStart: () => {
                                             setSkipSpeech(true);
                                         },
@@ -979,7 +983,7 @@ export default function EnrollKelasPage() {
                                             const fetchApiClassEnrollment = async () => {
                                                 try {
                                                     const response = await userGetEnroll({
-                                                        namaKelas: name,
+                                                        namaKelas: decodeURI(name),
                                                         token,
                                                     });
                                                     const materiBerjalan = response.data.data.kelas.materi.find(

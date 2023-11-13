@@ -313,8 +313,13 @@ export default function DaftarKelasPage() {
                 const fetchApiAllClass = async () => {
                     try {
                         const response = await userGetAllClassApi({ token });
-                        setKelas(response.data);
-                        console.log(kelas);
+                        const kelasData = Array.isArray(response.data)
+                            ? response.data
+                            : Object.keys(response.data).map((kelasKey) => response.data[kelasKey]);
+                        setKelas(kelasData);
+                        // console.log('daftar kelas: ', kelasData);
+                        // console.log('daftar kelas isi: ', response.data);
+                        // console.log('daftar kelas type: ', Array.isArray(response.data));
                         handleCheckBoxChange('semua');
 
                         speechWithBatch({
@@ -924,7 +929,7 @@ export default function DaftarKelasPage() {
                     <div
                         style={{ height: 'calc(100vh - 100px)' }}
                         className='col-span-10 grid grid-cols-4 gap-[24px] overflow-y-scroll '>
-                        {kelas?.length
+                        {kelas?.length > 0
                             ? kelas.map((kelasData, index) => {
                                   return (
                                       <div
