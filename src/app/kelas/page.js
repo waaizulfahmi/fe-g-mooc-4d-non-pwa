@@ -313,7 +313,13 @@ export default function DaftarKelasPage() {
                 const fetchApiAllClass = async () => {
                     try {
                         const response = await userGetAllClassApi({ token });
-                        setKelas(response.data);
+                        const kelasData = Array.isArray(response.data)
+                            ? response.data
+                            : Object.keys(response.data).map((kelasKey) => response.data[kelasKey]);
+                        setKelas(kelasData);
+                        // console.log('daftar kelas: ', kelasData);
+                        // console.log('daftar kelas isi: ', response.data);
+                        // console.log('daftar kelas type: ', Array.isArray(response.data));
                         handleCheckBoxChange('semua');
 
                         speechWithBatch({
@@ -355,7 +361,7 @@ export default function DaftarKelasPage() {
                     } catch (error) {
                         if (error instanceof ApiResponseError) {
                             // console.log(`ERR API MESSAGE: `, error.data);
-                            // console.log(error.data);
+                            console.log(error.data);
 
                             if (
                                 error?.data?.data?.metadata?.code === 401 ||
@@ -832,17 +838,35 @@ export default function DaftarKelasPage() {
     }, [isClickButton, isPlayIntruction, isPermit]);
 
     // Setting if Window in small size
-    if (windowSize.innerWidth < 768) {
-        return <h1>You cant acces this page with {windowSize.innerWidth}px</h1>;
+    if (windowSize.innerWidth < 640) {
+        return (
+            <div className='relative flex h-screen items-center justify-center gap-2'>
+                <Image
+                    alt='white icon gmooc'
+                    src={'/small-images/monitor-size.webp'}
+                    width={200}
+                    height={80}
+                    className='absolute left-1/2 top-1/4 z-10 -translate-x-1/2 -translate-y-1/3 transform'
+                />
+                <h1 className='z-0 px-3 pt-2 text-center'>
+                    <b>Maaf</b>, Aplikasi tidak dapat berjalan dengan baik pada layar {windowSize.innerWidth}px atau{' '}
+                    <b>
+                        <i>smartphone</i>
+                    </b>
+                    . Buka di layar lebih dari 640px atau gunakan
+                    <b> laptop</b>.
+                </h1>
+            </div>
+        );
     }
 
     return (
         <div className='h-screen bg-[#EDF3F3]'>
             <Navbar />
             <main style={{ height: 'calc(100vh - 90px)' }} className='w-screen bg-[#EDF3F3] pt-[90px] '>
-                <div className='grid max-w-screen-xl grid-cols-12 mx-auto'>
+                <div className='mx-auto grid max-w-screen-xl grid-cols-12'>
                     <div className='col-span-2'>
-                        <h1 className='font-bold text-title-2 '>Level</h1>
+                        <h1 className='text-title-2 font-bold '>Level</h1>
                         <div className='mt-[30px] flex flex-col gap-[18px] '>
                             <div className='flex items-center gap-2'>
                                 <input
@@ -854,7 +878,7 @@ export default function DaftarKelasPage() {
                                     }}
                                     className='h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600'
                                 />
-                                <label htmlFor='check' className='font-medium text-body-4'>
+                                <label htmlFor='check' className='text-body-4 font-medium'>
                                     Mudah
                                 </label>
                             </div>
@@ -868,7 +892,7 @@ export default function DaftarKelasPage() {
                                     checked={isChecked.normal}
                                     className='h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600'
                                 />
-                                <label htmlFor='check' className='font-medium text-body-4'>
+                                <label htmlFor='check' className='text-body-4 font-medium'>
                                     Normal
                                 </label>
                             </div>
@@ -882,7 +906,7 @@ export default function DaftarKelasPage() {
                                     checked={isChecked.sulit}
                                     className='h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600'
                                 />
-                                <label htmlFor='check' className='font-medium text-body-4'>
+                                <label htmlFor='check' className='text-body-4 font-medium'>
                                     Sulit
                                 </label>
                             </div>
@@ -896,7 +920,7 @@ export default function DaftarKelasPage() {
                                     checked={isChecked.semua}
                                     className='h-[28px] w-[28px] rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600'
                                 />
-                                <label htmlFor='check' className='font-medium text-body-4'>
+                                <label htmlFor='check' className='text-body-4 font-medium'>
                                     Semua
                                 </label>
                             </div>
@@ -905,7 +929,7 @@ export default function DaftarKelasPage() {
                     <div
                         style={{ height: 'calc(100vh - 100px)' }}
                         className='col-span-10 grid grid-cols-4 gap-[24px] overflow-y-scroll '>
-                        {kelas?.length
+                        {kelas?.length > 0
                             ? kelas.map((kelasData, index) => {
                                   return (
                                       <div

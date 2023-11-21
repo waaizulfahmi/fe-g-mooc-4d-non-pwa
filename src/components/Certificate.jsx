@@ -125,18 +125,18 @@ const Certificate = ({ name, kelas }) => {
                 <View style={styles.container}>
                     <View style={styles.leftSection}>
                         <View style={styles.sectionLogo}>
-                            <Image src='/small-images/logo.webp' style={styles.imageLogo} />
-                            <Image src='/small-images/serlus.webp' style={styles.imageSerLus} />
+                            <Image src='/images/logo.png' style={styles.imageLogo} />
+                            <Image src='/images/serlus.png' style={styles.imageSerLus} />
                         </View>
                         <Text style={styles.textName}>{name}</Text>
                         <Text style={styles.sectionSuccess}>Telah Berhasil Menyelesaikan Kelas {kelas} Pada G-MOOC 4D</Text>
                         <View style={styles.bottomSection}>
-                            <Image src='/small-images/ttd.webp' style={styles.signature} />
-                            <Image src='/small-images/award-cert.webp' style={styles.award} />
+                            <Image src='/images/ttd.png' style={styles.signature} />
+                            <Image src='/images/award.png' style={styles.award} />
                         </View>
                     </View>
                     <View style={styles.rightSection}>
-                        <Image src='/small-images/side.webp' style={styles.imageSide} />
+                        <Image src='/images/side.png' style={styles.imageSide} />
                     </View>
                 </View>
             </Page>
