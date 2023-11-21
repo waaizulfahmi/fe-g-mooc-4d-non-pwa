@@ -176,7 +176,7 @@ const Register = () => {
                         <h1 className='text-xl font-bold md:text-title-2'>Buat Akun Baru</h1>
                         <p className='text-body-2'>Buktikan Sekarang Semua Bisa Belajar</p>
                     </div>
-                    <form className='mx-4 flex flex-col items-center gap-[14px] md:mx-0 ' onSubmit={handleSubmit(onSubmit)}>
+                    <form className='mx-4 flex flex-col items-center gap-[16px] md:mx-0 ' onSubmit={handleSubmit(onSubmit)}>
                         <div className='w-full'>
                             <Label htmlFor='name' className={`${errors.name?.message ? 'text-alert-1' : 'text-black'}`}>
                                 {errors.name?.message || <span className='invisible'>.</span>}
@@ -270,7 +270,9 @@ const Register = () => {
                                 </div>
                             </Popup>
                         ) : (
-                            <button onClick={openCamera} className='pt-3 text-center text-base font-semibold'>
+                            <button
+                                onClick={openCamera}
+                                className='my-[14px] cursor-pointer appearance-none rounded-rad-5 border-2 border-primary-1 bg-white px-[52px] py-[16px] text-center font-monsterrat text-base font-bold text-primary-1 outline-none hover:bg-primary-1 hover:text-white'>
                                 Tambahkan Data Gambar Anda
                             </button>
                         )}

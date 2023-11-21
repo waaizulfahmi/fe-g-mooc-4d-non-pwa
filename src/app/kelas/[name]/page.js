@@ -1103,7 +1103,6 @@ export default function EnrollKelasPage() {
                                     text: `Anda akan menuju halaman Daftar Kelas`,
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        // router.push('/kelas');
                                         handleMovePage('/kelas');
                                     },
                                 });
@@ -1114,7 +1113,6 @@ export default function EnrollKelasPage() {
                                     text: `Anda akan menuju halaman beranda`,
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        // router.push('/');
                                         handleMovePage('/');
                                     },
                                 });
@@ -1125,7 +1123,6 @@ export default function EnrollKelasPage() {
                                     text: `Anda akan menuju halaman Rapor`,
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        // router.push('/rapor');
                                         handleMovePage('/rapor');
                                     },
                                 });
@@ -1137,7 +1134,6 @@ export default function EnrollKelasPage() {
                                     text: 'Anda akan menuju halaman Peringkat',
                                     actionOnEnd: () => {
                                         setDisplayTranscript(false);
-                                        // router.push('/peringkat');
                                         handleMovePage('/peringkat');
                                     },
                                 });

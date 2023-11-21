@@ -288,3 +288,30 @@ export const authResetPassword = async ({ email, password, password_confirmation
         throw new Error(error.message); //throw custom error
     }
 };
+
+/* 
+@ROUTE : /logout 
+*/
+export const authCheckUser = async ({ token }) => {
+    try {
+        if (!token) throw new Error('Token must be submitted!');
+        const response = await apiInstance.get('/user', {
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError) {
+            const errorMsg = error?.response?.data?.metadata?.message;
+            const errorData = error?.response;
+
+            throw new ApiResponseError({
+                data: errorData,
+                message: errorMsg,
+            });
+        }
+        throw new Error(error.message); //throw custom error
+    }
+};
