@@ -406,7 +406,7 @@ export default function RaporPage() {
                                 }
                                 if (runningClass?.length > 0) {
                                     speechAction({
-                                        text: `Untuk melanjutkan belajar di kelas, Anda dapat mengucapkan belajar lagi diikuti nama kelas, contohnya belajar kembali kelas ${runningClass[0].name}`,
+                                        text: `Untuk melanjutkan belajar di kelas, Anda dapat mengucapkan belajar kembali diikuti nama kelas, contohnya belajar kembali kelas ${runningClass[0].name}`,
                                     });
                                 }
                             } else {
