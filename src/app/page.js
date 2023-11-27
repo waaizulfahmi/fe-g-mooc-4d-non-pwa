@@ -75,7 +75,7 @@ export default function HomePage() {
     const { model, vocab, labelEncoder } = useMl();
 
     /* COMMON STATE */
-    // --
+    const [loadData, setLoadData] = useState(true);
 
     /* ACCESSIBILITY STATE */
     const [speechOn, setSpeechOn] = useState(false); // state untuk  speech recognition
@@ -137,92 +137,175 @@ export default function HomePage() {
 
     // Load Data
     useEffect(() => {
-        let ignore = false;
-        if (userName && isPermit && !ignore) {
-            const fetchCheckUser = async () => {
-                try {
-                    const respond = await authCheckUser({ token });
-                    console.log(respond);
-                    speechWithBatch({
-                        speechs: [
-                            {
-                                text: `Selamat datang di ji muk fordi, ${userName}`,
-                                actionOnStart: () => {
-                                    setSkipSpeech(true);
-                                },
-                            },
-                            {
-                                text: 'Perkenalkan saya Uli, saya akan memandu Anda untuk belajar. ucapkan hai atau hello uli agar saya dapat mendengar Anda',
-                            },
-                            {
-                                text: `Halaman ini adalah halaman beranda, pada halaman ini merupakan halaman  pertama kali ketika Anda menggunakan aplikasi.`,
-                            },
-                            {
-                                text: 'Pada halaman ini terdapat berbagai perintah untuk pergi ke halaman lain, contohnya halaman kelas, raport, dan peringkat.',
-                            },
-                            {
-                                text: 'Untuk masuk halaman tersebut Anda bisa mengucapkan pergi ke halaman yang Anda tuju, misalnya, pergi ke kelas',
-                            },
-                            {
-                                text: 'Jangan lupa ucapkan hi Uli atau hallo uli agar saya bisa mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.',
-                            },
-                            {
-                                text: `Saya juga akan diam, jika perintah sudah dilakukan. Tapi Anda jangan khawatir, panggil saja saya lagi dengan hi Uli atau hallo uli agar saya dapat mendengar Anda.`,
-                            },
-                            {
-                                text: 'Satu lagi, Anda wajib menunggu saya berbicara sampai selesai, agar saya bisa mendengar Anda kembali',
-                            },
-                            {
-                                text: 'Jika Anda masih bingung, Anda bisa ucapkan intruksi agar mendapatkan penjelasan lebih banyak.',
-                                actionOnEnd: () => {
-                                    setIsClickButton(true); // ketika sampai akhir button seolah sudah terclick
-                                    setSkipSpeech(false);
-                                },
-                            },
-                        ],
-                    });
-                } catch (error) {
-                    if (error instanceof ApiResponseError) {
-                        // console.log(`ERR API MESSAGE: `, error.data);
-                        // console.log(error.data);
+        // let ignore = false;
 
-                        if (
-                            error?.data?.data?.metadata?.code === 401 ||
-                            error?.message?.toLowerCase() === 'Email belum diverifikasi'.toLocaleLowerCase()
-                        ) {
-                            speechAction({
-                                text: 'Anda harus verifikasi akun Anda terlebih dahulu. Silahkan check email Anda!',
-                                actionOnEnd: () => {
-                                    // router.push('/must-verify');
-                                    const fetchLogout = async () => {
-                                        const response = await authLogout({ token });
-                                        if (response?.metadata?.status === 'success') {
-                                            // signOut();
-                                            handleMovePage('must-verify', 'replace', false);
-                                        } else {
-                                            handleMovePage('must-verify', 'replace', false);
-                                        }
-                                    };
-                                    fetchLogout();
+        if (userName && token) {
+            if (loadData) {
+                const fetchCheckUser = async () => {
+                    try {
+                        const respond = await authCheckUser({ token });
+                        console.log(respond);
+                        speechWithBatch({
+                            speechs: [
+                                {
+                                    text: `Selamat datang di ji muk fordi, ${userName}`,
+                                    actionOnStart: () => {
+                                        setSkipSpeech(true);
+                                    },
                                 },
-                            });
-                        } else {
-                            speechAction({
-                                text: 'Kelas tidak ditemukan',
-                            });
+                                {
+                                    text: 'Perkenalkan saya Uli, saya akan memandu Anda untuk belajar. ucapkan hai atau hello uli agar saya dapat mendengar Anda',
+                                },
+                                {
+                                    text: `Halaman ini adalah halaman beranda, pada halaman ini merupakan halaman  pertama kali ketika Anda menggunakan aplikasi.`,
+                                },
+                                {
+                                    text: 'Pada halaman ini terdapat berbagai perintah untuk pergi ke halaman lain, contohnya halaman kelas, raport, dan peringkat.',
+                                },
+                                {
+                                    text: 'Untuk masuk halaman tersebut Anda bisa mengucapkan pergi ke halaman yang Anda tuju, misalnya, pergi ke kelas',
+                                },
+                                {
+                                    text: 'Jangan lupa ucapkan hi Uli atau hallo uli agar saya bisa mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.',
+                                },
+                                {
+                                    text: `Saya juga akan diam, jika perintah sudah dilakukan. Tapi Anda jangan khawatir, panggil saja saya lagi dengan hi Uli atau hallo uli agar saya dapat mendengar Anda.`,
+                                },
+                                {
+                                    text: 'Satu lagi, Anda wajib menunggu saya berbicara sampai selesai, agar saya bisa mendengar Anda kembali',
+                                },
+                                {
+                                    text: 'Jika Anda masih bingung, Anda bisa ucapkan intruksi agar mendapatkan penjelasan lebih banyak.',
+                                    actionOnEnd: () => {
+                                        setIsClickButton(true); // ketika sampai akhir button seolah sudah terclick
+                                        setSkipSpeech(false);
+                                    },
+                                },
+                            ],
+                        });
+                    } catch (error) {
+                        if (error instanceof ApiResponseError) {
+                            // console.log(`ERR API MESSAGE: `, error.data);
+                            // console.log(error.data);
+                            if (
+                                error?.data?.data?.metadata?.code === 401 ||
+                                error?.message?.toLowerCase() === 'Email belum diverifikasi'.toLocaleLowerCase()
+                            ) {
+                                speechAction({
+                                    text: 'Anda harus verifikasi akun Anda terlebih dahulu. Silahkan check email Anda!',
+                                    actionOnEnd: () => {
+                                        // router.push('/must-verify');
+                                        const fetchLogout = async () => {
+                                            const response = await authLogout({ token });
+                                            if (response?.metadata?.status === 'success') {
+                                                // signOut();
+                                                handleMovePage('must-verify', 'replace', false);
+                                            } else {
+                                                handleMovePage('must-verify', 'replace', false);
+                                            }
+                                        };
+                                        fetchLogout();
+                                    },
+                                });
+                            } else {
+                                speechAction({
+                                    text: 'Kelas tidak ditemukan',
+                                });
+                            }
+                            return;
                         }
-                        return;
                     }
-                }
-            };
-
-            fetchCheckUser();
+                };
+                fetchCheckUser();
+            }
+            setLoadData(false);
         }
 
-        return () => {
-            ignore = true;
-        };
-    }, [userName, isPermit, handleMovePage, token]);
+        // if (userName && isPermit && !ignore) {
+        //     const fetchCheckUser = async () => {
+        //         try {
+        //             const respond = await authCheckUser({ token });
+        //             console.log(respond);
+        //             speechWithBatch({
+        //                 speechs: [
+        //                     {
+        //                         text: `Selamat datang di ji muk fordi, ${userName}`,
+        //                         actionOnStart: () => {
+        //                             setSkipSpeech(true);
+        //                         },
+        //                     },
+        //                     {
+        //                         text: 'Perkenalkan saya Uli, saya akan memandu Anda untuk belajar. ucapkan hai atau hello uli agar saya dapat mendengar Anda',
+        //                     },
+        //                     {
+        //                         text: `Halaman ini adalah halaman beranda, pada halaman ini merupakan halaman  pertama kali ketika Anda menggunakan aplikasi.`,
+        //                     },
+        //                     {
+        //                         text: 'Pada halaman ini terdapat berbagai perintah untuk pergi ke halaman lain, contohnya halaman kelas, raport, dan peringkat.',
+        //                     },
+        //                     {
+        //                         text: 'Untuk masuk halaman tersebut Anda bisa mengucapkan pergi ke halaman yang Anda tuju, misalnya, pergi ke kelas',
+        //                     },
+        //                     {
+        //                         text: 'Jangan lupa ucapkan hi Uli atau hallo uli agar saya bisa mendengar Anda. Jika tidak ada perintah apapun saya akan diam dalam 10 detik.',
+        //                     },
+        //                     {
+        //                         text: `Saya juga akan diam, jika perintah sudah dilakukan. Tapi Anda jangan khawatir, panggil saja saya lagi dengan hi Uli atau hallo uli agar saya dapat mendengar Anda.`,
+        //                     },
+        //                     {
+        //                         text: 'Satu lagi, Anda wajib menunggu saya berbicara sampai selesai, agar saya bisa mendengar Anda kembali',
+        //                     },
+        //                     {
+        //                         text: 'Jika Anda masih bingung, Anda bisa ucapkan intruksi agar mendapatkan penjelasan lebih banyak.',
+        //                         actionOnEnd: () => {
+        //                             setIsClickButton(true); // ketika sampai akhir button seolah sudah terclick
+        //                             setSkipSpeech(false);
+        //                         },
+        //                     },
+        //                 ],
+        //             });
+        //         } catch (error) {
+        //             if (error instanceof ApiResponseError) {
+        //                 // console.log(`ERR API MESSAGE: `, error.data);
+        //                 // console.log(error.data);
+
+        //                 if (
+        //                     error?.data?.data?.metadata?.code === 401 ||
+        //                     error?.message?.toLowerCase() === 'Email belum diverifikasi'.toLocaleLowerCase()
+        //                 ) {
+        //                     speechAction({
+        //                         text: 'Anda harus verifikasi akun Anda terlebih dahulu. Silahkan check email Anda!',
+        //                         actionOnEnd: () => {
+        //                             // router.push('/must-verify');
+        //                             const fetchLogout = async () => {
+        //                                 const response = await authLogout({ token });
+        //                                 if (response?.metadata?.status === 'success') {
+        //                                     // signOut();
+        //                                     handleMovePage('must-verify', 'replace', false);
+        //                                 } else {
+        //                                     handleMovePage('must-verify', 'replace', false);
+        //                                 }
+        //                             };
+        //                             fetchLogout();
+        //                         },
+        //                     });
+        //                 } else {
+        //                     speechAction({
+        //                         text: 'Kelas tidak ditemukan',
+        //                     });
+        //                 }
+        //                 return;
+        //             }
+        //         }
+        //     };
+
+        //     fetchCheckUser();
+        // }
+
+        // return () => {
+        //     ignore = true;
+        // };
+    }, [userName, handleMovePage, token, loadData]);
 
     // Processing Speech Recognition
     useEffect(() => {
@@ -366,6 +449,7 @@ export default function HomePage() {
                                         actionOnEnd: () => {
                                             setIsClickButton(false);
                                             setDisplayTranscript(false);
+                                            setLoadData(true);
                                         },
                                     });
                                 }
