@@ -31,6 +31,7 @@ import { usePathname } from 'next/navigation';
 import CheckPermission from '@/components/CheckPermission';
 import { useDispatch } from 'react-redux';
 import { checkPermissionSlice } from '@/redux/check-permission';
+import { MdError } from 'react-icons/md';
 
 const Register = () => {
     const webcamRef = useRef(null);
@@ -289,6 +290,12 @@ const Register = () => {
                                     />
                                     <div className='mt-4 flex flex-col items-center'>
                                         <h3 className='text-xl font-semibold'>Memindai Wajah Anda</h3>
+                                        <div>
+                                            <h1 className='relative mb-2 text-center font-semibold text-rose-600'>
+                                                <MdError className='mr-2 inline-block align-middle' />
+                                                Harap Pastikan Jarak Anda dengan Kamera +-40cm
+                                            </h1>
+                                        </div>
                                         <button
                                             onClick={closeCamera}
                                             className='mt-2 rounded-lg bg-red-500 px-4 py-2 font-semibold text-white hover:bg-red-600'>

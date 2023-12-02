@@ -3,9 +3,9 @@
     "background_color": "#ffffff",
     "display": "fullscreen",
     "scope": "/",
-    "start_url": "/login",
+    "start_url": "/",
     "name": "Aplikasi GMOOC 4D",
-    "short_name": "Aplikasi GMOOC 4D",
+    "short_name": "GMOOC 4D Apps",
     "description": "Apps for who have spirit of learning!",
     "screenshots": [
         {
@@ -44,6 +44,12 @@
             "src": "/images/icon-512x512.png",
             "sizes": "512x512",
             "type": "image/png"
+        },
+        {
+            "src": "/images/maskable_icon.png",
+            "sizes": "196x196",
+            "type": "image/png",
+            "purpose": "any maskable"
         }
     ]
 }
